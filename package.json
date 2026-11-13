@@ -1,0 +1,36 @@
+{
+  "name": "uluv",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/api"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace apps/api",
+    "db:provision": "node --env-file=apps/api/.env scripts/db/provision.mjs",
+    "test:unit": "node --experimental-strip-types --test apps/api/tests/unit/*.test.ts",
+    "test:integration": "node --env-file=apps/api/.env scripts/verify/p00-integration.mjs",
+    "test:local-guards": "node --test scripts/verify/p00-local-endpoints.test.mjs",
+    "test:contracts": "node scripts/verify/source-contract.mjs",
+    "test:docs": "node scripts/verify/docs-check.mjs",
+    "test:portable": "npm run test:unit && npm run test:local-guards && npm run test:dev-cli && npm run test:env-init && npm run test:contracts && npm run test:docs && npm run test:environment && npm run test:secrets && npm run test:cloud-guards",
+    "test:environment": "node scripts/verify/local-environment-contract.mjs",
+    "test:secrets": "node scripts/verify/secret-guard.mjs",
+    "test:cloud-guards": "node scripts/verify/cloud-operation-guard.mjs",
+    "typecheck": "npm run typecheck --workspace apps/api",
+    "verify:p00": "node scripts/verify/p00-verifier.mjs",
+    "test:db": "node --env-file=apps/api/.env scripts/verify/p00-db-direct.mjs",
+    "env:init": "node scripts/dev/generate-token.mjs",
+    "flutter:setup": "node scripts/dev/flutter.mjs setup",
+    "dev:flutter": "node --env-file=apps/api/.env scripts/dev/flutter.mjs run",
+    "test:flutter": "node scripts/dev/flutter.mjs test",
+    "test:flutter:e2e": "node --env-file=apps/api/.env scripts/dev/flutter.mjs e2e",
+    "verify:p00:portable": "npm run test:portable",
+    "test:dev-cli": "node --test scripts/verify/p00-dev-cli.test.mjs",
+    "test:env-init": "node --test scripts/verify/p00-env-init.test.mjs"
+  }
+}

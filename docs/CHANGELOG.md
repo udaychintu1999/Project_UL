@@ -1,0 +1,48 @@
+## 2026-11-13 — P00 CORE_FLOW_VERIFIED closeout only; P01 ON HOLD
+
+- Recorded owner's P00 outage/restart observation: database-unavailable error while DynamoDB Local was stopped; normal operation restored after restart. This completes the minimum core recovery acceptance after the earlier full Windows/USB Android automated PASS.
+- Updated P00 phase/progress/evidence/next-step records to `CORE_FLOW_VERIFIED`; clearly marked optional rapid-tap, exact HTTP status and post-restart reruns as not separately evidenced.
+- Owner expressly requested **do not begin P01**. P01–P17 remain NOT STARTED. No source/runtime code, table schema, private `.env`, AWS or payments were modified.
+
+---
+
+## 2026-11-13 — Owner's P00 real Android/full-stack automated gate passed
+
+- Recorded owner-provided Windows logs: **23/23 portable Node tests** plus security/source/docs guards, backend typecheck, real 18-table DynamoDB Local operations, Fastify integration and invalid-token/concurrency checks, Flutter analyzer + 7 widget tests, and real USB Android device integration all passed. Owner manually confirmed both diagnostic buttons working.
+- Updated P00 status/evidence/runbooks to keep historical failure logs clearly superseded and manual database outage/restart/retry **UNVERIFIED** until explicitly observed. No application code, schema, cloud, payment, or private `.env` changed. No `CORE_FLOW_VERIFIED` claim yet.
+
+## 2026-11-13 — P00 USB Android debug connection
+
+- Added documented non-secret `apps/flutter_app/dev_connection.config.mjs` with USB/Android emulator localhost URL modes; USB is now the default. `dev:flutter` and `test:flutter:e2e` auto-run `adb reverse` for USB endpoints, fail closed on ADB failure, and preserve explicit local-only endpoint restrictions. No shared Wi-Fi/IP or public API binding needed.
+- Fixed the Flutter analyzer `prefer_const_constructors` finding and improved API integration failure instructions for a stopped Fastify process.
+- Added guarded stub CLI tests plus USB/Windows acceptance documentation and owner-reported evidence. **Still PARTIALLY_VERIFIED**, real phone full-stack/recovery not yet confirmed.
+
+# U_luv handoff change history
+
+## 2026-11-12 — P00 standardized commands, private env init and manual Java startup
+
+- Added named npm commands (`env:init`, `flutter:setup`, `dev:flutter`, `test:flutter`, `test:flutter:e2e`, `verify:p00:portable`) and normalized `db:provision`, `test:db`, `test:integration` to privately load local `.env` through Node 22's `--env-file`.
+- Changed `verify:p00` from portable-only to **fail-closed full real API/DB/Flutter automated gate**. Offline-only verification is `verify:p00:portable`. No false `CORE_FLOW_VERIFIED` from source checks.
+- Added cross-platform Node/Flutter launcher and 5 CLI negative/stub tests; user starts/stops Java DynamoDB Local manually. Kept legacy PowerShell scripts as optional compatibility.
+- Updated root/Flutter READMEs, Windows and Java runbooks, P00 phase/QA/progress/evidence/next-step docs; fixed Flutter README's stale public-bind advice. Owner-only env generator is never invoked by agents or committed/packed.
+
+## v2.0 FINAL — approved early DEV two-bucket topology + strict secret/cost gates (2026-11-10)
+- **Authoritative** owner decision: Java DynamoDB Local (no Docker) remains the database through P16. AWS DynamoDB production tables and ECS remain P17 and require distinct owner authorization.
+- Owner manually creates **two private DEV S3 buckets** (persistent profiles and temporary chat/Local/Activity) and **one DEV CloudFront distribution with two private OAC S3 origins and signed URL behaviors** in early phases; local media adapter remains default and is required for offline QA.
+- Strict **deny-default AWS**: no AWS request, upload, HEAD/List, create/delete, real signed URL use, IAM/Secret access, provider charge or cloud deployment by agent/scripts without fresh bounded explicit owner approval; offer manual operator runbook instead.
+- Strict environment secret rules: never AI-read actual `.env`, AWS profiles, signing PEM, keys, payment/store credentials; exclude secrets from ZIP, logs, screenshots, telemetry. Add safe package script, repo secret scanner, cost-guard checks, and local DB fail-closed config.
+- Signed S3 PUT and CloudFront GET architecture and authorized **list/detail response signed URL embedding** mandated. No signed URLs persisted in database or logs. Seven-day temporary media deletion/visibility and residual URL validity acknowledged.
+- U_Day-style small feature folders for Fastify/Flutter explicitly specified; 18 phases still D1/D2/D3 + T1/T2/T3 with evidence-based validation.
+- Promoted v1.3 proposal into current architecture; old proposal files moved to docs/reference as archived. v1.0–v1.3 docs/handoffs superseded.
+
+## v1.3 proposal — historical, now approved with stronger guards
+Two-bucket early dev S3/CloudFront proposal. Archived in `docs/reference/`.
+
+## v1.2 — historical
+Added signed S3 upload / signed CloudFront delivery model.
+
+## v1.1 — historical
+Java 17+ DynamoDB Local instead of Docker; production AWS/real billing late.
+
+## v1.0 — historical
+Initial 18-phase project, 18-table key design and P00 scaffold.

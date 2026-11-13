@@ -1,0 +1,27 @@
+{
+  "handoff_version": "2.0 FINAL",
+  "database_tables": 18,
+  "implementation_phases": 18,
+  "phase_sections": [
+    "D1",
+    "D2",
+    "D3",
+    "T1",
+    "T2",
+    "T3"
+  ],
+  "cloud_policies": {
+    "database": "Java DynamoDB Local through P16; real AWS DynamoDB only P17 after separate approval",
+    "dev_media": "owner manually sets up 2 private S3 buckets + one signed CloudFront distribution early; AI AWS actions denied until action-specific approval",
+    "production_media": "distinct resources P17; signed private media",
+    "payments": "sandbox P16, real release P17"
+  },
+  "security": "No actual .env/secret access by AI; do not transfer signed URLs to logs/ZIP; deny all AWS by default",
+  "entrypoints": [
+    "AGENTS.md",
+    "docs/START_HERE.md",
+    "docs/security/00_NON_NEGOTIABLE_GUARDS.md",
+    "docs/handoff/INITIAL_PROMPT_UNIVERSAL.md",
+    "docs/handoff/CONTINUE_PHASE_PROMPT_UNIVERSAL.md"
+  ]
+}

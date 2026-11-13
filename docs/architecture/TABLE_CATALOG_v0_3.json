@@ -1,0 +1,170 @@
+{
+  "version": "0.3",
+  "step": 3,
+  "status": "proposal_not_runtime_verified",
+  "table_count": 18,
+  "tables": [
+    {
+      "number": 1,
+      "name": "uluv_users",
+      "purpose": "Account identity; eligibility; public handle mapping",
+      "primary_example": "USER#uid / META",
+      "other_keys": "HANDLE#normalized / META",
+      "invariant": "Account owner; handle uniqueness",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 2,
+      "name": "uluv_auth_links",
+      "purpose": "Google/Email verified provider mappings",
+      "primary_example": "AUTH#provider#subjectHash / META",
+      "other_keys": "USER#uid / PROVIDER#provider#subjectHash",
+      "invariant": "Account sign-in and unlink",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 3,
+      "name": "uluv_profiles",
+      "purpose": "Separate Dating/Friendship profiles; photos",
+      "primary_example": "USER#uid / MODE#DATING|FRIENDSHIP",
+      "other_keys": "USER#uid / MEDIA#mediaId",
+      "invariant": "2 eligible photos, contact-safe view",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 4,
+      "name": "uluv_settings",
+      "purpose": "Privacy, notification, selected locality, distance bands",
+      "primary_example": "USER#uid / SETTINGS",
+      "other_keys": "USER#uid / MODE#DATING|FRIENDSHIP",
+      "invariant": "Only authoritative selected locality setting",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 5,
+      "name": "uluv_discovery",
+      "purpose": "H3 R6 mode-specific candidate pointers",
+      "primary_example": "DISC#mode#R6#cell / JOIN#ISO#uid",
+      "other_keys": "\u2014",
+      "invariant": "One home-cell pointer per active mode",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 6,
+      "name": "uluv_dating_likes",
+      "purpose": "Canonical one-sided Likes and incoming/outgoing inboxes",
+      "primary_example": "PAIR#pairId / META",
+      "other_keys": "LIKEDYOU#uid / T#ISO#liker; LIKESSENT#uid / T#ISO#recipient",
+      "invariant": "No pay for ordinary Like; 1 credit for explicit Like Back",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 7,
+      "name": "uluv_dating_matches",
+      "purpose": "Canonical mutual match state and match indexes",
+      "primary_example": "PAIR#pairId / META",
+      "other_keys": "MATCHES#uid / T#ISO#pairId",
+      "invariant": "New mutual consent on rematch",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 8,
+      "name": "uluv_friendship_requests",
+      "purpose": "Paid invitations, lifecycle, incoming/outgoing indexes",
+      "primary_example": "REQ#requestId / META",
+      "other_keys": "REQIN#uid / T#ISO#id; REQOUT#uid / T#ISO#id; PAIR#pairId / DEDUP",
+      "invariant": "One credit at successful send, no ordinary rejection refund",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 9,
+      "name": "uluv_connections",
+      "purpose": "Canonical pair entitlement across Dating/Friendship",
+      "primary_example": "PAIR#pairId / META",
+      "other_keys": "USER#uid / PAIR#pairId (optional owner list)",
+      "invariant": "Single paid unlock, reuse across modes",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 10,
+      "name": "uluv_blocks",
+      "purpose": "Block edge and reverse lookup",
+      "primary_example": "BLOCKS#actor / TARGET#target",
+      "other_keys": "BLOCKEDBY#target / ACTOR#actor",
+      "invariant": "Both directions checked before interaction",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 11,
+      "name": "uluv_wallet",
+      "purpose": "Balances, credit ledger, grants, receipts, idempotency",
+      "primary_example": "USER#uid / BALANCE",
+      "other_keys": "USER#uid / TX#ISO#txnId; OP#uid#opId / META; RECEIPT#store#id / META",
+      "invariant": "Atomic debits with business actions",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 12,
+      "name": "uluv_local_posts",
+      "purpose": "Canonical social posts; local home-cell feed pointers; author posts",
+      "primary_example": "POST#postId / META",
+      "other_keys": "FEED#R6#cell / POST#ISO#id; AUTHORPOST#uid / POST#ISO#id",
+      "invariant": "Post 7-day expiry, 5 photos max; no duplicate canonical posts",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 13,
+      "name": "uluv_activities",
+      "purpose": "Activity extension, expiry, activity-only geographic index",
+      "primary_example": "POST#postId / META",
+      "other_keys": "ACTIVITY#R6#cell / POST#ISO#postId",
+      "invariant": "One activity is one canonical Local post + detail extension",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 14,
+      "name": "uluv_local_comments",
+      "purpose": "Public comments on all Local post types",
+      "primary_example": "POST#postId / T#ISO#commentId",
+      "other_keys": "COMMENT#commentId / LOOKUP (optional direct admin lookup)",
+      "invariant": "10 comments/day, expire with post",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 15,
+      "name": "uluv_local_reactions",
+      "purpose": "One active reaction per user per post",
+      "primary_example": "POST#postId / USER#uid",
+      "other_keys": "\u2014",
+      "invariant": "30 new reactions/day; duplicate reaction blocked",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 16,
+      "name": "uluv_chat",
+      "purpose": "Pair conversation, per-user inbox, ephemeral messages",
+      "primary_example": "THREAD#pairId / META",
+      "other_keys": "THREAD#pairId / GEN#gen#MSG#ISO#id; USERCHAT#uid / PAIR#pairId",
+      "invariant": "7-day expiry, clear for both, entitlement independent",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 17,
+      "name": "uluv_safety",
+      "purpose": "Reports, moderation status, appeals, admin audit",
+      "primary_example": "REPORT#reportId / META",
+      "other_keys": "TARGET#type#id / T#ISO#reportId; QUEUE#OPEN#day / T#ISO#id",
+      "invariant": "Moderation bypasses no safety checks",
+      "initial_gsi_count": 0
+    },
+    {
+      "number": 18,
+      "name": "uluv_operations",
+      "purpose": "Usage counters, notifications, due-expiry buckets",
+      "primary_example": "USAGE#uid#day / COUNTER#feature",
+      "other_keys": "NOTIFY#uid / T#ISO#id; EXP#hour#shard / DUE#epoch#type#id",
+      "invariant": "No scan-based quotas or cleanup",
+      "initial_gsi_count": 0
+    }
+  ]
+}

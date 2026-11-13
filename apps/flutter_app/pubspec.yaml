@@ -1,0 +1,16 @@
+name: uluv
+description: U_luv local development diagnostics P00 (Android-first)
+publish_to: none
+version: 0.0.1+1
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true

@@ -27,6 +27,7 @@
 
 ## T3 — Flutter E2E + Manual
 - Run widget/device/browser integration where available. Otherwise runnable scripts, exact human start commands and unverified evidence.
+- If unavailable or repeatedly unreliable after targeted diagnosis, AI **must ask owner to perform manual workflow** with exact commands, steps, expected results and sanitized feedback. Record manual vs automated outcomes separately using `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`; retain failing test and unresolved gate.
 
 ## Exit gate
 - P0 user journey works, all tests evidence-backed, unresolved coverage called out, changed code/test scripts+docs ZIP, stop after phase.

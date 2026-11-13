@@ -3,6 +3,7 @@ import {randomUUID, timingSafeEqual} from 'node:crypto';
 import {GetCommand, PutCommand, QueryCommand, DeleteCommand} from '@aws-sdk/lib-dynamodb';
 import type {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
 import type {AppConfig} from './config.js';
+import {registerLocalEmailAuth} from './features/auth/routes.js';
 
 const operationsTable='uluv_operations';
 function equalDevToken(expected: string|undefined, supplied: string|undefined): boolean {
@@ -46,6 +47,7 @@ export function buildApp(config:AppConfig, db:DynamoDBDocumentClient) {
       finally {if(writeSucceeded){try{await db.send(new DeleteCommand({TableName:operationsTable,Key:key}));}catch{app.log.warn('fixture cleanup failed');}}}
     });
   }
+  if(config.env==='local' || (config.env==='test' && config.devToken)) registerLocalEmailAuth(app,db,config);
   app.setErrorHandler((error,_req,reply)=>{
     // Fastify can deliver non-Error throwables. Log only a safe category, never raw payloads.
     const errorName = error instanceof Error ? error.name : 'UnknownError';

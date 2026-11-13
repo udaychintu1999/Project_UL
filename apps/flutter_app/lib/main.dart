@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 import 'diagnostics_service.dart';
+import 'features/auth/auth_service.dart';
+import 'features/auth/auth_screen.dart';
 
 void main() {
   const baseUrl = String.fromEnvironment('ULUV_API_BASE_URL', defaultValue: 'http://10.0.2.2:3000');
   const devToken = String.fromEnvironment('ULUV_DEV_TOKEN', defaultValue: '');
-  runApp(UluvApp(service: HttpDiagnosticsService(baseUrl: baseUrl, devToken: devToken)));
+  runApp(UluvApp(service: HttpDiagnosticsService(baseUrl: baseUrl, devToken: devToken), authService: HttpAuthService(baseUrl: baseUrl, devToken: devToken)));
 }
 
 class UluvApp extends StatelessWidget {
-  const UluvApp({super.key, required this.service});
+  const UluvApp({super.key, required this.service, this.authService});
   final DiagnosticsService service;
+  final AuthService? authService;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'U_luv Diagnostics',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF2757E)), useMaterial3: true),
-      home: DiagnosticsHome(service: service),
+      home: DiagnosticsHome(service: service, authService: authService),
     );
   }
 }
 
 class DiagnosticsHome extends StatefulWidget {
-  const DiagnosticsHome({super.key, required this.service});
+  const DiagnosticsHome({super.key, required this.service, this.authService});
   final DiagnosticsService service;
+  final AuthService? authService;
   @override
   State<DiagnosticsHome> createState() => _DiagnosticsHomeState();
 }
@@ -69,7 +73,9 @@ class _DiagnosticsHomeState extends State<DiagnosticsHome> {
             OutlinedButton(onPressed: busy ? null : () => runCheck(widget.service.verifyDatabase), child: const Text('Test database')),
             if(busy) const Padding(padding: EdgeInsets.only(top: 20), child: CircularProgressIndicator()),
             const SizedBox(height: 10),
-            const Text('Local-only diagnostic screen. Authentication, profiles and paid features come in later phases.',textAlign: TextAlign.center),
+            if(widget.authService!=null) FilledButton.tonal(key: const Key('open-auth'),onPressed:busy?null:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>AuthScreen(service:widget.authService!))),child:const Text('P01 Email sign-in')),
+            const SizedBox(height: 10),
+            const Text('Local-only diagnostics. P01 email OTP is a local test flow; Google and real email delivery are not yet configured.',textAlign: TextAlign.center),
           ],
         )),
       ))),

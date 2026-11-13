@@ -1,4 +1,9 @@
-# Test automation contracts P00 must implement
+# Test automation contract — all phases (P00–P17)
+
+## Mandatory manual-test escalation (all P00–P17 phases)
+
+Follow [`docs/qa/MANUAL_VERIFICATION_ESCALATION.md`](../qa/MANUAL_VERIFICATION_ESCALATION.md). AI must **ask the owner to perform an exact manual test** if physical hardware, UI, privileged external checks, or environment limitations prevent automated verification, or if repeated failures persist after a justified diagnosis/repair and the next patch would be speculative. Provide startup commands, actions, expected results, failure evidence request and one clear question to owner. Do not wait for owner to volunteer manual testing. Manual results are separately evidenced; `FAILED (automated)` is never converted to PASS. Owner may accept limited continued development of the same phase with a documented exception; critical security/release gates cannot be skipped, and CI failures must not be disabled.
+
 
 ## Backend (Node.js)
 
@@ -40,4 +45,4 @@
 - Content expiry asserts immediate API invisibility even if physical DynamoDB TTL is delayed.
 - Manual script has expected screen state and DB records to inspect where appropriate.
 
-**Status:** P00 source and core test scripts are included and portable Node tests executed. Live DynamoDB Local, Flutter and backend dependency typecheck remain UNVERIFIED. The remaining phase-specific scripts and code must be added as each phase is implemented.
+**Status as of 2026-11-13:** P00 was previously owner-confirmed `CORE_FLOW_VERIFIED` on Windows/Android. P01 local OTP has passing previously observed typecheck, real Java DynamoDB Local/API integration, Flutter analyzer/widget checks and owner-observed manual account-access/logout, but the P01 automated Android E2E still **FAILED** after repeated attempts. Overall P01 is `PARTIALLY_VERIFIED`; use the manual escalation protocol, preserve the failure, and do not claim P01 phase completion. Remaining phase-specific scripts are added with implementation.

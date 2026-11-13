@@ -1,3 +1,89 @@
+# 2026-11-13 — Continue P01 with documented manual-verification escalation
+
+**The owner authorized pausing repeated P01 Android E2E troubleshooting**, after manually observing `Account access confirmed` and `Signed out` / return to email screen. The latest automated P01 Android E2E nevertheless **FAILED** with truncated OTP HTTP response headers and failed same-device probes. Root cause unresolved; leave the automated test in place, **do not represent it as PASS or make the combined `verify:p01` green by omission**. Record the local-development exception, and revisit before P01 phase closeout or when related Android transport changes occur. **Overall P01 remains `PARTIALLY_VERIFIED`; P00 historical `CORE_FLOW_VERIFIED`; P02 is not authorized.**
+
+**Next implementation work:** Inspect canonical `docs/implementation/phases/P01.md` and choose the next missing, testable P01 slice (e.g. within authorized provider/session/eligibility scope, subject to actual spec and provider availability). Maintain the existing successful local email OTP/manual account access/logout workflow and P00 regressions. Do not start external provider or production/cloud operations without the correct owner authorization. Run all feasible non-device tests; when device/UI automation cannot validate a workflow, **proactively ask the owner to perform a short, explicit manual test**, rather than issuing speculative fixes. Use the policy `docs/qa/MANUAL_VERIFICATION_ESCALATION.md` and current Windows commands in `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`. Record manual vs automated results separately; neither P01 completion nor release is implied by manual acceptance of one slice.
+
+**Current change is docs-only:** No application edits, schema change, test skips or new dependencies.
+
+---
+
+# 2026-11-13 — Verify P01 test-harness-only repair on Windows
+
+Manual physical-device P01 account access and logout succeeded: user saw `Account access confirmed` and `Signed out` with return to email screen. **Do not change the working application code.** The prior automated Android P01 failure showed `response_headers_truncated` and then failed local readiness/diagnostic probes. Underlying transport/ADB/Fastify cause is **unconfirmed**.
+
+Apply the test-only Android harness ZIP (all relative paths) over existing project root, preserving local `.env` and DynamoDB Local. Keep Java DynamoDB Local manually running on 8000 and Fastify `npm run dev:api` in a visible terminal on 3000. Do not run interactive `npm run dev:flutter` simultaneously with device tests. In project root:
+
+```powershell
+npm run verify:p01:portable
+npm run typecheck
+npm run test:flutter
+npm run test:flutter:p01:e2e
+```
+
+The Flutter suite should include four additional harness tests (latest snapshot before patch: 15 expected (owner last confirmed 14); expected new total: 19, **not verified**). If P01 Android E2E PASS, run `npm run verify:p01` and `npm run verify:p00` and record real logs. If FAIL, immediately check whether the Fastify terminal stayed up; run `curl.exe http://127.0.0.1:3000/health/ready` and `adb reverse --list`, share only sanitized statuses (no OTPs/keys/tokens). Don't issue further speculative production-code changes.
+
+No P02, external provider, production AWS, SES, or payment work. QA details: `docs/qa/P01_ANDROID_E2E_HARNESS_2026_11_13.md`.
+
+---
+
+# Next required action — P01 Slice 01 physical Android HTTP response validation
+
+Owner's P01 `test:flutter:p01:e2e` still fails on physical USB Android after the header-order repair: `Local API HTTP transport failed during code request (response)`. The local API/database pass prior tests; actual cause of Dart `HttpException` awaits device-level evidence. Apply the small P01 fixed-length JSON/nonpersistent connection patch, then with Java DB running manually and Fastify kept running, run `npm run verify:p01:portable`, `npm run typecheck`, `npm run test:flutter` and `npm run test:flutter:p01:e2e`. If P01 device succeeds, rerun `npm run verify:p01` and `npm run verify:p00`. If it fails, provide only the sanitized line containing both GET readiness and signed P00 diagnostic POST results. See `docs/qa/P01_ANDROID_POST_FRAMING_REPAIR_2026_11_13.md`. P00 historical `CORE_FLOW_VERIFIED`; P01 `PARTIALLY_VERIFIED`; no P02, cloud or payments.
+
+---
+
+# CURRENT NEXT ACTION — P01 Android outbox HTTP header-order fix
+
+The owner confirmed that API/DB readiness succeeds while local outbox POST fails at HTTP `send`. `HttpAuthService` incorrectly assigned `x-uluv-dev-key` and bearer headers **after** `request.write`. Apply the targeted update ZIP to your existing project root; do not delete your `.env`, data or re-provision unnecessarily. The repair puts headers before body writes and adds a regression assertion. Keep Java DynamoDB Local (8000) manually running and `npm run dev:api` (3000) active.
+
+Run `npm run verify:p01:portable`, `npm run typecheck`, `npm run test:flutter`, and `npm run test:flutter:p01:e2e` on the authorized Android device, with no concurrent `dev:flutter` process. After Android success, run `npm run verify:p01` and `npm run verify:p00`. For a separate manual session use `npm run dev:flutter`. Record new Windows evidence in `docs/qa/EVIDENCE_LOG.md`. P00 historically `CORE_FLOW_VERIFIED`; P01 remains `PARTIALLY_VERIFIED`; P02 not started. See `docs/qa/P01_ANDROID_HTTP_HEADER_ORDER_REPAIR_2026_11_13.md`.
+
+---
+
+# 2026-11-13 — P01 local outbox Android error classification (third owner device report)
+
+- Latest owner Windows `verify:p01:portable` **PASS**, `test:flutter` analyze + 10 widgets **PASS**, and full `verify:p01` reached P01 physical Android E2E after **PASS** for typecheck, real 18-table DB operations, P00/P01 API integration, P00 USB Android E2E, and Flutter static/widget checks.
+- P01 physical Android E2E **FAIL twice**, specifically at **local development outbox retrieval**, after the code-request action completed. Observed UI status `Connection failed. Check Fastify and DynamoDB Local, then retry.` The previous Flutter client mapped *all* exceptions to this status, so this does **not prove a network outage**.
+- The test-runner closing the application after the failed test is not by itself evidence of an Android app crash; logs contain no fatal native exception.
+- Patch: pure HTTP JSON response parser and four unit tests; non-secret operation/stage-specific HTTP/transport/error categories; same-device read-only API readiness probe *on outbox failure* in E2E. No backend, table, auth security, production/provider, or P00 flow modifications.
+- **After-patch** `verify:p01:portable` test result will be recorded in `docs/qa/P01_ANDROID_OUTBOX_ERROR_CLASSIFICATION_2026_11_13.md`. Flutter post-patch, real device post-patch and full gate are **UNVERIFIED** until owner rerun. P00 historical `CORE_FLOW_VERIFIED` and P01 `PARTIALLY_VERIFIED`; P02 not started.
+
+---
+
+# CURRENT NEXT ACTION — P01 slice 01 Android asynchronous outbox E2E re-verification (2026-11-13)
+
+**P00 remains CORE_FLOW_VERIFIED (owner evidence); P01 remains IN PROGRESS / PARTIALLY_VERIFIED; P02 is not authorized.** The owner re-ran `npm run verify:p01` after the prior TS/Flutter rendering patch. **Backend typecheck, P00 real 18-table DB/API integration, P01 real DB/API integration, Flutter analyzer + 9 widget tests, and P00 real USB Android diagnostics now all PASS.** The only supplied failing gate is `test:flutter:p01:e2e`: the outbox UI success message did not appear after the test tapped the button. The old test used `pumpAndSettle()` to infer real HTTP completion and did not include the actual UI error text.
+
+Apply the latest **P01 Android asynchronous outbox repair** update-only ZIP to project root. This patch changes the Android test's real HTTP waiting/diagnostics, adds a pending-outbox widget regression, updates a P01 source guard and documentation; no backend/DB/app runtime code changes. Keep Java DynamoDB Local manually running on port 8000 and Fastify `npm run dev:api` on 3000. Stop interactive `npm run dev:flutter` on the same phone before the automated device E2E; it starts Flutter/ADB reverse itself. Run:
+
+```powershell
+npm run verify:p01:portable
+npm run test:flutter
+npm run test:flutter:p01:e2e
+npm run verify:p01
+```
+
+If E2E fails, copy only the sanitized action/status failure reported by the new test. Full diagnosis: `docs/qa/P01_ANDROID_ASYNC_WAIT_REPAIR_2026_11_13.md`. No owner post-patch Android success has been supplied; keep `PARTIALLY_VERIFIED`. Google server claim verification, real email delivery, session restore/refresh, cross-provider collisions and administrative/deactivation workflows remain P01 work. **Do not start P02.**
+
+---
+
+# NEXT ACTION — P01 slice 01 Windows re-verification after corrective patch (2026-11-13)
+
+**P00: CORE_FLOW_VERIFIED (historical); P01: IN PROGRESS / PARTIALLY_VERIFIED, device/typecheck repair unverified on Windows; P02: NOT AUTHORIZED.** Apply the **P01 slice 01 corrective update-only ZIP** over the existing project, without touching `.env`, DynamoDB data or native Android folders. Run `npm run typecheck` and `npm run test:flutter` first. Manually start Java DynamoDB Local (same existing data directory; port 8000), keep `npm run dev:api` running (port 3000) and use the authorized USB phone. For **manual interactive checks**, run `npm run dev:flutter` in its own terminal; this launches the Flutter app and sets ADB reverse. Stop the interactive Flutter run before using the **automated** `npm run test:flutter:p01:e2e` on the same device; the E2E command itself builds/launches its test app and configures ADB reverse. Then run `npm run test:p01:integration`, `npm run test:flutter:p01:e2e`, `npm run verify:p01` and optional complete `npm run verify:p00`. If a Flutter test still fails, record the sanitized user-facing status; new E2E asserts outbox success explicitly before looking for the OTP. Full runbook: `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`; detailed diagnosis: `docs/qa/P01_WINDOWS_REPAIR_2026_11_13.md`. Do not report the repaired T1/T3 gates PASS until owner confirms successful rerun. No P02 work.
+
+---
+
+# NEXT ACTION — P01 slice 01: owner Windows compile / live API + Android verification (2026-11-13)
+
+**P00: CORE_FLOW_VERIFIED. P01: IN PROGRESS / PARTIALLY_VERIFIED. P02: NOT AUTHORIZED.** The owner has now explicitly authorized P01, superseding the older P01 hold text preserved below as P00 historical context.
+
+Apply `U_luv_P01_Email_OTP_Slice01_Update_2026-11-13.zip` to project root **without deleting `.env`, local data or existing files**. On the owner Windows PC, follow `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md` precisely. Start Java DynamoDB Local **manually**, keep Fastify on port 3000 and the same USB phone/ADB reverse. First run `npm install`, `npm run verify:p01:portable` and `npm run typecheck`; fix any true compile errors and rerun. With live local DB+API and phone, run `npm run test:p01:integration`, `npm run test:flutter`, `npm run test:flutter:p01:e2e`, `npm run verify:p00` and `npm run verify:p01`. Manually exercise code request/retrieval, age rejection, sign-in, restricted/expired responses, logout, DB stop/restart/recovery, and rapid taps. Record sanitized statuses in `docs/qa/EVIDENCE_LOG.md`. No external email is sent and Google is not yet connected.
+
+**Next exact P01 slice (after current T1/T2/T3 gates pass):** strengthen Google ID-token verification and account/provider collision resolution using validated test-provider claims, then secure Flutter session restore/refresh and deactivation/admin eligibility workflows. Provider-dependent checks remain UNVERIFIED without actual authorized Google test configuration. Do not start P02, real AWS or payments.
+
+---
+
 # Next action — HOLD (owner has explicitly requested no P01 yet)
 
 **Current state (2026-11-13): P00 CORE_FLOW_VERIFIED; P01–P17 NOT STARTED. DO NOT START P01 without a separate explicit owner instruction.**

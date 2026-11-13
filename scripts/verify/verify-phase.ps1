@@ -1,7 +1,14 @@
 param([string]$Phase='P00')
 $ErrorActionPreference='Stop'
 Set-Location (Resolve-Path "$PSScriptRoot/../..")
-if ($Phase -ne 'P00') { throw 'P01-P17 are future phases. Implement their real tests before claiming verification.' }
+if ($Phase -eq 'P01') {
+  Write-Host '=== P01 full owner-operated local gate (includes P00 regression + P01 API/Flutter) ==='
+  npm run verify:p01
+  if ($LASTEXITCODE -ne 0) { throw 'P01 gate FAILED or unavailable. Do not claim verification.' }
+  Write-Host 'P01 first-slice automation passed; Google and remaining P01 scope still unverified.'
+  exit 0
+}
+if ($Phase -ne 'P00') { throw 'P02-P17 are future phases. No verifier implemented.' }
 
 Write-Host '=== T1: Portable code/docs tests ==='
 npm run verify:p00

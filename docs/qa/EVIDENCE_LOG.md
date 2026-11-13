@@ -1,3 +1,114 @@
+# 2026-11-13 — Manual-verification escalation policy and latest P01 Android evidence
+
+**Owner request:** AI must suggest and request a step-by-step manual test when automation repeatedly fails or lacks physical/GUI access. Implemented as a documentation-only policy (`docs/qa/MANUAL_VERIFICATION_ESCALATION.md`) and cross-referenced from agent instructions, both operating modes, QA contract, phase template and handoff prompts.
+
+| Evidence and provenance | Result | Interpretation |
+|---|---|---|
+| Owner Windows physical USB Android: latest `npm run test:flutter:p01:e2e` after test harness patch | **FAILED (automated)** | OTP code-request HTTP response ended with `response_headers_truncated`; subsequent same-device readiness GET and diagnostic POST could not connect. Cause remains unknown; do **not** classify as proven harness defect or app defect. |
+| Owner physical USB Android, interactive `npm run dev:flutter`: pressed `Check account access` | **PASSED (manual, owner-observed)** | Visible message `Account access confirmed`. |
+| Owner physical USB Android, interactive `npm run dev:flutter`: pressed `Log out` | **PASSED (manual, owner-observed)** | Visible message `Signed out` and returned to email screen. |
+| OTP issuance, development outbox, OTP verification and eligibility individual taps | **INFERRED / NOT SEPARATELY OBSERVED** | Reaching the authenticated screen implies a successful sign-in path; the individual intermediate interactions were not independently reported as manual outcomes. |
+| Owner's statement to skip continued troubleshooting of this Android E2E | **OWNER-ACCEPTED EXCEPTION (local-development only)** | Pause speculative fixes; retain failing test and P01 partial status. Recheck before P01 closeout or if later Android API tests fail similarly. |
+| This turn's `npm run verify:p01:portable` | **PASS (authoring Linux; documentation change only)** | Portable unit, source, security/cloud and doc checks. No fresh live Android, Flutter SDK, or Java DynamoDB Local test in this authoring run. |
+
+No test has been removed or disabled; no P02/cloud/payment code started. **P00 historical `CORE_FLOW_VERIFIED`; overall P01 `PARTIALLY_VERIFIED`.** Any production release and phase completion require the appropriate still-open acceptance evidence.
+
+---
+
+# 2026-11-13 — Owner manual P01 success + test-only E2E harness patch
+
+- **Owner physical-device manual:** `npm run dev:flutter` reached authenticated P01 screen. Owner specifically observed **“Account access confirmed”** after account-access check and **“Signed out”** followed by return to email screen. These two UI results are **PASS (manual observation)**, independent of automated E2E. Earlier logged P01 API/database integration, typecheck, Flutter analyzer/widget suite, P00 diagnostics remain previously reported owner PASS.
+- **Owner latest automated device before patch:** `test:flutter:p01:e2e` **FAIL** at OTP request; sanitized client error `response_headers_truncated`. Both same-device readiness GET and authenticated diagnostic POST failed afterward. This does not prove a specific backend, socket or ADB root cause.
+- **Patch:** test-only `ObservedAuthService` starts all five actual HTTP operations inside `WidgetTester.runAsync`, using actual UI taps, real service delegation, and one-shot operation guards. No app/server/database code modified; no secret-bearing logs.
+- **Authoring machine:** `npm run verify:p01:portable` **PASS** after code/docs edits; includes P00 portable/static/secret/cloud guards and P01 source contract. Test-only source inspection **PASS**. Flutter SDK, Android hardware, Java local database and runtime build unavailable here: Flutter test suite and new device E2E **UNVERIFIED**. These must be run by owner after applying ZIP.
+- Phase remains **P01 PARTIALLY_VERIFIED**, not P01 complete. P00 historical `CORE_FLOW_VERIFIED`, P02 not started.
+
+---
+
+# 2026-11-13 — P01 Android OTP HTTP response-stage failure (fourth owner report)
+
+- Owner after previous header-order patch: `verify:p01:portable` PASS, `typecheck` PASS, `test:flutter` analyzer + 14 tests PASS. USB Android `test:flutter:p01:e2e` FAIL: **OTP request** now reports `Local API HTTP transport failed during code request (response)` (Dart `HttpException` while awaiting the HTTP response). This is not evidence the server or database is unavailable. Raw exception and exact route receipt were not supplied, so the underlying socket fault is **unconfirmed**.
+- Current patch: P01 Flutter sends UTF-8 fixed-length JSON in nonpersistent local HTTP requests, retains header-before-body rules, classifies transport errors with finite safe tags, and E2E compares GET readiness against signed P00 diagnostic POST on any P01 failure. See `docs/qa/P01_ANDROID_POST_FRAMING_REPAIR_2026_11_13.md`.
+- New authoring portable verification PASS; live Android success **UNVERIFIED** pending owner run. No backend, P00 or database change. P00 historical `CORE_FLOW_VERIFIED`, P01 `PARTIALLY_VERIFIED`; P02 not started.
+
+---
+
+# 2026-11-13 — P01 local outbox Android header-order repair
+
+- Owner latest: `verify:p01:portable` PASS; Flutter analyzer + **14** tests PASS twice; physical Android E2E FAIL at `Read local test outbox` with **HTTP transport failure at stage send**, while same-device API/DB probe succeeds. This is **not** an API/DB outage.
+- Source-confirmed `HttpClientRequest` bug: `request.write(jsonEncode(body))` was before developer/bearer headers. Source fix now sets ALL headers first, then writes the JSON body. The same bug could affect authenticated logout.
+- Added a source-contract regression for the header-before-body invariant. Authoring-container tests and owner Android retest statuses are recorded in `docs/qa/P01_ANDROID_HTTP_HEADER_ORDER_REPAIR_2026_11_13.md`.
+- No backend, database, cloud, payment or P00 source changes. P00 remains historically `CORE_FLOW_VERIFIED`, P01 `PARTIALLY_VERIFIED` until physical E2E + combined verification pass, P02 not started.
+
+---
+
+# 2026-11-13 — P01 local outbox Android error classification (third owner device report)
+
+- Latest owner Windows `verify:p01:portable` **PASS**, `test:flutter` analyze + 10 widgets **PASS**, and full `verify:p01` reached P01 physical Android E2E after **PASS** for typecheck, real 18-table DB operations, P00/P01 API integration, P00 USB Android E2E, and Flutter static/widget checks.
+- P01 physical Android E2E **FAIL twice**, specifically at **local development outbox retrieval**, after the code-request action completed. Observed UI status `Connection failed. Check Fastify and DynamoDB Local, then retry.` The previous Flutter client mapped *all* exceptions to this status, so this does **not prove a network outage**.
+- The test-runner closing the application after the failed test is not by itself evidence of an Android app crash; logs contain no fatal native exception.
+- Patch: pure HTTP JSON response parser and four unit tests; non-secret operation/stage-specific HTTP/transport/error categories; same-device read-only API readiness probe *on outbox failure* in E2E. No backend, table, auth security, production/provider, or P00 flow modifications.
+- **After-patch** `verify:p01:portable` test result will be recorded in `docs/qa/P01_ANDROID_OUTBOX_ERROR_CLASSIFICATION_2026_11_13.md`. Flutter post-patch, real device post-patch and full gate are **UNVERIFIED** until owner rerun. P00 historical `CORE_FLOW_VERIFIED` and P01 `PARTIALLY_VERIFIED`; P02 not started.
+
+---
+
+# P01 slice 01 — second owner Windows regression evidence (2026-11-13)
+
+**Owner-reported logs from the previous TypeScript/Flutter patch (before current asynchronous-wait repair)**, sanitized and without dev keys, tokens or OTPs:
+
+| Executed on owner Windows machine | Actual status |
+|---|---|
+| `npm run test:p01:integration` | **PASS** — full real Fastify + Java DB OTP, limits, account/eligibility, concurrent signup/reentry, session/restriction workflows |
+| `npm run test:portable` during `verify:p01` | **PASS** — 14 unit, 2 local guards, 9 CLI stubs, 3 env-init tests; static/docs/security/cloud checks |
+| `npm run typecheck` | **PASS** — prior TS2345 no longer occurs |
+| `npm run test:db` | **PASS** — all 18 tables, conditional data operations |
+| `npm run test:integration` | **PASS** — original P00 real API/DB |
+| `npm run test:flutter` | **PASS** — analyzer clean, 9 widget tests |
+| `npm run test:flutter:e2e` | **PASS** — original P00 real Android physical-device diagnostics over ADB reverse |
+| `npm run test:flutter:p01:e2e` | **FAIL** — outbox success text not found at `auth_integration_test.dart:26`; exact UI error unknown in provided logs |
+| `npm run verify:p01` | **FAIL** — stopped at P01 Android integration; earlier stages above passed |
+
+**Authoring patch in this turn:** Android test polls real HTTP completion/status and reports a sanitized operation-specific UI error or timeout; adds widget pending/denial regression and source-contract guard. `npm run verify:p01:portable` **PASS** after the current repair in the authoring Linux container (14 Node unit, 2 local guards, 9 CLI, 3 env-init and all P00/P01/static/security/doc guards). Flutter/Android **post-patch** checks are unverified pending owner rerun. These owner outcomes cannot be marked post-patch PASS. P00 status remains `CORE_FLOW_VERIFIED` from owner real-device/outage evidence; P01 status `PARTIALLY_VERIFIED`. Details: `docs/qa/P01_ANDROID_ASYNC_WAIT_REPAIR_2026_11_13.md`.
+
+---
+
+# P01 slice 01 — Windows owner feedback and targeted repair (2026-11-13)
+
+**Status: PARTIALLY_VERIFIED (patch must be rerun on owner Windows machine).** P00 historical `CORE_FLOW_VERIFIED` retained. This entry supersedes the earlier statement that no owner P01 tests had been reported. Current owner evidence was provided as sanitized console text; no authentication secrets or OTPs were shared.
+
+| Owner-run check (pre-repair) | Observed result | Evidence classification |
+|---|---|---|
+| `npm run test:p01:integration` | PASS: real Java DynamoDB Local + Fastify validation, OTP, rate limit, eligibility, concurrent signup, immutable ID, restriction, logout/re-entry, session revocation | **PASS** — owner Windows real integration |
+| `npm run test:flutter` | Flutter analyzer: no issues; 8 widget tests passed | **PASS** — owner Flutter SDK |
+| `npm run verify:p01:portable` | 14/14 Node unit, 2/2 local guards, 9/9 CLI stubs, 3/3 env tests, static/contracts/docs/security/cloud guards including P01 all PASS | **PASS** — owner Windows portable |
+| `npm run typecheck` | TS2345 at `apps/api/src/features/auth/routes.ts:131`: secret used in nested `requireSession` still `string | undefined` | **FAIL** — repair prepared, owner rerun required |
+| `npm run test:flutter:p01:e2e` | Real USB Android + ADB reverse built and launched app, then missing `auth-local-code` widget after tapping development outbox | **FAIL** — repair prepared, owner rerun required; precise cause not proven by log |
+| `npm run verify:p01` | Portable tests passed; stopped at typecheck error, later gates not reached | **FAIL** — rerun required after repair |
+
+**Authoring-container repair and checks:** `apps/api/src/features/auth/routes.ts` gives the development signing secret an unambiguous `string` type after defaulting and still throws for missing/short secrets. The Flutter auth form now uses an eagerly built, scrollable `Column` instead of a lazily constructed `ListView`; it dismisses the keyboard before request/outbox actions. The device test asserts successful outbox retrieval before reading the code, so any actual network/auth error is reported instead of appearing as a missing widget. A new narrow-viewport widget regression test targets the off-screen OTP scenario. The exact source of the original Android error is not proven without device rerun. `npm run verify:p01:portable` **PASS** in authoring container after patch (14 Node unit, 2 local guard, 9 CLI, 3 env tests plus static/documentation/secret/cloud/P01 contracts). No Flutter SDK, Java DB/runtime, Android target or installed npm backend dependencies were available here; **post-patch** TypeScript typecheck, real API/DB integration, Flutter analyzer/widget test and physical Android E2E remain **UNVERIFIED**. See `docs/qa/P01_WINDOWS_REPAIR_2026_11_13.md` and the updated `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`.
+
+---
+
+# P01 slice 01 — evidence recorded 2026-11-13 (authoring container)
+
+**Current P01 status: PARTIALLY_VERIFIED.** New owner authorization for P01 supersedes the older P01-on-hold P00 closeout header below; P00's historical `CORE_FLOW_VERIFIED` still stands. No actual owner Windows P01 tests have been reported yet.
+
+| Run/check | Observed outcome and provenance | Classification |
+|---|---|---|
+| `npm run verify:p00:portable` before and after edits | Offline unit, CLI stub tests, source contracts, docs, environment, secret and cloud checks pass in Linux authoring container | **PASS** (portable only) |
+| `npm run test:unit` after adding P01 policy tests | 14/14 Node unit tests including new age, email, digest and parser cases | **PASS** (offline) |
+| `npm run test:p01:contracts` | P01 source/security/Flutter integration contract assertions | **PASS** (static only) |
+| `npm run test:dev-cli` | 9/9 existing Flutter CLI stub tests after adding P01 command action | **PASS** (offline stub) |
+| `node --check` new MJS and TS transpiler syntax check | JS parses; 0 syntax errors for changed TS source | **PASS** (syntax only) |
+| `npm run typecheck` | Local npm `node_modules` and Node type definitions unavailable; `npm ci --offline` had missing cached dependency and regular `npm ci` failed; no semantic TypeScript checking completed | **UNVERIFIED** (environment dependency) |
+| `npm run test:db`, `npm run test:integration`, `npm run test:p01:integration` | No manually started local Java DB and Fastify in Linux authoring runtime | **UNVERIFIED**, run on owner Windows PC |
+| `npm run test:flutter`, `npm run test:flutter:e2e`, `npm run test:flutter:p01:e2e` | Flutter SDK / authorized Android device unavailable in Linux authoring runtime | **UNVERIFIED**, run on owner Windows PC |
+| Google Sign-In, real email delivery, session refresh and all remaining P01 scope | Not implemented or not available; no real-provider identity verification claimed | **NOT IMPLEMENTED / UNVERIFIED** |
+
+New verification and manual recovery instructions are in `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`. Detailed scope, keys and limits: `docs/qa/P01_EMAIL_OTP_LOCAL_SLICE_2026_11_13.md`.
+
+---
+
 # P00 closeout — owner-confirmed manual database outage and recovery (2026-11-13)
 
 **Phase status: CORE_FLOW_VERIFIED; P01–P17 NOT STARTED / P01 ON HOLD.**

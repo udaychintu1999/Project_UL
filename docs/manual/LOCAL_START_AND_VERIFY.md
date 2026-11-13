@@ -1,6 +1,6 @@
 # P00 — Windows local start, npm commands and honest verification
 
-**Current status (2026-11-13):** `CORE_FLOW_VERIFIED` based on owner-reported passing Windows and USB Android full-stack checks plus confirmed database-outage error and successful restart recovery. **P01 remains ON HOLD** until explicitly authorized. **All commands below run from the project root** in PowerShell or Command Prompt, unless a `cd` is shown. Java DynamoDB Local is started and stopped **manually by the owner**. npm does not start/stop it. No Docker, AWS database, or payment service is used.
+**Current status (2026-11-13):** `CORE_FLOW_VERIFIED` based on owner-reported passing Windows and USB Android full-stack checks plus confirmed database-outage error and successful restart recovery. **P01 is now authorized and its first local-email OTP slice is partially verified.** See `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`; the original P00 run commands remain valid. **All commands below run from the project root** in PowerShell or Command Prompt, unless a `cd` is shown. Java DynamoDB Local is started and stopped **manually by the owner**. npm does not start/stop it. No Docker, AWS database, or payment service is used.
 
 ## A. First-time setup (once per checkout)
 

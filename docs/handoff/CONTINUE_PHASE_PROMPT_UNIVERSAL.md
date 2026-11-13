@@ -33,6 +33,7 @@ Follow all existing business rules, especially: 18 feature-aligned DynamoDB tabl
 5. Return an **update-only project-relative ZIP** containing changed source/tests/scripts and updated `docs/`. Exclude secrets, dependencies and cache directories.
 6. Summarize what was actually implemented and tested, exact passing/failing commands, `CORE_FLOW_VERIFIED`/`PARTIALLY_VERIFIED`/`RELEASE_BLOCKED` status, remaining unverified manual checks and the precise next task.
 7. Move to the next phase **only** when the current phase's critical acceptance criteria have evidence-backed verification. If tooling blocks complete validation, preserve the partially verified status and hand off exact manual checks instead of falsely declaring success.
+8. **Manual test escalation is mandatory**: after repeated unresolved automated/device failures or unavailable interactive tooling, **proactively ask me to test the user workflow manually** with exact commands, taps/actions, expected results and what non-secret evidence to return. Record manual PASS and automated FAIL separately. Stop speculative fixes; a locally accepted exception may permit the next slice of the same phase but never silently pass gates or permit production release. See `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`.
 
 **Continue immediately with the next incomplete, highest-priority vertical slice. Produce code and tests, not just a plan.**
 

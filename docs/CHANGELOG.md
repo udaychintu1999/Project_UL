@@ -1,3 +1,26 @@
+# 2026-11-13 — P01 Android E2E test harness isolation
+
+- Preserved all functioning production Flutter/Fastify/DB code after owner verified P01 account access and logout manually on USB Android.
+- Replaced P01 test's fake-clock network/status polling with a test-only `ObservedAuthService` that executes the actual request once inside `WidgetTester.runAsync`, then checks the rendered UI. Added four Flutter test regressions and strengthened P01 source-contract check.
+- Recorded prior `response_headers_truncated` automated failure, owner manual success, still-unverified post-patch Android result, and troubleshooting steps. No schema/ports/secrets/cloud or P02 changes.
+
+---
+
+## 2026-11-13 — P01 slice 01 Android asynchronous outbox polling repair
+
+- Owner confirmed previous TypeScript fix: `typecheck` PASS; real P00 DB/API/Android and P01 API/database tests PASS; Flutter analyzer and 9 widget tests PASS. Only the P01 phone test still failed, at missing outbox confirmation text.
+- Replaced device E2E network-response `pumpAndSettle` assumptions with bounded real I/O-aware status polling and explicit sanitized action/error reporting; kept the real outbox/API/database route.
+- Added pending-outbox denial/disabled-controls Flutter widget regression and source-contract guard. Updated current evidence and Windows runbook. No backend/runtime schema or provider integrations changed. Physical Android post-patch result pending.
+
+# 2026-11-13 — P01 slice 01 Windows verification repair
+
+- Fixed local auth signing-secret TypeScript narrowing in nested session handler (TS2345).
+- Made Flutter auth form eagerly built and scrollable, dismissing keyboard on submit; added narrow-screen widget regression and explicit outbox success assertion in Android E2E.
+- Recorded owner real API integration PASS, Flutter analyzer/widget PASS, failed TS/Android checks and required reruns.
+- Clarified `npm run dev:flutter` manual interactive step versus the self-launching automated Android E2E command. No production/AWS/payment/schema changes.
+
+---
+
 ## 2026-11-13 — P00 CORE_FLOW_VERIFIED closeout only; P01 ON HOLD
 
 - Recorded owner's P00 outage/restart observation: database-unavailable error while DynamoDB Local was stopped; normal operation restored after restart. This completes the minimum core recovery acceptance after the earlier full Windows/USB Android automated PASS.

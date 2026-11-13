@@ -31,6 +31,11 @@
     "test:flutter:e2e": "node --env-file=apps/api/.env scripts/dev/flutter.mjs e2e",
     "verify:p00:portable": "npm run test:portable",
     "test:dev-cli": "node --test scripts/verify/p00-dev-cli.test.mjs",
-    "test:env-init": "node --test scripts/verify/p00-env-init.test.mjs"
+    "test:env-init": "node --test scripts/verify/p00-env-init.test.mjs",
+    "test:p01:integration": "node --env-file=apps/api/.env scripts/verify/p01-email-integration.mjs",
+    "verify:p01:portable": "npm run test:portable && npm run test:p01:contracts",
+    "verify:p01": "node scripts/verify/p01-verifier.mjs",
+    "test:flutter:p01:e2e": "node --env-file=apps/api/.env scripts/dev/flutter.mjs p01-e2e",
+    "test:p01:contracts": "node scripts/verify/p01-source-contract.mjs"
   }
 }

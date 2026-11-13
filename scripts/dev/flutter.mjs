@@ -15,7 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const flutterRoot = path.join(root, 'apps/flutter_app');
 const flutterExe = process.platform === 'win32' ? 'flutter.bat' : 'flutter';
 const [action, ...userArgs] = process.argv.slice(2);
-const actions = new Set(['setup', 'run', 'test', 'e2e']);
+const actions = new Set(['setup', 'run', 'test', 'e2e', 'p01-e2e']);
 const permittedApiHosts = new Set(['localhost', '127.0.0.1', '[::1]', '10.0.2.2']);
 const usbApiHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -93,7 +93,7 @@ function runFlutter(args) {
   if (child.status !== 0) process.exit(child.status ?? 1);
 }
 
-if (!actions.has(action)) fail('Usage: npm run flutter:setup | dev:flutter | test:flutter | test:flutter:e2e');
+if (!actions.has(action)) fail('Usage: npm run flutter:setup | dev:flutter | test:flutter | test:flutter:e2e | test:flutter:p01:e2e');
 if (action === 'setup') {
   if (userArgs.length) fail('Flutter setup accepts no extra arguments');
   // Generate only when absent: do not regenerate/replace existing native code.
@@ -125,7 +125,8 @@ if (action === 'setup') {
   if (action === 'run') {
     runFlutter(['run', ...device, ...define]);
   } else {
-    runFlutter(['test', 'integration_test', ...device, ...define]);
-    console.log('Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).');
+    const suite = action === 'p01-e2e' ? 'integration_test/auth_integration_test.dart' : 'integration_test/diagnostics_integration_test.dart';
+    runFlutter(['test', suite, ...device, ...define]);
+    console.log(`${action === 'p01-e2e' ? 'P01 auth' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
   }
 }

@@ -1,7 +1,7 @@
 # U_luv — 18-Phase Implementation Master Plan v1.1
 
 **Date:** 2026-11-10  
-**Status:** P00 SOURCE SCAFFOLD INCLUDED; P00 portable tests executed, real API/DynamoDB Local/Flutter runtime UNVERIFIED; P01–P17 not implemented.  
+**Status (2026-11-13):** P00 owner-verified `CORE_FLOW_VERIFIED`; P01 first local email-OTP slice implemented, `PARTIALLY_VERIFIED` pending live Windows tests; P02–P17 not started. See `PROGRESS.md` for current evidence.  
 **Baseline:** Product and Business contract v1.1 as updated by the latest U_luv decisions; 18-table Step 03 design, H3 resolution 6, user-selected distance bands; original Project U_Day phase-by-phase handoff principles.  
 **Delivery target:** Both autonomous coding agents AND ordinary AI chats.
 
@@ -51,6 +51,7 @@ Every phase guide contains **D1 Backend + DynamoDB**, **D2 Flutter/User experien
 2. Choose one **small complete vertical slice** from current D1–D3; implement backend + Flutter UI + real persistence as applicable.
 3. Generate tests/scripts at the same time as implementation; run every possible test in the environment. If an unavailable tool blocks execution, preserve a runnable script and mark that check `UNVERIFIED`.
 4. Fix verified regressions, rerun the affected test suite; do not claim a feature is working based on code inspection.
+   - For unavailable device/interactive tests or repeated failures without a proven app defect, **proactively request owner manual testing**, with exact commands, visible steps and expected results. Preserve the automated failure and record manual observations separately; follow `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`.
 5. Update `docs/implementation/PROGRESS.md` once at the end of the slice/phase, plus `docs/qa/EVIDENCE_LOG.md`, changed docs, and `docs/NEXT_STEP.md`.
 6. Deliver **project-relative changed code**, relevant QA scripts and updated `docs/` in the step ZIP; never deliver only a report when code was requested.
 7. Phase gate: `CORE_FLOW_VERIFIED`, `PARTIALLY_VERIFIED`, or `RELEASE_BLOCKED`. An ordinary AI chat should usually report `PARTIALLY_VERIFIED` when Flutter/DynamoDB Local cannot be executed; this is honest and expected.

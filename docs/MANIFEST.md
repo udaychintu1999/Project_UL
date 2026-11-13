@@ -1,3 +1,5 @@
+> **Current status as of 2026-11-13:** P00 has owner-confirmed `CORE_FLOW_VERIFIED` evidence; P01 slice 01 is `PARTIALLY_VERIFIED` with real local API/DB and Flutter analyzer/widgets passed on Windows, and a subsequent corrective patch awaiting Windows TypeScript + USB Android rerun. This note supersedes the older P00-focused current-status paragraph below (retained as historical manifest context). See `docs/qa/P01_WINDOWS_REPAIR_2026_11_13.md`, `docs/qa/EVIDENCE_LOG.md`, `docs/NEXT_STEP.md` and `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`. P02 and production AWS/payment integration are not authorized.
+
 # U_luv documentation and source manifest — current P00 handoff
 
 **Current baseline:** FINAL v2.0 source + P00 command-standardization update, 2026-11-12. The older documentation-only v1.0 manifest was superseded; do not treat this repository as planning-only or production-ready. A P00 starter exists, but the genuine Java DB / Fastify / Flutter run remains `PARTIALLY_VERIFIED` pending owner-run evidence.

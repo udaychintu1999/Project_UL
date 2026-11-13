@@ -10,6 +10,7 @@ Use if the agent has filesystem, terminal, Java DynamoDB Local/Flutter and appro
 4. Run T1 tests, run T2 against real DynamoDB Local, and run Flutter widget/integration plus browser tests for T3 where available.
 5. Exercise happy and failure paths: import/select image, process/save, view/paginate, connect/message, delete/expire as relevant; test repeat, concurrency, negative and recovery behavior.
 6. Repair, rerun. Do not skip failed tests or mark a failure as known acceptable without explicit decision record.
+   - **Escalate for human observation:** If a device/GUI/provider check cannot be exercised or repeated failures persist without a proven app defect, the agent **must proactively ask the owner to run a specific manual test** (commands, steps, expected result, non-secret evidence). Halt speculative patch loops. Keep failing automation explicit; only the owner may accept a bounded local-development exception, never an automatic PASS/release waiver. See `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`.
 7. Record commands, environment, exit codes, duration where available, logs or fixture IDs, actual pass/fail and truly inaccessible tests.
 8. Update only affected docs, evidence, phase progress; package changed code + `docs/` ZIP, with a concise next-step handoff. STOP at phase boundary.
 

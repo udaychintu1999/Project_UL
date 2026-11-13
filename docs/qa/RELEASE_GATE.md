@@ -1,3 +1,5 @@
+**Cross-phase manual/automation rule (2026-11-13):** See `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`. An owner-observed manual PASS supports local feature evidence but never turns a failed automated check into PASS. A documented owner-accepted **development-only** exception may allow work on the next slice of the same phase; it does **not** waive production/release, identity, security, privacy, money or required provider verification. Never disable a failing gate to change the result.
+
 # Release and phase-gate policy
 
 ## Status vocabulary

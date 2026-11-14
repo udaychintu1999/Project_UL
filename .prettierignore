@@ -1,0 +1,16 @@
+# Do not bulk-rewrite accepted source or generated/dependency artifacts.
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.dart_tool/**
+**/.gradle/**
+**/coverage/**
+**/local-dynamodb-data/**
+**/.env
+**/.env.*
+!**/.env.example
+package-lock.json
+apps/flutter_app/**
+docs/**
+infra/**
+*.zip

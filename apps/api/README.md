@@ -43,3 +43,7 @@ Do not replace `apps/api/.env` or installed dependencies when applying readabili
 ## Scope of the readability pass
 
 This update changes **whitespace, line wrapping and comments only** in `.ts` files. No route paths, export names, constants, API responses, authorization rules, DynamoDB expressions, session/token behavior or cryptographic settings were changed. There is no module or file split: moving functions across files would require broader regression review. Existing literal values are listed in the guide, not refactored.
+
+## Quality tooling
+
+From the repository root after `npm install`: `npm run check:dev` (typecheck + ESLint); `npm run format:api:check` (optional report). `npm run format:api:write` is an explicit/manual formatting action followed by the full regressions. See `../../docs/development/DEVELOPER_WORKFLOW_V1.md`.

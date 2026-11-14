@@ -48,6 +48,21 @@
     "test:p01-3:integration": "node --env-file=apps/api/.env scripts/verify/p01-3-device-integration.mjs",
     "test:flutter:p01-3:e2e": "node --env-file=apps/api/.env scripts/verify/p01-3-android-e2e.mjs",
     "verify:p01-3:portable": "npm run verify:p01-2:portable && npm run test:p01-3:contracts",
-    "verify:p01-3": "node scripts/verify/p01-3-verifier.mjs"
+    "verify:p01-3": "node scripts/verify/p01-3-verifier.mjs",
+    "lint:api": "eslint \"apps/api/src/**/*.ts\" \"apps/api/tests/unit/**/*.ts\"",
+    "lint:scripts": "eslint \"scripts/**/*.mjs\"",
+    "lint": "npm run lint:api && npm run lint:scripts",
+    "format:api:check": "prettier --check \"apps/api/src/**/*.ts\" \"apps/api/tests/unit/**/*.ts\"",
+    "format:api:write": "prettier --write \"apps/api/src/**/*.ts\" \"apps/api/tests/unit/**/*.ts\"",
+    "format:scripts:check": "prettier --check \"scripts/**/*.mjs\"",
+    "logs:pretty": "pino-pretty",
+    "check:dev": "npm run typecheck && npm run lint",
+    "test:dev-workflow": "node --test scripts/verify/dev-workflow.test.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^10.15.0",
+    "pino-pretty": "^13.2.0",
+    "prettier": "^3.9.10",
+    "typescript-eslint": "^8.72.2"
   }
 }

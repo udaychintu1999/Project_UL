@@ -92,3 +92,7 @@ P01-2 adds email/password sign-in and recovery while retaining OTP; 30-day login
 `npm run verify:p01-2` now requires a distinct P01-2 device E2E test, not just the P00 diagnostics buttons. Run all feasible automated checks before asking the owner for manual acceptance. See `docs/manual/P01_2_PASSWORD_WINDOWS_TEST.md` and `docs/qa/P01_2_AUTOMATION_FIRST_ANDROID_2026_11_13.md`. The P01-1 OTP Android automation failure remains separately documented and is **not** treated as PASS. P01-3 persistent login has not started.
 
 **P01-2 UI note (2026-11-13):** Sign up, password login, authenticated account home and password settings are separate views. New signup presents only Create/Confirm after OTP; normal password login displays no password-editor fields. See `docs/qa/P01_2_SIGNUP_LOGIN_UX_REPAIR_2026_11_13.md`.
+
+## Developer tooling (V1)
+
+Use `npm run dev:api` for existing auto-restart and `npm run check:dev` for TypeScript + ESLint after one-time `npm install`. Prettier format checks are opt-in; do not bulk-format accepted P01 code. See [developer workflow](docs/development/DEVELOPER_WORKFLOW_V1.md).

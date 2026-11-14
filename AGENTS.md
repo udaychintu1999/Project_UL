@@ -65,3 +65,7 @@ P01-2 = email+password integration with **NEW OWNER-APPROVED NIST SP 800-63B-4 p
 ## P01-2 email-cost and live form-validation implementation gate (2026-11-14)
 
 Historical 2026-11-14 pre-implementation guidance (already implemented/owner tested): read `docs/design_reviews/P01_2_EMAIL_BUDGET_VALIDATION_NAVIGATION_SPEC.md`. The proposed shared **5 issuances / rolling 24h** quota requires atomic cross-purpose DynamoDB transactions, no-new-table discipline, safe anonymous account-enumeration responses, real concurrent integration tests, and coverage of provider-cost/idempotency races. Don't expose whether a public email is registered just to improve UX. Show inline field feedback without removing backend validation, and fix authenticated Back navigation without claiming P01-3 30-day session persistence. This document is analysis only; do not mark these behaviors implemented or verified until corresponding code and Windows/Android evidence exist.
+
+## Developer tooling policy — V1
+
+For source maintenance, follow `docs/development/DEVELOPER_WORKFLOW_V1.md`. Existing `tsx watch` and `dotenv` remain; new quality CLI tools are dev-only. Do not run Prettier `--write` over the whole repository or change auth logic while resolving lint warnings. New tooling does not supersede `npm run verify:p01-3` or the local-only safety guards.

@@ -1,3 +1,7 @@
+> **Current P01-2 implementation update (2026-11-13):** The owner subsequently authorized proceeding after the design review. Source now splits signup from existing-user OTP login and adopts the new NIST password rules; the authoring portable suite passes, but Windows/Flutter/real database/Android acceptance remains **UNVERIFIED**. P01-3 implementation remains held. See `docs/qa/P01_2_INTENT_AND_NIST_IMPLEMENTATION_2026_11_13.md`. The earlier design-freeze notes below are historical and no longer describe the current source.
+
+> **P01-2/P01-3 design freeze (2026-11-13):** Analysis/documentation only. Owner approved NEW NIST password rules (15 Unicode code points, no mandatory symbol); current code/tests still enforce 8+symbol. Source behavior has NOT been updated. See `docs/design_reviews/P01_2_P01_3_DESIGN_AUDIT_READ_FIRST.md` and `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`. Known P01-2 issues: Email code login incorrectly requires DOB/consent and Android recovery Reset tap did not hit button. Do not mark P01-2 complete or start P01-3 implementation.
+
 # U_luv — Full Developer Handoff v2.0 FINAL
 
 **U_luv — Algorithm-Free Connections.** Complete product, architecture, 18-phase delivery plan (P00–P17), 18 DynamoDB tables, 3 development + 3 testing sections each phase, Fastify/TypeScript and Flutter P00 starter, secure-media architecture, mandatory AI safety gates, and real automation/manual QA instructions.
@@ -48,3 +52,12 @@ In a **fourth terminal**, run `npm run verify:p00:portable` for source-only/port
 Signed URL API contracts: read [docs/architecture/12_S3_CLOUDFRONT_SIGNED_URLS.md](docs/architecture/12_S3_CLOUDFRONT_SIGNED_URLS.md); bucket topology: [docs/architecture/13_TWO_BUCKET_MEDIA_ARCHITECTURE.md](docs/architecture/13_TWO_BUCKET_MEDIA_ARCHITECTURE.md); simple code layout: [docs/architecture/14_FEATURE_MODULE_STRUCTURE.md](docs/architecture/14_FEATURE_MODULE_STRUCTURE.md).
 
 **Verified status (2026-11-13): P00 CORE_FLOW_VERIFIED.** Owner-provided Windows logs confirm the **full automated P00 gate PASSED** with real Java DynamoDB Local, Fastify, and physical USB Android; the owner confirmed both buttons worked and the app displayed a database-unavailable error during a local DB outage, returning to normal after restart. This is a verified P00 foundation, **not a completed application or deployed AWS environment**. **That statement was the historical P00 closeout state; P01 is now authorized and `PARTIALLY_VERIFIED`.** The owner accepted pausing the failing P01 automated USB E2E while continuing within P01; P02 remains not started. See [P00 closeout](docs/qa/P00_CLOSEOUT_2026_11_13.md) and [current progress](docs/implementation/PROGRESS.md).
+
+## P01-2 password implementation (local only)
+P01-2 adds email/password sign-in and recovery while retaining OTP; 30-day login persistence is a distinct P01-3 slice. Start with `docs/implementation/P01_PASSWORD_AND_SESSION_PHASE_SPLIT.md` and the Windows test commands in `docs/manual/P01_2_PASSWORD_WINDOWS_TEST.md`. Argon2 dependency requires owner `npm install` once because no registry resolution was possible in the authoring environment. Do not claim P01-2 is fully verified until Windows/device tests pass.
+
+## P01-2: automated Android password acceptance (2026-11-13)
+
+`npm run verify:p01-2` now requires a distinct P01-2 device E2E test, not just the P00 diagnostics buttons. Run all feasible automated checks before asking the owner for manual acceptance. See `docs/manual/P01_2_PASSWORD_WINDOWS_TEST.md` and `docs/qa/P01_2_AUTOMATION_FIRST_ANDROID_2026_11_13.md`. The P01-1 OTP Android automation failure remains separately documented and is **not** treated as PASS. P01-3 persistent login has not started.
+
+**P01-2 UI note (2026-11-13):** Sign up, password login, authenticated account home and password settings are separate views. New signup presents only Create/Confirm after OTP; normal password login displays no password-editor fields. See `docs/qa/P01_2_SIGNUP_LOGIN_UX_REPAIR_2026_11_13.md`.

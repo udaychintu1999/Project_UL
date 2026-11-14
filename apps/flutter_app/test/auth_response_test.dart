@@ -3,6 +3,15 @@ import 'package:uluv/features/auth/auth_service.dart';
 
 void main() {
   const outbox = '/v1/dev/otp/outbox';
+  test('separate signup response preserves account creation status', () {
+    final first = parseAuthResponse(path: '/v1/auth/signup/register', status: 201,
+        body: '{"token":"test","account":{"uniqueId":"u"},"newAccount":true}');
+    final existing = parseAuthResponse(path: '/v1/auth/email/verify', status: 200,
+        body: '{"token":"test","account":{"uniqueId":"u"},"newAccount":false}');
+    expect(first.newAccount, isTrue);
+    expect(existing.newAccount, isFalse);
+  });
+
   test('transport categorization never repeats exception content', () {
     expect(HttpAuthService.httpFailureCategory('Connection closed before full header was received, uri=http://SECRET'), 'response_headers_truncated');
     expect(HttpAuthService.httpFailureCategory('Headers already sent'), 'headers_committed');

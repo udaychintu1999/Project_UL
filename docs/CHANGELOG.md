@@ -1,3 +1,19 @@
+## 2026-11-13 — Design review / no runtime changes
+
+- Comprehensive P01-2 and P01-3 source-grounded analysis, detailed state transitions/permutations, decision and risk register, automated-first verification matrix, and NIST SP 800-63B-4 password policy override.
+- Owner's prior 8+punctuation password requirement superseded; **code not yet migrated**. Known Email-code DOB/consent defect and Android Reset target missed tap remain OPEN. No P01-3 or P02 implementation authorized by this documentation update.
+
+## 2026-11-13 — P01-2 Android integration-test input focus and equality diagnostics
+- Test-only re-focus and both-field re-entry for repeated password login on physical Android, with sanitized pre-submit/post-submit comparisons.
+- New observer regression and automated-first source-contract protection; production Flutter/backend/security/session/schema untouched.
+- Documented remaining owner physical-device verification and manual escalation if another test-harness failure occurs.
+
+## 2026-11-13 — P01-2 distinct signup/login/password screens and stronger Android fixture validation
+- Fixed account page displaying four password fields (Create+Confirm and Current+New) after both signup and returning-user password login.
+- Sign-up now distinguishes a newly created account using the existing `newAccount` API result; password setup, account home, password management and recovery render separately.
+- Added explicit Flutter widget transitions and local Android fixture password-login preflight, without changing backend authentication rules or database schema.
+- Recorded owner Android E2E 401 as FAIL until reverified; portable suite passes; manual verification follows automation.
+
 # 2026-11-13 — P01 Android E2E test harness isolation
 
 - Preserved all functioning production Flutter/Fastify/DB code after owner verified P01 account access and logout manually on USB Android.

@@ -23,3 +23,6 @@
 
 
 **FINAL v2.0:** Java DynamoDB Local throughout P00–P16. Owner manually sets up two DEV S3 buckets and one DEV CloudFront distribution early; no AI-driven AWS activity without separate scoped explicit approval. Local media adapter remains default; production AWS DynamoDB/media/ECS at P17, payment sandbox P16. See `docs/security/00_NON_NEGOTIABLE_GUARDS.md`.
+
+## 2026-11-13 — P01-2 password and P01-3 persistent session split
+Password credentials live in existing `uluv_auth_links` (user UID key, `SK=CREDENTIAL#PASSWORD`), Argon2id with per-password salt. Existing email verified link remains canonical. Atomic user `sessionEpoch` increment after change/reset revokes all previously issued session tokens on their next access check without a table scan. No extra tables or GSIs. Avoid JWT migration. Server token lifetime stays at 24h until P01-3 adds secure Android storage and 30-day rotating renewals. API remains local-only in P01.

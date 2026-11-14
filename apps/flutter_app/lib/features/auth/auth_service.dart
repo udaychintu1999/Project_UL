@@ -3,10 +3,28 @@ import 'dart:convert';
 import 'dart:io';
 
 class AuthResult {
-  const AuthResult({required this.ok, required this.message, this.token, this.uniqueId, this.code});
+  const AuthResult({required this.ok, required this.message, this.token, this.uniqueId, this.code, this.newAccount});
   final bool ok;
   final String message;
   final String? token, uniqueId, code;
+  final bool? newAccount;
+}
+
+/// P01-2 separate capability keeps older P01-1 diagnostics/test delegates intact.
+abstract class PasswordAuthService {
+  Future<AuthResult> passwordLogin(String email, String password);
+  Future<AuthResult> setPassword(String token, String password);
+  Future<AuthResult> changePassword(String token, String currentPassword, String newPassword);
+  Future<AuthResult> requestPasswordRecovery(String email);
+  Future<AuthResult> localPasswordRecoveryCode(String email);
+  Future<AuthResult> resetPassword(String email, String code, String newPassword);
+}
+
+/// P01-2 registration is a distinct operation from returning-user OTP login.
+abstract class SignupPasswordAuthService {
+  Future<AuthResult> requestSignupCode(String email);
+  Future<AuthResult> registerAccount({required String email, required String code,
+    required String dateOfBirth, required bool consent, required String password});
 }
 
 abstract class AuthService {
@@ -25,7 +43,9 @@ String authErrorMessage(String? code, int status) {
     case 'otp_attempts_exhausted': return 'Too many incorrect codes. Request a new one later.';
     case 'otp_invalid_or_used': return 'Code incorrect or already used.';
     case 'otp_expired': return 'Code expired. Request a new one.';
-    case 'consent_required': return 'You must consent to sign in.';
+    case 'consent_required': return 'Confirm the required registration consent.';
+    case 'email_login_unavailable': return 'Unable to sign in with this email code. Choose Sign up if you are new.';
+    case 'registration_unavailable': return 'Unable to register with this email. Try Log in or recover your account.';
     case 'adult_eligibility_required': return 'U_luv is available only to adults aged 18 or over.';
     case 'account_unavailable': return 'This account is not eligible for access.';
     case 'otp_used_or_identity_conflict': return 'Concurrent sign-in or a used code. Request another code.';
@@ -33,6 +53,16 @@ String authErrorMessage(String? code, int status) {
     case 'session_expired_or_revoked': return 'Session expired. Please sign in again.';
     case 'otp_not_in_outbox': return 'Local code unavailable. Request another code when allowed.';
     case 'auth_store_unavailable': return 'Database unavailable. Restart DynamoDB Local and retry.';
+    case 'invalid_password': return 'Choose at least 15 characters. Symbols and numbers are optional; avoid common passwords.';
+    case 'password_already_set': return 'Password already configured. Use Change password.';
+    case 'invalid_login_request': return 'Enter a valid email and password.';
+    case 'invalid_credentials': return 'Incorrect email or password.';
+    case 'password_login_limited': return 'Too many sign-in attempts. Try again in 15 minutes.';
+    case 'recent_auth_required': return 'Please verify your email again before setting a password.';
+    case 'invalid_password_change': return 'Enter your current password and a different valid new password.';
+    case 'password_change_conflict': return 'Password changed in another request. Please sign in again.';
+    case 'invalid_password_reset': return 'Enter a valid recovery code and a new password.';
+    case 'reset_invalid_or_used': return 'Recovery code invalid, expired, or used.';
     case 'forbidden': return 'Local developer access denied.';
     default: return 'Request failed (HTTP $status). Retry.';
   }
@@ -62,14 +92,14 @@ AuthResult parseAuthResponse({required String path, required int status, require
   if (path == '/v1/auth/email/request' && decoded['status'] != 'otp_requested') {
     return const AuthResult(ok: false, message: 'Unexpected code request response.');
   }
-  if (path == '/v1/auth/email/verify' &&
+  if ((path == '/v1/auth/email/verify' || path == '/v1/auth/signup/register' || path == '/v1/auth/password/login') &&
       (decoded['token'] is! String || account?['uniqueId'] is! String)) {
     return const AuthResult(ok: false, message: 'Unexpected sign-in response.');
   }
   if (path == '/v1/auth/me' && account?['uniqueId'] is! String) {
     return const AuthResult(ok: false, message: 'Unexpected account response.');
   }
-  if (path == '/v1/dev/otp/outbox' &&
+  if ((path == '/v1/dev/otp/outbox' || path == '/v1/dev/password/recovery/outbox') &&
       (decoded['code'] is! String || !RegExp(r'^\d{6}$').hasMatch(decoded['code'] as String))) {
     return const AuthResult(ok: false, message: 'Local outbox returned an invalid code response.');
   }
@@ -77,7 +107,14 @@ AuthResult parseAuthResponse({required String path, required int status, require
     ok: true,
     message: switch (path) {
       '/v1/auth/email/request' => 'Code issued to local development outbox (not a real email).',
-      '/v1/auth/email/verify' => 'Signed in. Age eligibility is self-declared, not independently verified.',
+      '/v1/auth/password/login' => 'Signed in with password.',
+      '/v1/auth/signup/register' => 'Account created. You are signed in.',
+      '/v1/auth/password/set' => 'Password created.',
+      '/v1/auth/password/change' => 'Password changed. Sign in again.',
+      '/v1/auth/password/recovery/request' => 'If eligible, a recovery code was issued to the local development outbox.',
+      '/v1/auth/password/recovery/reset' => 'Password reset. Sign in with your new password.',
+      '/v1/dev/password/recovery/outbox' => 'Local recovery code retrieved.',
+      '/v1/auth/email/verify' => 'Signed in with email code.',
       '/v1/auth/me' => 'Account access confirmed.',
       '/v1/auth/logout' => 'Signed out.',
       '/v1/dev/otp/outbox' => 'Local development code retrieved.',
@@ -86,10 +123,11 @@ AuthResult parseAuthResponse({required String path, required int status, require
     token: decoded['token'] is String ? decoded['token'] as String : null,
     uniqueId: account?['uniqueId'] is String ? account!['uniqueId'] as String : null,
     code: decoded['code'] is String ? decoded['code'] as String : null,
+    newAccount: decoded['newAccount'] is bool ? decoded['newAccount'] as bool : null,
   );
 }
 
-class HttpAuthService implements AuthService {
+class HttpAuthService implements AuthService, PasswordAuthService, SignupPasswordAuthService {
   HttpAuthService({required this.baseUrl, required this.devToken});
   final String baseUrl, devToken;
 
@@ -110,8 +148,15 @@ class HttpAuthService implements AuthService {
     '/v1/auth/email/request' => 'code request',
     '/v1/dev/otp/outbox' => 'outbox read',
     '/v1/auth/email/verify' => 'code verification',
+    '/v1/auth/signup/register' => 'registration',
     '/v1/auth/me' => 'account check',
     '/v1/auth/logout' => 'logout',
+    '/v1/auth/password/login' => 'password sign-in',
+    '/v1/auth/password/set' => 'password setup',
+    '/v1/auth/password/change' => 'password change',
+    '/v1/auth/password/recovery/request' => 'recovery request',
+    '/v1/dev/password/recovery/outbox' => 'recovery outbox',
+    '/v1/auth/password/recovery/reset' => 'password reset',
     _ => 'authentication request',
   };
 
@@ -184,14 +229,32 @@ class HttpAuthService implements AuthService {
   }
 
   @override
-  Future<AuthResult> requestCode(String email) => _send('/v1/auth/email/request', {'email': email});
+  Future<AuthResult> requestCode(String email) => _send('/v1/auth/email/request', {'email': email,'purpose':'login'});
+  @override
+  Future<AuthResult> requestSignupCode(String email) => _send('/v1/auth/email/request', {'email': email,'purpose':'signup'});
   @override
   Future<AuthResult> localOutboxCode(String email) => _send('/v1/dev/otp/outbox', {'email': email}, dev: true);
   @override
   Future<AuthResult> verify({required String email, required String code, required String dateOfBirth, required bool consent}) =>
-      _send('/v1/auth/email/verify', {'email': email, 'code': code, 'dateOfBirth': dateOfBirth, 'consent': consent});
+      _send('/v1/auth/email/verify', {'email': email, 'code': code});
+  @override
+  Future<AuthResult> registerAccount({required String email, required String code, required String dateOfBirth, required bool consent, required String password}) =>
+      _send('/v1/auth/signup/register', {'email':email,'code':code,'dateOfBirth':dateOfBirth,'consent':consent,'password':password});
   @override
   Future<AuthResult> me(String token) => _send('/v1/auth/me', null, token: token);
   @override
   Future<AuthResult> logout(String token) => _send('/v1/auth/logout', {}, token: token);
+  @override
+  Future<AuthResult> passwordLogin(String email, String password) => _send('/v1/auth/password/login', {'email':email,'password':password});
+  @override
+  Future<AuthResult> setPassword(String token,String password) => _send('/v1/auth/password/set', {'password':password},token:token);
+  @override
+  Future<AuthResult> changePassword(String token,String currentPassword,String newPassword) => _send('/v1/auth/password/change', {'currentPassword':currentPassword,'newPassword':newPassword},token:token);
+  @override
+  Future<AuthResult> requestPasswordRecovery(String email) => _send('/v1/auth/password/recovery/request', {'email':email});
+  @override
+  Future<AuthResult> localPasswordRecoveryCode(String email) => _send('/v1/dev/password/recovery/outbox', {'email':email},dev:true);
+  @override
+  Future<AuthResult> resetPassword(String email,String code,String newPassword) => _send('/v1/auth/password/recovery/reset', {'email':email,'code':code,'newPassword':newPassword});
 }
+

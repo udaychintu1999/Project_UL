@@ -67,3 +67,6 @@ Every phase guide contains **D1 Backend + DynamoDB**, **D2 Flutter/User experien
 ## Hand-off principle
 
 This implementation plan is **not** proof of implementation. Do not begin coding P01 if P00 cannot be made runnable or its blocker cannot be documented. `docs/qa/RELEASE_GATE.md` governs truthfulness of status.
+
+### P01 internal slice decision (owner approved 2026-11-13)
+P01-2: email/password authentication and recovery (>=8 characters, >=1 special punctuation), retain OTP and verified identity mapping. P01-3: separate 30-day renewable sessions. P02 unchanged. See `docs/implementation/P01_PASSWORD_AND_SESSION_PHASE_SPLIT.md`.

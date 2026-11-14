@@ -1,5 +1,11 @@
 # Test automation contract — all phases (P00–P17)
 
+## AUTOMATED-FIRST: required in every phase
+
+Before asking for manual testing, run **all feasible automated test layers that actually cover the current user journey**: portable/unit/source guards, semantic typecheck/analyzer, real Fastify + Java DynamoDB Local integration, widget tests and available Android device E2E. Inspect test names and steps; P00 button checks cannot substitute for P01 auth UI checks. Do not report a complete automated gate unless every required phase-specific test really ran. For missing or repeatedly failing automation, record `FAILED` or `UNVERIFIED` and ask for manual intervention **after** completing all other feasible automated checks, not in place of them. An explicitly owner-accepted exception must name the precise failing test, leave it runnable and preserve the release blocker where relevant.
+
+For P01-2 specifically, `npm run verify:p01-2` MUST include `npm run test:flutter:p01-2:e2e` (real password login, access, change, recovery, logout on physical Android). `npm run test:flutter:e2e` is a separate P00 regression only. The existing P01-1 OTP Android E2E (`npm run test:flutter:p01:e2e`) is a known unresolved local-development exception, **not a PASS**. No change to P01-3 (30-day sessions) or P02 is authorized by this policy.
+
 ## Mandatory manual-test escalation (all P00–P17 phases)
 
 Follow [`docs/qa/MANUAL_VERIFICATION_ESCALATION.md`](../qa/MANUAL_VERIFICATION_ESCALATION.md). AI must **ask the owner to perform an exact manual test** if physical hardware, UI, privileged external checks, or environment limitations prevent automated verification, or if repeated failures persist after a justified diagnosis/repair and the next patch would be speculative. Provide startup commands, actions, expected results, failure evidence request and one clear question to owner. Do not wait for owner to volunteer manual testing. Manual results are separately evidenced; `FAILED (automated)` is never converted to PASS. Owner may accept limited continued development of the same phase with a documented exception; critical security/release gates cannot be skipped, and CI failures must not be disabled.
@@ -46,3 +52,6 @@ Follow [`docs/qa/MANUAL_VERIFICATION_ESCALATION.md`](../qa/MANUAL_VERIFICATION_E
 - Manual script has expected screen state and DB records to inspect where appropriate.
 
 **Status as of 2026-11-13:** P00 was previously owner-confirmed `CORE_FLOW_VERIFIED` on Windows/Android. P01 local OTP has passing previously observed typecheck, real Java DynamoDB Local/API integration, Flutter analyzer/widget checks and owner-observed manual account-access/logout, but the P01 automated Android E2E still **FAILED** after repeated attempts. Overall P01 is `PARTIALLY_VERIFIED`; use the manual escalation protocol, preserve the failure, and do not claim P01 phase completion. Remaining phase-specific scripts are added with implementation.
+
+### P01-2 auth UI journey coverage guard (2026-11-13)
+The real-device P01-2 test is mandatory, and the Flutter widget tests must assert *screen transitions*, not just button presence: Sign up gives only the Create + Confirm password pair after new-account OTP verification; successful password login gives an account home with **zero** password-editing fields; Change password appears only after an explicit settings action. Run all possible automation before manual checks. Record the observed `Incorrect email or password` automated Android failure until its rerun succeeds.

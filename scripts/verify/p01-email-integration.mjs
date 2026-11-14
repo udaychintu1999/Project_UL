@@ -11,6 +11,8 @@ const secret=process.env.ULUV_DEV_TOKEN;
 if(process.env.APP_ENV!=='local'||!secret||secret.length<24) throw Error('P01 integration requires authorized local-only env and owner-generated private local key');
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({region:'ap-south-1',endpoint,credentials:{accessKeyId:'local',secretAccessKey:'local'}}));
 const email=`p01-qa-${randomUUID()}@example.invalid`;
+const absentEmail=`p01-unknown-${randomUUID()}@example.invalid`;
+const absentHash=createHmac('sha256',secret).update(`email-subject\0${absentEmail}`).digest('hex');
 const hash=createHmac('sha256',secret).update(`email-subject\0${email}`).digest('hex');
 const linkKey={PK:`AUTH#EMAIL#${hash}`,SK:'META'};
 const challengeKey={PK:`OTP#EMAIL#${hash}`,SK:'CHALLENGE'};
@@ -28,21 +30,28 @@ async function resetTestCooldown(){
   await db.send(new UpdateCommand({TableName:'uluv_auth_links',Key:rateKey,UpdateExpression:'SET nextAllowedAt = :past',ConditionExpression:'attribute_exists(PK)',ExpressionAttributeValues:{':past':Math.floor(Date.now()/1000)-1}}));
 }
 try {
+  // OTP sign-in for an unknown email may issue a non-enumerating challenge,
+  // but it must never silently provision a user or verified email link.
+  assert.equal((await api('/v1/auth/email/request',{email:absentEmail,purpose:'login'})).status,202);
+  const unknownCode=(await api('/v1/dev/otp/outbox',{email:absentEmail},{dev:true})).body.code;
+  assert.equal((await api('/v1/auth/email/verify',{email:absentEmail,code:unknownCode})).status,401);
+  assert.equal((await db.send(new GetCommand({TableName:'uluv_auth_links',Key:{PK:`AUTH#EMAIL#${absentHash}`,SK:'META'},ConsistentRead:true}))).Item,undefined);
   const noAuth=await api('/v1/auth/me',{}, {method:'GET'});
   assert.equal(noAuth.status,401);
   assert.equal((await api('/v1/auth/email/request',{email:'bad'})).status,400);
-  const issued=await api('/v1/auth/email/request',{email});
+  const issued=await api('/v1/auth/email/request',{email,purpose:'signup'});
   assert.equal(issued.status,202); assert.equal(issued.body.delivery,'local_dev_outbox');
-  assert.equal((await api('/v1/auth/email/request',{email})).status,429);
+  assert.equal((await api('/v1/auth/email/request',{email,purpose:'signup'})).status,429);
   assert.equal((await api('/v1/dev/otp/outbox',{email})).status,403);
   const outbox=await api('/v1/dev/otp/outbox',{email},{dev:true});
   assert.equal(outbox.status,200);assert.match(outbox.body.code,/^\d{6}$/);
-  assert.equal((await api('/v1/auth/email/verify',{email,code:'abcdef',dateOfBirth:'2000-01-01',consent:true})).status,400);
-  assert.equal((await api('/v1/auth/email/verify',{email,code:outbox.body.code,dateOfBirth:'2014-01-01',consent:true})).status,403);
-  assert.equal((await api('/v1/auth/email/verify',{email,code:outbox.body.code,dateOfBirth:'2000-01-01',consent:false})).status,400);
-  assert.equal((await api('/v1/auth/email/verify',{email,code:'999999'===outbox.body.code?'888888':'999999',dateOfBirth:'2000-01-01',consent:true})).status,400);
-  const verifyBody={email,code:outbox.body.code,dateOfBirth:'2000-01-01',consent:true};
-  const signed=await Promise.all([api('/v1/auth/email/verify',verifyBody),api('/v1/auth/email/verify',verifyBody)]);
+  assert.equal((await api('/v1/auth/signup/register',{email,code:'abcdef',dateOfBirth:'2000-01-01',consent:true})).status,400);
+  assert.equal((await api('/v1/auth/signup/register',{email,code:outbox.body.code,dateOfBirth:'2014-01-01',consent:true,password:'My private long passphrase 2026'})).status,403);
+  assert.equal((await api('/v1/auth/signup/register',{email,code:outbox.body.code,dateOfBirth:'2000-01-01',consent:false,password:'My private long passphrase 2026'})).status,400);
+  assert.equal((await api('/v1/auth/signup/register',{email,code:'999999'===outbox.body.code?'888888':'999999',dateOfBirth:'2000-01-01',consent:true,password:'My private long passphrase 2026'})).status,400);
+  const verifyBody={email,code:outbox.body.code,dateOfBirth:'2000-01-01',consent:true,password:'My private long passphrase 2026'};
+  assert.equal((await api('/v1/auth/email/verify',verifyBody)).status,400,'signup purpose cannot sign in');
+  const signed=await Promise.all([api('/v1/auth/signup/register',verifyBody),api('/v1/auth/signup/register',verifyBody)]);
   const success=signed.filter(r=>r.status===201);
   assert.equal(success.length,1,'concurrent OTP consumption created exactly one account');
   assert.equal(signed.filter(r=>r.status!==201).length,1);
@@ -50,7 +59,7 @@ try {
   assert.match(uid,/^[0-9a-f-]{36}$/);
   const token=success[0].body.token;tokens.push(token);
   assert.equal((await api('/v1/auth/me',{}, {method:'GET',token})).body.account.uniqueId,uid);
-  assert.equal((await api('/v1/auth/email/verify',verifyBody)).status,400);
+  assert.equal((await api('/v1/auth/signup/register',verifyBody)).status,400);
   // Restrict locally created fixture; session must fail authorization immediately.
   await db.send(new UpdateCommand({TableName:'uluv_users',Key:userKey(uid),UpdateExpression:'SET #state = :restricted',ExpressionAttributeNames:{'#state':'status'},ExpressionAttributeValues:{':restricted':'restricted'}}));
   assert.equal((await api('/v1/auth/me',{}, {method:'GET',token})).status,403);
@@ -58,18 +67,20 @@ try {
   assert.equal((await api('/v1/auth/me',{}, {method:'GET',token})).status,401);
   await db.send(new UpdateCommand({TableName:'uluv_users',Key:userKey(uid),UpdateExpression:'SET #state = :active',ExpressionAttributeNames:{'#state':'status'},ExpressionAttributeValues:{':active':'active'}}));
   await resetTestCooldown();
-  const repeat=await api('/v1/auth/email/request',{email});assert.equal(repeat.status,202);
+  const repeat=await api('/v1/auth/email/request',{email,purpose:'login'});assert.equal(repeat.status,202);
   const newCode=(await api('/v1/dev/otp/outbox',{email},{dev:true})).body.code;
-  const reentry=await api('/v1/auth/email/verify',{...verifyBody,code:newCode});
+  const reentry=await api('/v1/auth/email/verify',{email,code:newCode});
   assert.equal(reentry.status,200);assert.equal(reentry.body.newAccount,false);assert.equal(reentry.body.account.uniqueId,uid);
   tokens.push(reentry.body.token);
   assert.equal((await api('/v1/auth/me',{}, {method:'GET',token:reentry.body.token})).status,200);
   assert.equal((await api('/v1/auth/logout',{}, {token:reentry.body.token})).status,200);
-  console.log('PASS P01 local: validation, OTP, rate limit, age/consent, concurrent signup, immutable ID, restriction, logout/re-entry, session revocation (real Fastify + Java DynamoDB Local)');
+  console.log('PASS P01 local: explicit login/signup OTP purpose, validation, rate limit, age/consent, concurrent signup, immutable ID, restriction, logout/re-entry, session revocation (real Fastify + Java DynamoDB Local)');
 } finally {
   // Clean only this test's synthetic fixture; never touch real users or other records.
-  const keys=[{table:'uluv_auth_links',key:challengeKey},{table:'uluv_auth_links',key:rateKey},{table:'uluv_auth_links',key:linkKey}];
-  if(uid){keys.push({table:'uluv_users',key:userKey(uid)},{table:'uluv_settings',key:settingsKey(uid)},{table:'uluv_auth_links',key:reverseKey(uid)});}
+  const keys=[{table:'uluv_auth_links',key:challengeKey},{table:'uluv_auth_links',key:rateKey},{table:'uluv_auth_links',key:linkKey},
+    {table:'uluv_auth_links',key:{PK:`OTP#EMAIL#${absentHash}`,SK:'CHALLENGE'}},
+    {table:'uluv_auth_links',key:{PK:`OTP#EMAIL#${absentHash}`,SK:'RATE'}}];
+  if(uid){keys.push({table:'uluv_users',key:userKey(uid)},{table:'uluv_settings',key:settingsKey(uid)},{table:'uluv_auth_links',key:reverseKey(uid)},{table:'uluv_auth_links',key:{PK:`USER#${uid}`,SK:'CREDENTIAL#PASSWORD'}});}
   for(const token of tokens){keys.push({table:'uluv_auth_links',key:{PK:`SESSION#${createHmac('sha256',secret).update(`session\0${token}`).digest('hex')}`,SK:'META'}});}
   for(const item of keys){try{await db.send(new DeleteCommand({TableName:item.table,Key:item.key}));}catch{console.error('WARNING: synthetic P01 fixture cleanup incomplete; inspect local test fixture only.');}}
   db.destroy();

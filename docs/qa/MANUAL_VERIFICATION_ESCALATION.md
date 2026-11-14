@@ -2,6 +2,14 @@
 
 **Applies to:** Every U_luv phase (P00–P17), including backend, Flutter, Android, admin/browser, provider, recovery, and release testing. Binding instruction for both coding agents and regular AI Chats. Read with `docs/implementation/QA_AUTOMATION_CONTRACT.md`, `docs/qa/RELEASE_GATE.md`, `AGENTS.md`, and the security guards.
 
+## AUTOMATED-FIRST is mandatory (all phases, including P01-2)
+
+**Priority order is: implement → run every applicable feasible automated check → repair actual failures → rerun → ask for manual verification only for gaps that cannot be reliably automated.** The AI must actively inspect the *coverage* of tests, not just record green output. A test that checks P00 diagnostics buttons does **not** verify P01-1 OTP screens or P01-2 password screens. Include phase-specific real device automation whenever available and run it before requesting a manual test. Never silently omit a required test from a combined verifier.
+
+If a particular automated test demonstrably fails repeatedly despite justified investigation, keep the command, failing status, error evidence and risk in the QA log. The owner may explicitly accept a **narrow, phase/slice-specific local-development exception**. Such an exception permits other feasible automated tests to continue; it is **not** permission to skip new P01-2 device tests, call the failing test PASS, or waive production release requirements. Manual verification is **after** attempted applicable automation, except when no automatable path exists at all. The AI should proactively request a concise owner-run manual test for remaining gaps only after this automated-first sequence.
+
+**Current P01 split:** P01-1 physical Android OTP E2E remains `FAILED (automated)` and has an owner-accepted local-development exception after repeated repairs and a successful manual account-access/logout observation. Keep the test runnable independently as `npm run test:flutter:p01:e2e`. P01-2 **must** run its distinct real-device automated password journey `npm run test:flutter:p01-2:e2e` as part of `npm run verify:p01-2`, along with P00 regression, P01-1 backend/API, P01-2 backend/API, and Flutter analyzer/widget checks. If P01-2 Android automation itself fails, diagnose it, then request a targeted manual check under this document; do not preemptively skip it.
+
 ## 1. When the AI MUST propose and ask for a manual test
 
 The AI must **proactively offer a specific, executable manual test** and **ask the owner to run it**, rather than merely saying a tool or environment is unavailable, when any of these conditions holds:

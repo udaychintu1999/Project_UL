@@ -36,6 +36,12 @@
     "verify:p01:portable": "npm run test:portable && npm run test:p01:contracts",
     "verify:p01": "node scripts/verify/p01-verifier.mjs",
     "test:flutter:p01:e2e": "node --env-file=apps/api/.env scripts/dev/flutter.mjs p01-e2e",
-    "test:p01:contracts": "node scripts/verify/p01-source-contract.mjs"
+    "test:p01:contracts": "node scripts/verify/p01-source-contract.mjs",
+    "test:p01:password:integration": "node --env-file=apps/api/.env scripts/verify/p01-password-integration.mjs",
+    "test:p01:password:contracts": "node scripts/verify/p01-password-contract.mjs",
+    "verify:p01-2:portable": "npm run verify:p01:portable && npm run test:p01:password:contracts && npm run test:p01:automation:contracts",
+    "verify:p01-2": "node scripts/verify/p01-2-verifier.mjs",
+    "test:flutter:p01-2:e2e": "node --env-file=apps/api/.env scripts/verify/p01-2-android-e2e.mjs",
+    "test:p01:automation:contracts": "node --test scripts/verify/p01-2-automation.test.mjs"
   }
 }

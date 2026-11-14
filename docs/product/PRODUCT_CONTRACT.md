@@ -1,3 +1,5 @@
+> **Current P01-2 implementation update (2026-11-13):** The owner subsequently authorized proceeding after the design review. Source now splits signup from existing-user OTP login and adopts the new NIST password rules; the authoring portable suite passes, but Windows/Flutter/real database/Android acceptance remains **UNVERIFIED**. P01-3 implementation remains held. See `docs/qa/P01_2_INTENT_AND_NIST_IMPLEMENTATION_2026_11_13.md`. The earlier design-freeze notes below are historical and no longer describe the current source.
+
 # U_luv product contract — current authoritative delta
 
 **Supersedes:** `docs/reference/PRODUCT_REQUIREMENTS_v1_1_ARCHIVED.md` on the topics below. All unchanged agreed business rules from that archived specification remain applicable. This file intentionally stays concise so coding agents can start here instead of rereading old drafts.
@@ -49,3 +51,6 @@
 ## Design decisions vs proof points
 
 The above is the **product contract**. H3 resolution 6, the proposed 18-table physical schema, specific cursor fields, budgets and optional sharding are **technical proposals** subject to actual load tests. This stage makes no claim of tested runtime functionality.
+
+## Authentication owner decision — P01-2/P01-3 (2026-11-13)
+Support email+password as primary regular sign-in (no routine OTP cost); preserve optional email OTP and future Google Sign-In. Registration proves email via OTP, self-declares adult eligibility and consent, then creates password against the **same immutable ID**. Password creation policy (2026-11-13 OWNER-APPROVED DESIGN): NIST SP 800-63B-4-aligned single-factor minimum **15 Unicode code points**, **no mandatory special character/uppercase/digit**, accept spaces/passphrases and support >=64 characters; block common/compromised passwords. Current local P01-2 source still enforces obsolete 8+symbol and must be updated in a separately authorized implementation; do not represent target policy as shipped. No plaintext password storage. Use Argon2id, rate limits, secure recovery and revocation. P01-2 retains short-lived existing opaque sessions; **P01-3** will provide 30-day continuously renewable persistent authentication across device/app restarts.

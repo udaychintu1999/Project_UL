@@ -172,3 +172,8 @@ All 18 tables use string `PK` and `SK` (unless a prototype motivates a justified
 6. DynamoDB TTL is not exact; API checks expiry and cleanup reconciles media objects, comments/reactions and post indexes.
 
 **FINAL v2.0:** Media IDs reference a local-first adapter. Owner manually sets up two private DEV S3 buckets plus one DEV signed CloudFront distribution early; AI/dev scripts cannot make AWS requests without separately scoped owner approval. Production S3/DynamoDB/ECS integration remains P17. Local Java DynamoDB tables persist through P16 and are never migrated by accident.
+
+### P01-2 password records (same 18 tables)
+- `uluv_auth_links`: `PK=USER#uid, SK=CREDENTIAL#PASSWORD` → Argon2id PHC string, version UUID, timestamps. No plaintext/reversible passwords.
+- `uluv_auth_links`: `PK=PASSWORD#LOGIN#emailHash, SK=RATE` → optimistic CAS per-identity rate window; `PK=PASSWORD#RESET#emailHash, SK=RATE|CHALLENGE` → local recovery issuance and digest.
+- `uluv_users`: optional numeric `sessionEpoch` (default 0 for P01-1 accounts) increments after password change/reset. Session records capture epoch; every protected request compares it before authorizing, so old tokens are revoked without scans. No new tables/indexes.

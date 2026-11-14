@@ -1,3 +1,33 @@
+> **P01-2 OTP widget regression (2026-11-13):** Owner Flutter analyze PASS; two existing-user OTP widget tests FAIL after attempted Verify tap. Test-only revision unfocuses code entry, settles `ensureVisible` before tap and asserts verify invocation/account state. Flutter retest pending Windows. No production source altered; P01-2 `PARTIALLY_VERIFIED`, P01-3/P02 not started. See QA record `docs/qa/P01_2_OTP_WIDGET_TAP_TRANSITION_REPAIR_2026_11_13.md`.
+
+> **Current P01-2 implementation update (2026-11-13):** The owner subsequently authorized proceeding after the design review. Source now splits signup from existing-user OTP login and adopts the new NIST password rules; the authoring portable suite passes, but Windows/Flutter/real database/Android acceptance remains **UNVERIFIED**. P01-3 implementation remains held. See `docs/qa/P01_2_INTENT_AND_NIST_IMPLEMENTATION_2026_11_13.md`. The earlier design-freeze notes below are historical and no longer describe the current source.
+
+> **P01-2/P01-3 design freeze (2026-11-13):** Analysis/documentation only. Owner approved NEW NIST password rules (15 Unicode code points, no mandatory symbol); current code/tests still enforce 8+symbol. Source behavior has NOT been updated. See `docs/design_reviews/P01_2_P01_3_DESIGN_AUDIT_READ_FIRST.md` and `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`. Known P01-2 issues: Email code login incorrectly requires DOB/consent and Android recovery Reset tap did not hit button. Do not mark P01-2 complete or start P01-3 implementation.
+
+## 2026-11-13 — P01-2 Android repeated-login IME/input test repair
+
+Owner P01-2 Android E2E **FAILED** before the post-change successful login HTTP call: observer input equality detected a mismatch following intentional old-password rejection. Previous P01-2 backend/real DynamoDB, TypeScript and Flutter widget results remain owner-verified PASS; no backend defect is established by this new failure. Test-only patch refocuses before text entry, re-enters both login fields for every attempt, and isolates pre-tap versus post-tap email/password equality without exposing secrets. Added observer and offline contract regressions. Flutter/Android after patch **UNVERIFIED**; P01-2 `PARTIALLY_VERIFIED`, P01-1 exception preserved, P01-3/P02 NOT STARTED. See `docs/qa/P01_2_ANDROID_INPUT_FOCUS_TEST_REPAIR_2026_11_13.md`.
+
+---
+
+## 2026-11-13 — P01-2 Android post-change login failure isolated
+
+Owner automation evidence: TypeScript, portable gates, 25 Flutter widget tests and real password Fastify/Java DynamoDB integration PASS; Android P01-2 password E2E FAIL at **second login after password change**, not initial login. Added test-only device-side updated-password API probe, sanitized UI input equality guards and a widget regression for rejected old password followed by valid new password. No production change. Authoring tests and owner follow-up results: see `docs/qa/P01_2_POST_CHANGE_ANDROID_TEST_DIAGNOSTICS_2026_11_13.md`. P01-2 `PARTIALLY_VERIFIED` pending device rerun; known P01-1 automation exception stays separate; P01-3 NOT STARTED.
+
+---
+
+## 2026-11-13 — P01-2 Android automation coverage correction
+
+Owner Windows checks: `npm run typecheck`, `npm run test:p01:password:integration`, `npm run test:p01:integration`, `npm run test:flutter` (21 widget tests), `npm run test:flutter:e2e` (P00 two-button phone diagnostics) all PASS in supplied logs. Crucial gap: previous combined verifier did **not** test P01-2 on Android. Added an independent P01-2 real-device password journey with real temporary local Fastify/DynamoDB fixture, CLI invocation, coverage guard and mandatory full-verifier gate. Source-only/portable verification can pass without device, but full P01-2 remains `PARTIALLY_VERIFIED` until owner real-device evidence. P01-1 Android OTP remains a documented local-development-only exception (FAILED, not PASS). P01-3 deferred; no P02 implementation.
+
+---
+
+# 2026-11-13 — P01-2 Windows TypeScript syntax repair (current)
+
+Owner P01-2 dependency installation, portable verification, and Flutter analyzer/21 widget tests **PASS**. Owner backend `npm run typecheck` **FAILED** with 33 cascading TypeScript syntax errors caused by four malformed `TransactWriteCommand` closings in `password.ts`. Targeted correction and added dependency-free TypeScript syntax check in P01-2 source-contract runner; authoring portable suite **PASS** after repair. Owner full TypeScript rerun, live password API/real DynamoDB test, and manual Android password acceptance **PENDING**. P01-1 Android OTP automation exception remains unresolved/recorded, not silently passed. **P01-2 PARTIALLY_VERIFIED; P01-3 and P02 NOT STARTED.** See `docs/qa/P01_2_PASSWORD_TYPESCRIPT_SYNTAX_REPAIR_2026_11_13.md`.
+
+---
+
 # 2026-11-13 — Cross-phase manual-test escalation policy; P01 automation exception recorded
 
 The owner requested a permanent rule: if automation repeatedly fails, becomes unreliable, or cannot perform real-device/GUI checks, an AI agent or regular chat **must proactively suggest and explicitly request a concrete owner-run manual test**. New binding guidance: `docs/qa/MANUAL_VERIFICATION_ESCALATION.md`; linked from root `AGENTS.md`, QA automation contract, AI operating modes, phase template and handoff prompts. Exact commands, actions, expected results, sanitized observations and manual-vs-automated evidence are required; no speculative patch loops. **Documentation-only update; no app/backend/test code change.**
@@ -144,3 +174,9 @@ Verification evidence details: `docs/qa/EVIDENCE_LOG.md` and `docs/qa/ARCHIVED_P
 ## 2026-11-10 v1.1 environment/handoff amendment
 
 User chose **Java-based DynamoDB Local JAR (no Docker)**. P00 now has Java-first scripts and instructions, but live Java DB/API/Flutter remains **UNVERIFIED** until a capable workstation runs it. All P00–P15 phases use local media adapters as automatic-test default; owner-created DEV S3/CloudFront may be used only with distinct scoped approval. Payment provider sandbox begins P16; creation/verification of real AWS DynamoDB production tables, S3/CloudFront/ECS and release payments occur P17 only with explicit owner approval. This is a documentation/script amendment, **not** P00 phase completion.
+
+## 2026-11-13 — P01-2 password implementation (source delivered; owner verification pending)
+P01-2 source/tests: password attachment after verified OTP, Argon2id password login, atomically limited attempts, change/recovery/reset, session epoch revocation, Flutter password and recovery screens, local integration runner. `npm run verify:p01-2:portable` passed in authoring container; full API typecheck, real Java DB integration and Flutter/device tests require owner Windows environment and `npm install` for Argon2 package; **PARTIALLY_VERIFIED**. 30-day persistence explicitly moved to P01-3. No P02 work. See `docs/qa/P01_2_PASSWORD_IMPLEMENTATION_2026_11_13.md`.
+
+## P01-2 Flutter signup/login UX correction — 2026-11-13
+Owner observed the signed-in page showing both create/confirm and current/new password forms (four fields) after either signup or password login; owner Android P01-2 E2E **FAILED (automated)** at correct-password login with `Incorrect email or password`. Source repair separates signup, login, account home, password setup, password change and recovery. Device fixture now preflights real host password login before Android. Authoring portable suite **PASS**. Flutter/Dart analyzer, real phone E2E after this change **UNVERIFIED**; do not claim fix verified or override the full gate. Reference `docs/qa/P01_2_SIGNUP_LOGIN_UX_REPAIR_2026_11_13.md`. P01-3 and P02 not started.

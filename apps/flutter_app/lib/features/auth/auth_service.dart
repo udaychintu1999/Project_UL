@@ -46,7 +46,8 @@ String authErrorMessage(String? code, int status) {
     case 'otp_expired': return 'Code expired. Request a new one.';
     case 'consent_required': return 'Confirm the required registration consent.';
     case 'email_login_unavailable': return 'Unable to sign in with this email code. Choose Sign up if you are new.';
-    case 'registration_unavailable': return 'Unable to register with this email. Try Log in or recover your account.';
+    case 'email_already_registered': return 'This email is already registered. Log in or use Forgot password.';
+    case 'registration_unavailable': return 'This email is already registered. Log in or use Forgot password.';
     case 'adult_eligibility_required': return 'U_luv is available only to adults aged 18 or over.';
     case 'account_unavailable': return 'This account is not eligible for access.';
     case 'otp_used_or_identity_conflict': return 'Concurrent sign-in or a used code. Request another code.';

@@ -1,3 +1,11 @@
+> **2026-11-14:** P01-2 existing-signup-email notice + Go to Log in; preserves no-send quota and session behavior; public enumeration risk documented; authoring portable PASS, Windows pending. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
+
+## 2026-11-14 — P01-2 Android recovery status and local fixture cooldown
+
+- Updated the real-device test to expect the existing privacy-safe recovery acknowledgement, not the obsolete promise that a code was issued. Preserved the subsequent actual outbox-code proof and reset checks.
+- Synthetic LOCAL-only Android fixture now verifies exactly one already-counted signup email issuance and advances just its shared 60-second cooldown with version check; no production quotas, API, Flutter UI or schema changed.
+- Added a regression guard and QA runbook/evidence. Owner Android retest pending; no unverified full-stack PASS claimed.
+
 ## 2026-11-13 — Design review / no runtime changes
 
 - Comprehensive P01-2 and P01-3 source-grounded analysis, detailed state transitions/permutations, decision and risk register, automated-first verification matrix, and NIST SP 800-63B-4 password policy override.

@@ -53,6 +53,15 @@ class PasswordTransitionFake extends PasswordFake {
   }
 }
 
+class AlreadyRegisteredSignupFake extends PasswordFake {
+  @override
+  Future<AuthResult> requestSignupCode(String email) async {
+    signupCodeRequests++;
+    return const AuthResult(ok:false,
+      message:'This email is already registered. Log in or use Forgot password.');
+  }
+}
+
 void main(){
   testWidgets('P01-2 password login is the primary flow; logout restores screen', (tester)async{
     final service=PasswordFake();
@@ -81,6 +90,24 @@ void main(){
     await tester.tap(find.byKey(const Key('auth-logout')));await tester.pumpAndSettle();
     expect(find.byKey(const Key('auth-password-login')),findsOneWidget);
   });
+  testWidgets('P01-2 registered signup email shows message without OTP form', (tester) async {
+    final service=AlreadyRegisteredSignupFake();
+    await tester.pumpWidget(MaterialApp(home:AuthScreen(service:service)));
+    await tester.tap(find.byKey(const Key('auth-mode-signup')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('auth-email')),'registered@example.invalid');
+    await tester.tap(find.byKey(const Key('auth-request')));
+    await tester.pumpAndSettle();
+    expect(service.signupCodeRequests,1);
+    expect(find.text('This email is already registered. Log in or use Forgot password.'),findsOneWidget);
+    expect(find.byKey(const Key('auth-code')),findsNothing,
+      reason:'No signup code was issued; never invite an impossible verification.');
+    expect(find.byKey(const Key('auth-signup-go-login')),findsOneWidget);
+    await tester.tap(find.byKey(const Key('auth-signup-go-login')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-password-login')),findsOneWidget);
+  });
+
   testWidgets('P01-2 sign-up requires OTP then creates password atomically before account', (tester) async {
     final service=PasswordFake();
     await tester.pumpWidget(MaterialApp(home:AuthScreen(service:service)));

@@ -288,3 +288,17 @@ test('Flutter validates locally and prevents authenticated Back to diagnostics',
   assert.match(ui,/auth-consent/);
   assert.match(ui,/utf8\.encode\(value\)\.length/);
 });
+
+test('P01-2 existing signup email is rejected before OTP, shows safe login action, and never spends quota',()=>{
+  const api=read('apps/api/src/features/auth/routes.ts');
+  const client=read('apps/flutter_app/lib/features/auth/auth_service.dart');
+  const ui=read('apps/flutter_app/lib/features/auth/auth_screen.dart');
+  const widget=read('apps/flutter_app/test/password_auth_widget_test.dart');
+  const integration=read('scripts/verify/p01-email-budget-integration.mjs');
+  assert.match(api,/purpose==='signup' && link.*fail\(reply,409,'email_already_registered'\)/);
+  assert.match(client,/case 'email_already_registered'/);
+  assert.match(ui,/auth-signup-go-login/);
+  assert.match(widget,/registered signup email shows message without OTP form/);
+  assert.match(integration,/already registered signup never consumes another slot/);
+  assert.match(integration,/duplicateSignup\.code,409/);
+});

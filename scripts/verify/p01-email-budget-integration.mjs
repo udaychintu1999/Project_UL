@@ -42,7 +42,11 @@ try {
   const outbox=await status('/v1/dev/otp/outbox',{email});assert.equal(outbox.code,200);
   const registered=await status('/v1/auth/signup/register',{email,code:outbox.data.code,dateOfBirth:'2000-01-01',consent:true,password:'Example long budget passphrase'});
   assert.equal(registered.code,201);uid=registered.data.account.uniqueId;token=registered.data.token;
-  assert.deepEqual((await request('signup',randomUUID())).data,noUser.data,'already-registered signup must have same public response as unknown login');
+  const duplicateSignup=await request('signup',randomUUID());
+  assert.equal(duplicateSignup.code,409,'existing signup email rejected before a code is issued');
+  assert.deepEqual(duplicateSignup.data,{error:'email_already_registered'});
+  assert.equal((await status('/v1/dev/otp/outbox',{email})).code,404,
+    'registration consumed the earlier code and duplicate signup must not issue a replacement');
   assert.equal((await get(budget)).issuances.length,1,'already registered signup never consumes another slot');
   await releaseCooldown();
   const secondId=randomUUID();
@@ -69,7 +73,7 @@ try {
   await db.send(new UpdateCommand({TableName:table,Key:budget,UpdateExpression:'SET issuances = :list, nextAllowedAt = :past',ExpressionAttributeValues:{':list':old,':past':Math.floor(Date.now()/1000)-1}}));
   assert.equal((await request('login',randomUUID())).code,202);
   assert.equal((await get(budget)).issuances.length,5,'oldest issuance falls out of rolling 24h window');
-  console.log('PASS P01-2 real shared rolling email budget: 5/day, cross-purpose CAS concurrency, cooldown, idempotency, no-send privacy, 24h expiry, no new table');
+  console.log('PASS P01-2 real shared rolling email budget: 5/day, cross-purpose CAS concurrency, cooldown, idempotency, no-send existing signup notice, 24h expiry, no new table');
 }finally{
   const keys=[key(`OTP#EMAIL#${h}`,'RATE'),key(`OTP#EMAIL#${h}`,'CHALLENGE'),key(`OTP#EMAIL#${u}`,'RATE'),key(`OTP#EMAIL#${u}`,'CHALLENGE'),key(`AUTH#EMAIL#${h}`),key(`PASSWORD#RESET#${h}`,'CHALLENGE'),key(`PASSWORD#LOGIN#${h}`,'RATE')];
   if(uid)keys.push(key(`USER#${uid}`,'CREDENTIAL#PASSWORD'),key(`USER#${uid}`,`PROVIDER#EMAIL#${h}`));

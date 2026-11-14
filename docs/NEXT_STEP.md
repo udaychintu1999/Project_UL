@@ -1,3 +1,11 @@
+> **Next P01-2 verification:** Existing email signup now returns 409 with Go to Log in and no OTP; rerun full owner Windows tests first then manual signup UX check. Security anti-probing review required before public release. P01-3 and P02 not started. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
+
+# Current next step — P01-2 recovery Android E2E rerun (2026-11-14)
+
+The last owner Android test **FAILED** at an outdated recovery success-string assertion. Apply the narrow test-only patch described in `docs/qa/P01_2_ANDROID_RECOVERY_ACK_AND_FIXTURE_COOLDOWN_2026_11_14.md`. This update also prevents the disposable signup fixture's shared 60s cooldown from making recovery issuance timing-dependent; real account quotas are not bypassed. With manual Java DynamoDB Local and `npm run dev:api` running, execute `npm run verify:p01-2:portable`, `npm run typecheck`, `npm run test:p01:email-budget:integration`, `npm run test:p01:password:integration`, `npm run test:flutter`, `npm run test:flutter:p01-2:e2e`. If all pass, run `npm run verify:p01-2`. Do not manually test until feasible automated gates have been attempted. P01-3 remains NOT STARTED; P01-1 phone OTP automation exception remains separate.
+
+---
+
 > **P01-2 next owner gate (2026-11-14):** Apply recovery inline-validation widget test patch, run `npm run test:flutter` first (prior FAIL +29 -1), then `npm run verify:p01-2:portable`, `npm run typecheck`, real email-budget/password integrations and the full Android P01-2 gate. Owner manual QA only after feasible automation. Do not begin P01-3. See `docs/qa/P01_2_RECOVERY_INLINE_VALIDATION_WIDGET_FIX_2026_11_14.md`.
 
 > **Immediate P01-2 verification (2026-11-14):** Apply targeted TypeScript recovery-transaction typing repair. Run `npm run typecheck`, `npm run verify:p01-2:portable`, then real email-budget/password integration and Flutter/device gates before manual QA. Existing Windows TS2322 evidence is documented in `docs/qa/P01_2_EMAIL_BUDGET_TRANSACTION_TYPING_REPAIR_2026_11_14.md`. Do not start P01-3 yet.

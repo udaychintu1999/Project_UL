@@ -1,3 +1,5 @@
+> **ADR-IMP-014 (2026-11-14):** Owner requests direct “email already registered” on signup code request, with no OTP/quota debit. Implements signup-only 409, explicitly accepts a development UX trade-off but **does not approve production exposure without a further security review**. Name/handle collection to be specified in P02; immutable UID is created in P01. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
+
 # Implementation planning decisions (2026-11-10)
 
 - ADR-IMP-001: Keep **18 phases**, comparable to original U_Day's developer handoff, but each phase guide remains one focused file, not giant repeated documents.

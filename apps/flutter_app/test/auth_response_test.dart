@@ -12,6 +12,14 @@ void main() {
     expect(existing.newAccount, isFalse);
   });
 
+  test('existing signup address gives clear guidance without claiming an OTP', () {
+    final result = parseAuthResponse(path: '/v1/auth/email/request', status: 409,
+        body: '{"error":"email_already_registered"}');
+    expect(result.ok, isFalse);
+    expect(result.message, 'This email is already registered. Log in or use Forgot password.');
+    expect(result.code, isNull);
+  });
+
   test('transport categorization never repeats exception content', () {
     expect(HttpAuthService.httpFailureCategory('Connection closed before full header was received, uri=http://SECRET'), 'response_headers_truncated');
     expect(HttpAuthService.httpFailureCategory('Headers already sent'), 'headers_committed');

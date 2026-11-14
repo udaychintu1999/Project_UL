@@ -1,3 +1,5 @@
+> **2026-11-14 owner UX override:** Previously recommended neutral signup-account responses are superseded for existing signup email addresses only. Explicit 409 saves a wasted OTP but exposes registration status; older privacy rationale below remains valid. Login and recovery remain neutral. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
+
 > **Implementation note:** Backend-authoritative rolling quota, no-send checks, Flutter inline validation and Back guard are now in source. Existing public 202 responses intentionally remain non-enumerating. Provider controls/IP abuse protections are NOT production-ready.
 
 # U_luv — P01-2 Email Delivery Budget, Form Validation and Navigation Design Contract

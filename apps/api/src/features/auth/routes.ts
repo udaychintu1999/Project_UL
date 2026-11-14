@@ -39,9 +39,10 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
   const userKey=(uid:string)=>({PK:`USER#${uid}`,SK:'META'});
   const localOutboxKey=(hash:string)=>hash;
 
-  // Anonymous responses are intentionally identical for an unknown login email,
-  // an existing signup email, cooldown, exhausted quota and a valid issuance.
-  // This avoids exposing whether another person's address is registered.
+  // Registration product decision: report an already-linked email BEFORE OTP
+  // issuance so the UI can direct the user to Log in. WARNING: this public
+  // result reveals account membership; production needs probe-abuse protection.
+  // Login and recovery remain neutral, never disclosing account membership.
   app.post('/v1/auth/email/request', async(request,reply)=>{
     const input=bodyOf(request.body);
     const email=normalizeEmail(input?.email);
@@ -54,8 +55,11 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
     const accepted={status:'otp_requested',delivery:'if_eligible',expiresInSeconds:OTP_LIFETIME_SECONDS};
     try {
       const link=(await db.send(new GetCommand({TableName:authTable,Key:linkKey(hash),ConsistentRead:true}))).Item;
-      // No unnecessary email: signup cannot re-register, login cannot create an account.
-      if((purpose==='signup' && link)||(purpose==='login' && !link))return reply.code(202).send(accepted);
+      // Already registered: never create an OTP or spend quota. This is a
+      // deliberate signup-only UX disclosure, not a login/recovery response.
+      if(purpose==='signup' && link)return fail(reply,409,'email_already_registered');
+      // Unknown login addresses remain indistinguishable from eligible ones.
+      if(purpose==='login' && !link)return reply.code(202).send(accepted);
       let uid:string|null=null;
       if(purpose==='login'){
         if(typeof link?.uid!=='string')return reply.code(202).send(accepted);
@@ -79,7 +83,20 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
         onIssued:({code,now})=>outbox.set(localOutboxKey(hash),{code,expiresAt:now+OTP_LIFETIME_SECONDS})
       });
       return reply.code(202).send(accepted);
-    }catch(_error){return fail(reply,503,'auth_store_unavailable');}
+    }catch(error){
+      // If another signup committed after the first lookup, the conditional
+      // issuance may fail. Re-read the canonical email mapping before telling
+      // the user there is a storage failure. Never issue a second challenge.
+      if(purpose==='signup' && conditionalError(error)) {
+        try {
+          const linked=(await db.send(new GetCommand({TableName:authTable,
+            Key:linkKey(hash),ConsistentRead:true}))).Item;
+          if(linked)return fail(reply,409,'email_already_registered');
+        }catch{return fail(reply,503,'auth_store_unavailable');}
+        return reply.code(202).send(accepted);
+      }
+      return fail(reply,503,'auth_store_unavailable');
+    }
   });
 
   // Explicitly local, gated by P00's private local key; no public bypass or OTP in logs.
@@ -122,7 +139,7 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
       }
       const link=(await db.send(new GetCommand({TableName:authTable,Key:linkKey(hash),ConsistentRead:true}))).Item;
       if(intent==='login' && !link) return fail(reply,401,'email_login_unavailable');
-      if(intent==='signup' && link) return fail(reply,409,'registration_unavailable');
+      if(intent==='signup' && link) return fail(reply,409,'email_already_registered');
       const uid=link?String(link.uid):randomUUID();
       let currentEpoch=0;
       if(link) {

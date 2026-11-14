@@ -335,7 +335,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   () => mode == 'signup' && registration != null
                     ? registration!.requestSignupCode(email.text) : widget.service.requestCode(email.text), action: 'request') : null,
                 child: const Text('Request email code')),
-              const Text('A maximum of 5 email codes may be issued per address in 24 hours. If eligible, check for a code. Already registered? Log in.'),
+              const Text('A maximum of 5 email codes may be issued per address in 24 hours. If eligible, check for a code.'),
+              if (mode == 'signup' && message.startsWith('This email is already registered.'))
+                Align(alignment: Alignment.centerLeft, child: TextButton(
+                  key: const Key('auth-signup-go-login'),
+                  onPressed: busy ? null : () => chooseMode('password'),
+                  child: const Text('Go to Log in'),
+                )),
               if (codeRequested) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(key: const Key('auth-outbox'),

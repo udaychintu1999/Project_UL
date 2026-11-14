@@ -1,3 +1,5 @@
+> **2026-11-14 override:** Existing-email signup now returns 409 and displays Go to Log in before an OTP is issued. Older generic-signup-response notes below are historical. Account-enumeration security review remains required. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
+
 
 ## 2026-11-14 — Shared email quota and UX hardening acceptance (current)
 
@@ -68,7 +70,7 @@ Do not claim the P01-2 Android test passed until it actually passes on the owner
 ## Owner-run manual acceptance (mandatory fallback when device automation unreliable)
 1. Launch the app (`npm run dev:flutter`), enter a fresh synthetic email under `@example.invalid`, select **Sign up** and request code.
 2. Read the **local** outbox using the private development-only action. Verify the code, choose an adult DOB, accept consent and sign in. **Do not share the code.**
-3. Create a password with at least **8 characters and 1 special symbol** and confirm it. Verify weak/short/no-symbol inputs are rejected.
+3. Create a password with at least **15 Unicode code points** and confirm it. Symbols, uppercase letters and digits are not mandatory; validate short and blocklisted/common passwords, allow a long passphrase, and confirm mismatch guidance.
 4. Log out; switch to the default **Email + Password** tab. Log in with correct password **without requesting another OTP**; verify same account ID and `Check account access` succeeds.
 5. Wrong password: confirm generic error and no account access. Check recovery tab: request local recovery code, view local outbox, reset password; verify old password fails and new password succeeds on the same account.
 6. Log in, change password using current password; verify the app returns to sign-in and previous session is revoked; log in with the newest password. Explicit logout must return to sign-in.
@@ -85,3 +87,7 @@ The owner completed `npm install` (0 reported vulnerabilities) and passed the po
 Before manual testing, execute `npm run test:flutter` and `npm run test:flutter:p01-2:e2e` (after portable/typecheck/API checks). If device testing fails, preserve the exact sanitized failure and follow the automated-first/manual-escalation contract. The fixture now independently verifies the synthetic email/password can authenticate via Fastify on the PC before running the Android UI test.
 
 When checking the UI, **sign-up** shows only Create Password + Confirm Password after new-account OTP verification, **password login** goes straight to the account page with **no password editing fields**, **Password settings** exposes the Current Password + New Password form, and **Forgot password** is separate. If multiple password forms appear at once, this is a UX FAIL even if the API returns 200.
+
+## 2026-11-14 — Android recovery neutral acknowledgement + fixture cooldown
+
+The automated Android test must accept the privacy-safe `If eligible, a recovery code is available` message, then read a real local six-digit recovery code to prove issuance before resetting. The local test-only synthetic account was created via signup OTP, consuming one shared email issuance and initiating the 60-second cross-flow cooldown. The fixture now advances only this disposable account's cooldown, retaining its issued-code history and five-code rolling cap. This does not change the production API or Flutter application. Full details: `docs/qa/P01_2_ANDROID_RECOVERY_ACK_AND_FIXTURE_COOLDOWN_2026_11_14.md`. Rerun `npm run test:flutter:p01-2:e2e` and then `npm run verify:p01-2` after prior required checks.

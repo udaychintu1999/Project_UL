@@ -1,3 +1,11 @@
+# CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
+
+**P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.
+
+**Evidence:** `docs/qa/P01_3_OWNER_ACCEPTANCE_2026_11_14.md` (current) and historical `docs/qa/P01_3_INITIAL_IMPLEMENTATION_EVIDENCE_2026_11_14.md`. A real 30-day elapsed-time field observation and production/security/provider readiness have **not** been demonstrated by these logs; automated 30-day boundary tests passed. Do not equate owner acceptance of local development with production release. Java DynamoDB Local remains the database through P16; no AWS/email-provider/payments integration is authorized by this acceptance. Earlier status blocks below are preserved as dated history, not current instructions.
+
+---
+
 > **Current status as of 2026-11-13:** P00 has owner-confirmed `CORE_FLOW_VERIFIED` evidence; P01 slice 01 is `PARTIALLY_VERIFIED` with real local API/DB and Flutter analyzer/widgets passed on Windows, and a subsequent corrective patch awaiting Windows TypeScript + USB Android rerun. This note supersedes the older P00-focused current-status paragraph below (retained as historical manifest context). See `docs/qa/P01_WINDOWS_REPAIR_2026_11_13.md`, `docs/qa/EVIDENCE_LOG.md`, `docs/NEXT_STEP.md` and `docs/manual/P01_EMAIL_OTP_WINDOWS_TEST.md`. P02 and production AWS/payment integration are not authorized.
 
 # U_luv documentation and source manifest — current P00 handoff

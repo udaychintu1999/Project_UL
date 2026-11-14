@@ -7,6 +7,8 @@ import {registerLocalPasswordAuth, hashNewPassword} from './password.js';
 import {validPassword, compromisedCandidate} from './password-policy.js';
 import {bearerToken, challengeState, equalDigest, isAdultBirthDate, keyedHash, normalizeEmail, OTP_LIFETIME_SECONDS, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp} from './policy.js';
 import {issueEmailChallenge, requestIdFromHeader} from './email-budget.js';
+import {registerDeviceSessionRoutes} from './device-sessions.js';
+import {p13Keys, accessDigest} from './device-session-policy.js';
 
 const authTable='uluv_auth_links';
 const usersTable='uluv_users';
@@ -178,20 +180,34 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
   app.post('/v1/auth/email/verify',(request,reply)=>finishEmailVerification(request,reply,'login'));
   app.post('/v1/auth/signup/register',(request,reply)=>finishEmailVerification(request,reply,'signup'));
 
-  async function requireSession(request:FastifyRequest,reply:FastifyReply,checkEligibility=true):Promise<{uid:string;key:{PK:string;SK:string};authenticatedAt:number}|null>{
+  async function requireSession(request:FastifyRequest,reply:FastifyReply,checkEligibility=true):Promise<{uid:string;key:{PK:string;SK:string};authenticatedAt:number;familyId?:string;slot?:number}|null>{
     const token=bearerToken(request.headers.authorization);
     if(!token) {fail(reply,401,'authentication_required');return null;}
-    const key={PK:`SESSION#${sessionDigest(secret,token)}`,SK:'META'};
+    let key={PK:`SESSION#${sessionDigest(secret,token)}`,SK:'META'};
     try {
-      const session=(await db.send(new GetCommand({TableName:authTable,Key:key,ConsistentRead:true}))).Item;
+      let session=(await db.send(new GetCommand({TableName:authTable,Key:key,ConsistentRead:true}))).Item;
+      if(!session){
+        // P01-3 access tokens have a separate purpose-derived digest. Legacy
+        // P01-2 sessions continue to work until their original expiry.
+        key={PK:`SESSION#${accessDigest(p13Keys(secret).access,token)}`,SK:'META'};
+        session=(await db.send(new GetCommand({TableName:authTable,Key:key,ConsistentRead:true}))).Item;
+      }
       if(!session || session.kind!=='session' || Number(session.expiresAt)<=nowSeconds()) {fail(reply,401,'session_expired_or_revoked');return null;}
       const user=(await db.send(new GetCommand({TableName:usersTable,Key:userKey(String(session.uid)),ConsistentRead:true}))).Item;
       if(!user || Number(user.sessionEpoch??0)!==Number(session.sessionEpoch??0)) {fail(reply,401,'session_expired_or_revoked');return null;}
       if(checkEligibility && (user.status!=='active' || user.ageEligibility!=='self_declared_adult')) {fail(reply,403,'account_unavailable');return null;}
+      if(typeof session.familyId==='string'){
+        const slot=Number(session.familySlot);
+        if(!Number.isInteger(slot) || slot<0 || slot>4){fail(reply,401,'session_expired_or_revoked');return null;}
+        const family=(await db.send(new GetCommand({TableName:authTable,Key:{PK:`USER#${session.uid}`,SK:`DEVICE#${slot}`},ConsistentRead:true}))).Item;
+        if(!family || family.status!=='active' || family.familyId!==session.familyId || Number(family.reauthAt)<=nowSeconds() || Number(family.sessionEpoch)!==Number(session.sessionEpoch)){fail(reply,401,'session_expired_or_revoked');return null;}
+        return {uid:String(session.uid),key,authenticatedAt:Number(family.interactiveAt??family.createdAt),familyId:session.familyId,slot};
+      }
       return {uid:String(session.uid),key,authenticatedAt:Number(session.createdAt)};
     }catch(_error) {fail(reply,503,'auth_store_unavailable');return null;}
   }
   registerLocalPasswordAuth(app,db,secret,config.env==='local',requireSession);
+  const devices=registerDeviceSessionRoutes(app,db,secret,requireSession);
   app.get('/v1/auth/me',async(request,reply)=>{
     const auth=await requireSession(request,reply);
     if(!auth) return reply;
@@ -201,7 +217,14 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
   app.post('/v1/auth/logout',async(request,reply)=>{
     const auth=await requireSession(request,reply,false);
     if(!auth) return reply;
-    try {await db.send(new DeleteCommand({TableName:authTable,Key:auth.key}));return {status:'signed_out'};}
+    try {
+      if(auth.familyId && auth.slot!==undefined){
+        const item=await devices.getFamily(auth.uid,auth.slot);
+        if(item?.familyId===auth.familyId && item.status==='active')
+          await db.send(new UpdateCommand({TableName:authTable,Key:devices.familyKey(auth.uid,auth.slot),UpdateExpression:'SET #s = :revoked, revokedAt = :now',ConditionExpression:'familyId = :family AND #s = :active',ExpressionAttributeNames:{'#s':'status'},ExpressionAttributeValues:{':revoked':'revoked',':now':nowSeconds(),':family':auth.familyId,':active':'active'}}));
+      }
+      await db.send(new DeleteCommand({TableName:authTable,Key:auth.key}));return {status:'signed_out'};
+    }
     catch(_error) {return fail(reply,503,'auth_store_unavailable');}
   });
 }

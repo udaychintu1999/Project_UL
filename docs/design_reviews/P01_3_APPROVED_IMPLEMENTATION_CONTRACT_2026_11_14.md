@@ -1,3 +1,9 @@
+# CURRENT CHECKPOINT — P01-3 V1 SOURCE IMPLEMENTED, WINDOWS VERIFICATION PENDING (2026-11-14)
+
+P00 historically verified; P01-1 manually accepted with its Android OTP automation exception still FAILED; **P01-2 owner-accepted after all tests/manual QA**; **P01-3 approved V3 design implemented in code but NOT yet owner verified**; P02 not started. See `docs/qa/P01_3_INITIAL_IMPLEMENTATION_EVIDENCE_2026_11_14.md` and `docs/manual/P01_3_IMPLEMENTATION_WINDOWS_TEST.md`. Owner has authorized coding, not AWS, SES, payments or production release. Older checkpoint blocks below are historical.
+
+---
+
 # U_luv — P01-3 V3: Approved Implementation Contract
 
 **Date:** 2026-11-14  | **Authority:** owner decisions in current P01-3 discussion  | **Phase:** P01-3 only  | **Status:** DESIGN APPROVED / NOT IMPLEMENTED.  **Next action:** owner reviews this ZIP, then separately authorizes coding.

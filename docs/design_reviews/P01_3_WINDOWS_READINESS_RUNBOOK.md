@@ -1,3 +1,9 @@
+# CURRENT CHECKPOINT — P01-3 V1 SOURCE IMPLEMENTED, WINDOWS VERIFICATION PENDING (2026-11-14)
+
+P00 historically verified; P01-1 manually accepted with its Android OTP automation exception still FAILED; **P01-2 owner-accepted after all tests/manual QA**; **P01-3 approved V3 design implemented in code but NOT yet owner verified**; P02 not started. See `docs/qa/P01_3_INITIAL_IMPLEMENTATION_EVIDENCE_2026_11_14.md` and `docs/manual/P01_3_IMPLEMENTATION_WINDOWS_TEST.md`. Owner has authorized coding, not AWS, SES, payments or production release. Older checkpoint blocks below are historical.
+
+---
+
 # P01-3 — V3 Windows Implementation and Acceptance Runbook
 
 **State:** OWNER-APPROVED DESIGN; no implementation yet. This document does not claim that the proposed P01-3 commands currently exist. Do not run device tests until corresponding source scripts have been delivered.

@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 import 'diagnostics_service.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/auth_screen.dart';
+import 'features/auth/persistent_gate.dart';
 
 void main() {
   const baseUrl = String.fromEnvironment('ULUV_API_BASE_URL', defaultValue: 'http://10.0.2.2:3000');
   const devToken = String.fromEnvironment('ULUV_DEV_TOKEN', defaultValue: '');
-  runApp(UluvApp(service: HttpDiagnosticsService(baseUrl: baseUrl, devToken: devToken), authService: HttpAuthService(baseUrl: baseUrl, devToken: devToken)));
+  runApp(UluvApp(service: HttpDiagnosticsService(baseUrl: baseUrl, devToken: devToken), authService: HttpAuthService(baseUrl: baseUrl, devToken: devToken), persistentMode: true));
 }
 
 class UluvApp extends StatelessWidget {
-  const UluvApp({super.key, required this.service, this.authService});
+  const UluvApp({super.key, required this.service, this.authService, this.persistentMode=false});
   final DiagnosticsService service;
   final AuthService? authService;
+  final bool persistentMode;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'U_luv Diagnostics',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF2757E)), useMaterial3: true),
-      home: DiagnosticsHome(service: service, authService: authService),
+      home: persistentMode && authService is HttpAuthService
+        ? PersistentAuthGate(service: authService! as HttpAuthService)
+        : DiagnosticsHome(service: service, authService: authService),
     );
   }
 }

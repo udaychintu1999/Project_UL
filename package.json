@@ -43,6 +43,11 @@
     "verify:p01-2": "node scripts/verify/p01-2-verifier.mjs",
     "test:flutter:p01-2:e2e": "node --env-file=apps/api/.env scripts/verify/p01-2-android-e2e.mjs",
     "test:p01:automation:contracts": "node --test scripts/verify/p01-2-automation.test.mjs",
-    "test:p01:email-budget:integration": "node --env-file=apps/api/.env scripts/verify/p01-email-budget-integration.mjs"
+    "test:p01:email-budget:integration": "node --env-file=apps/api/.env scripts/verify/p01-email-budget-integration.mjs",
+    "test:p01-3:contracts": "node scripts/verify/p01-3-source-contract.mjs",
+    "test:p01-3:integration": "node --env-file=apps/api/.env scripts/verify/p01-3-device-integration.mjs",
+    "test:flutter:p01-3:e2e": "node --env-file=apps/api/.env scripts/verify/p01-3-android-e2e.mjs",
+    "verify:p01-3:portable": "npm run verify:p01-2:portable && npm run test:p01-3:contracts",
+    "verify:p01-3": "node scripts/verify/p01-3-verifier.mjs"
   }
 }

@@ -1,3 +1,9 @@
+# CURRENT CHECKPOINT — P01-3 V1 SOURCE IMPLEMENTED, WINDOWS VERIFICATION PENDING (2026-11-14)
+
+P00 historically verified; P01-1 manually accepted with its Android OTP automation exception still FAILED; **P01-2 owner-accepted after all tests/manual QA**; **P01-3 approved V3 design implemented in code but NOT yet owner verified**; P02 not started. See `docs/qa/P01_3_INITIAL_IMPLEMENTATION_EVIDENCE_2026_11_14.md` and `docs/manual/P01_3_IMPLEMENTATION_WINDOWS_TEST.md`. Owner has authorized coding, not AWS, SES, payments or production release. Older checkpoint blocks below are historical.
+
+---
+
 ## 2026-11-14 — P01-3 V3 approved design package (DOCS ONLY)
 
 Owner confirmed simple refresh rotation, CAS single-winner, no grace/recovery receipts and fresh login on irrecoverable failure; approved Android Keystore device proof and server secret key isolation. Updated 84-case matrix, mandatory real DB + Android acceptance tests, UX/runbook, project checkpoint and threat register. No app/backend/scripts/dependencies/DB changed; no P01-3 test results. P01-2 owner accepted; P01-1 Android OTP automated local exception retained. See `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md`.

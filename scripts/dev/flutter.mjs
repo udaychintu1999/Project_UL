@@ -15,7 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const flutterRoot = path.join(root, 'apps/flutter_app');
 const flutterExe = process.platform === 'win32' ? 'flutter.bat' : 'flutter';
 const [action, ...userArgs] = process.argv.slice(2);
-const actions = new Set(['setup', 'run', 'test', 'e2e', 'p01-e2e', 'p01-2-e2e']);
+const actions = new Set(['setup', 'run', 'test', 'e2e', 'p01-e2e', 'p01-2-e2e', 'p01-3-e2e']);
 const permittedApiHosts = new Set(['localhost', '127.0.0.1', '[::1]', '10.0.2.2']);
 const usbApiHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -127,7 +127,19 @@ if (action === 'setup') {
   } else {
     const suite = action === 'p01-e2e' ? 'integration_test/auth_integration_test.dart'
       : action === 'p01-2-e2e' ? 'integration_test/password_integration_test.dart'
+      : action === 'p01-3-e2e' ? 'integration_test/persistent_session_integration_test.dart'
       : 'integration_test/diagnostics_integration_test.dart';
+    if (action === 'p01-3-e2e') {
+      const email=process.env.ULUV_P01_3_FIXTURE_EMAIL??'';
+      const password=process.env.ULUV_P01_3_FIXTURE_PASSWORD??'';
+      const uid=process.env.ULUV_P01_3_FIXTURE_UID??'';
+      if(!/^p01-2-device-[a-f0-9-]{36}@example\.invalid$/.test(email) ||
+         !/^DeviceStart@[0-9a-f]{20}$/.test(password) ||
+         !/^[0-9a-f-]{36}$/i.test(uid))fail('P01-3 device fixture unavailable; run npm run test:flutter:p01-3:e2e.');
+      define.push(`--dart-define=ULUV_P01_3_FIXTURE_EMAIL=${email}`,
+        `--dart-define=ULUV_P01_3_FIXTURE_PASSWORD=${password}`,
+        `--dart-define=ULUV_P01_3_FIXTURE_UID=${uid}`);
+    }
     if (action === 'p01-2-e2e') {
       // Only the host-side setup runner sets these synthetic test credentials.
       // They are not real user passwords and never appear in source/logs.
@@ -144,6 +156,6 @@ if (action === 'setup') {
         `--dart-define=ULUV_P01_2_FIXTURE_UID=${uid}`);
     }
     runFlutter(['test', suite, ...device, ...define]);
-    console.log(`${action === 'p01-e2e' ? 'P01-1 auth' : action === 'p01-2-e2e' ? 'P01-2 password' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
+    console.log(`${action === 'p01-e2e' ? 'P01-1 auth' : action === 'p01-2-e2e' ? 'P01-2 password' : action === 'p01-3-e2e' ? 'P01-3 persistent sessions' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
   }
 }

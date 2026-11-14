@@ -5,8 +5,11 @@ import 'auth_service.dart';
 /// P01-2: distinct login, registration, password recovery, and account pages.
 /// P01-3 alone will persist credentials/renew sessions across app restarts.
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key, required this.service});
+  const AuthScreen({super.key, required this.service, this.initialToken, this.initialUid, this.onAuthenticated, this.accountExtra});
   final AuthService service;
+  final String? initialToken, initialUid;
+  final Future<void> Function(String token,String uid)? onAuthenticated;
+  final Widget? accountExtra;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -29,6 +32,7 @@ class _AuthScreenState extends State<AuthScreen> {
   DateTime? dob;
   String message = 'Log in with your email and password.';
   String? token, uid, localCode, recoveryLocalCode;
+  bool persistentSetupFailed = false;
   String mode = 'password'; // password | signup | otp | recovery
   String accountPanel = 'home'; // home | setup | options | create | change
   bool? passwordConfigured; // unknown for an existing account reached by OTP
@@ -45,6 +49,8 @@ class _AuthScreenState extends State<AuthScreen> {
   void initState() {
     super.initState();
     if (passwords == null) mode = 'otp';
+    token = widget.initialToken;
+    uid = widget.initialUid;
   }
 
   @override
@@ -215,6 +221,14 @@ class _AuthScreenState extends State<AuthScreen> {
           accountPanel = 'home';
         }
       });
+      if(result.ok && widget.onAuthenticated!=null &&
+          (action=='verify' || action=='signup' || action=='password-login') &&
+          result.token!=null && result.uniqueId!=null){
+        try {await widget.onAuthenticated!(result.token!,result.uniqueId!);}
+        catch(_){
+          if(mounted)setState((){persistentSetupFailed=true;message='Signed in for this session, but protected 30-day login could not be enabled. Try again.';});
+        }
+      }
     } catch (_) {
       if (mounted) setState(() => message = 'Unexpected error. Retry.');
     } finally {
@@ -471,6 +485,15 @@ class _AuthScreenState extends State<AuthScreen> {
                       : passwordConfigured == false ? 'create' : 'options'),
                 child: const Text('Password settings')),
             ],
+            if (persistentSetupFailed && widget.onAuthenticated!=null && token!=null && uid!=null)
+              FilledButton.tonal(key: const Key('p13-retry-enroll'),
+                onPressed: busy ? null : () async {
+                  setState(() {busy=true;message='Enabling secure login...';});
+                  try {await widget.onAuthenticated!(token!,uid!);}
+                  catch (_) {if(mounted)setState(()=>message='Protected login unavailable. Sign out and try again if the issue persists.');}
+                  finally {if(mounted)setState(()=>busy=false);}
+                },child:const Text('Retry secure login')),
+            if(widget.accountExtra!=null) widget.accountExtra!,
             const SizedBox(height: 12),
             OutlinedButton(key: const Key('auth-logout'),
               onPressed: busy ? null : () => run(() => widget.service.logout(token!), action: 'logout'),

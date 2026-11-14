@@ -1,12 +1,14 @@
 export type DistanceBand = '0-10' | '10-35' | '35-50' | '0-50';
 export type GenderBenefit = 'woman' | 'other';
 
+/** Stable, direction-independent pair key. Order must not affect identities. */
 export function canonicalPair(a: string, b: string): string {
   if (!a || !b || a === b || /[#\s]/.test(a + b)) throw new Error('Invalid pair identifiers');
   const [first, second] = [a, b].sort();
   return `${first}#${second}`;
 }
 
+/** Policy values belong to the product contract; this pass does not change them. */
 export function monthlyFreeCredits(benefit: GenderBenefit): number {
   return benefit === 'woman' ? 4 : 2;
 }
@@ -15,6 +17,7 @@ export function creditCost(action: 'liked_you_like_back' | 'dating_connect' | 'f
   return action === 'ordinary_like' ? 0 : 1;
 }
 
+/** Band thresholds and their inclusive edges are externally observable rules. */
 export function distanceBand(km: number): Exclude<DistanceBand, '0-50'> {
   if (!Number.isFinite(km) || km < 0 || km > 50) throw new RangeError('Distance must be 0–50 km');
   if (km <= 10) return '0-10';
@@ -30,7 +33,17 @@ export function isInsideBand(distanceKm: number, selected: DistanceBand): boolea
   return distanceKm > 35 && distanceKm <= 50;
 }
 
-export const LIMITS = Object.freeze({dailyDatingLikes:100,dailyPosts:3,activePosts:5,dailyComments:10,dailyReactions:30,photosPerPost:5,photosPerModeMin:2,photosPerModeMax:6,pendingFriendshipRequests:5});
+export const LIMITS = Object.freeze({
+  dailyDatingLikes: 100,
+  dailyPosts: 3,
+  activePosts: 5,
+  dailyComments: 10,
+  dailyReactions: 30,
+  photosPerPost: 5,
+  photosPerModeMin: 2,
+  photosPerModeMax: 6,
+  pendingFriendshipRequests: 5
+});
 export const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export function expiryTime(utcMs: number): number {
   if (!Number.isSafeInteger(utcMs) || utcMs < 0) throw new RangeError('Invalid timestamp');

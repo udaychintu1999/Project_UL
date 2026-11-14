@@ -118,8 +118,8 @@ test('new signup requires password before committing identity and OTP login neve
   const ui = read('apps/flutter_app/lib/features/auth/auth_screen.dart');
   const client = read('apps/flutter_app/lib/features/auth/auth_service.dart');
   assert.match(api, /purpose.*signup/);
-  assert.match(api, /intent==='login' && !link/);
-  assert.match(api, /intent==='signup' && link/);
+  assert.match(api, /intent\s*===\s*'login'\s*&&\s*!link/);
+  assert.match(api, /intent\s*===\s*'signup'\s*&&\s*link/);
   assert.match(api, /hashNewPassword/);
   assert.match(api, /CREDENTIAL#PASSWORD/);
   assert.match(api, /TransactWriteCommand/);
@@ -138,8 +138,8 @@ test('recovery transaction items use explicit AWS SDK contextual typing', () => 
   // Without an explicit return type, TypeScript infers optional undefined
   // properties across the differing ConditionCheck name dictionaries.
   assert.match(password,
-    /makeItems:\s*\(\{code,nonce,version,now\}\):NonNullable<TransactWriteCommandInput\['TransactItems'\]>\s*=>/);
-  assert.match(password, /import type \{DynamoDBDocumentClient, TransactWriteCommandInput\}/);
+    /makeItems:\s*\(\s*\{\s*code\s*,\s*nonce\s*,\s*version\s*,\s*now\s*\}\s*\)\s*:\s*NonNullable<TransactWriteCommandInput\['TransactItems'\]>\s*=>/);
+  assert.match(password, /import type \{\s*DynamoDBDocumentClient\s*,\s*TransactWriteCommandInput\s*\}/);
   assert.match(budget, /makeItems:.*NonNullable<TransactWriteCommandInput\['TransactItems'\]>/);
 });
 
@@ -176,7 +176,7 @@ test('P01-2 Android recovery checks the current privacy-safe message and a REAL 
   assert.match(device, /expect\(localCode, matches\(RegExp/);
   // Only the synthetic local test fixture may advance the cooldown. Keep the
   // original issuance in the 24-hour quota and reject unexpected fixture state.
-  assert.match(fixture, /import \{DynamoDBDocumentClient, DeleteCommand, GetCommand, UpdateCommand\}/);
+  assert.match(fixture, /import \{\s*DynamoDBDocumentClient\s*,\s*DeleteCommand\s*,\s*GetCommand\s*,\s*UpdateCommand\s*\}/);
   assert.match(fixture, /sharedBudgetKey = key\(`OTP#EMAIL#\$\{emailHash\}`, 'RATE'\)/);
   assert.match(fixture, /sharedBudget\.issuances\.length !== 1/);
   assert.match(fixture, /UpdateExpression: 'SET nextAllowedAt = :past'/);
@@ -295,7 +295,7 @@ test('P01-2 existing signup email is rejected before OTP, shows safe login actio
   const ui=read('apps/flutter_app/lib/features/auth/auth_screen.dart');
   const widget=read('apps/flutter_app/test/password_auth_widget_test.dart');
   const integration=read('scripts/verify/p01-email-budget-integration.mjs');
-  assert.match(api,/purpose==='signup' && link.*fail\(reply,409,'email_already_registered'\)/);
+  assert.match(api,/purpose\s*===\s*'signup'\s*&&\s*link\s*\)\s*return\s+fail\s*\(\s*reply\s*,\s*409\s*,\s*'email_already_registered'\s*\)/);
   assert.match(client,/case 'email_already_registered'/);
   assert.match(ui,/auth-signup-go-login/);
   assert.match(widget,/registered signup email shows message without OTP form/);

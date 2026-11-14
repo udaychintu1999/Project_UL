@@ -3,7 +3,8 @@ import {readFileSync} from 'node:fs';
 const api=readFileSync('apps/api/src/app.ts','utf8');
 assert.match(api,/\/health\/ready/);
 assert.match(api,/GetCommand/);assert.match(api,/PutCommand/);assert.match(api,/QueryCommand/);assert.match(api,/DeleteCommand/);
-assert.match(api,/config\.env==='local'/);
+// Formatting must not change the local-only registration gate.
+assert.match(api,/config\.env\s*===\s*'local'/);
 assert.doesNotMatch(api,/ScanCommand|\.scan\(/);
 assert.match(api,/error instanceof Error/); // reject direct property access on unknown error payloads
 const prod=readFileSync('apps/api/src/config.ts','utf8');assert.match(prod,/assertLocalDynamoEndpoint/);assert.match(prod,/assertLocalMediaDriver/);assert.match(prod,/P00 starter only supports local\/test/);assert.match(prod,/P00 API must bind to loopback only/);

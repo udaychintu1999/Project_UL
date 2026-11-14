@@ -14,7 +14,7 @@ assert.match(localGuard,/Only a loopback HTTP/);
 assert.match(config,/P00 starter only supports local\/test/);
 assert.match(config,/assertLocalDynamoEndpoint/);
 assert.match(db,/assertLocalDynamoEndpoint/);
-assert.match(db,/accessKeyId:'local',secretAccessKey:'local'/);
+assert.match(db,/accessKeyId\s*:\s*'local'\s*,\s*secretAccessKey\s*:\s*'local'/);
 assert.match(ex,/MEDIA_STORAGE_DRIVER=local/);
 assert.match(root,/NEVER inspect/);
 assert.match(policy,/Deny AWS actions by default/);

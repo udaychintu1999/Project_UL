@@ -1,8 +1,21 @@
 import 'dotenv/config';
-import {assertLocalDynamoEndpoint, assertLocalMediaDriver} from './local-safety.js';
+import { assertLocalDynamoEndpoint, assertLocalMediaDriver } from './local-safety.js';
 
-export type AppConfig = { env: string; host: string; port: number; region: string; dynamodbEndpoint: string; devToken?: string; mediaDriver: 'local' };
+export type AppConfig = {
 
+  env: string;
+  host: string;
+  port: number;
+  region: string;
+  dynamodbEndpoint: string;
+  devToken?: string;
+  mediaDriver: 'local' 
+};
+
+/**
+ * Reject unsupported environments and hosts before any SDK client is built.
+ * This starter never infers permission to contact AWS from ambient credentials.
+ */
 export function readConfig(): AppConfig {
   const env = process.env.APP_ENV ?? 'local';
   // P00 starter is deliberately NOT a production runtime. Owner-authorized P17 will add real AWS configuration explicitly.
@@ -19,5 +32,7 @@ export function readConfig(): AppConfig {
   }
   const dynamodbEndpoint = assertLocalDynamoEndpoint(process.env.DYNAMODB_ENDPOINT);
   const mediaDriver = assertLocalMediaDriver(process.env.MEDIA_STORAGE_DRIVER);
-  return {env, host, port, region:'ap-south-1', dynamodbEndpoint, devToken, mediaDriver};
+  // The region string is retained for compatibility with the existing
+  // local DynamoDB configuration; it is not a cloud-enablement switch.
+  return { env, host, port, region: 'ap-south-1', dynamodbEndpoint, devToken, mediaDriver };
 }

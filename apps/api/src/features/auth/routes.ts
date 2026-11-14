@@ -1,11 +1,12 @@
-import {randomBytes, randomInt, randomUUID} from 'node:crypto';
+import {randomBytes, randomUUID} from 'node:crypto';
 import type {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import {DeleteCommand, GetCommand, TransactWriteCommand, UpdateCommand} from '@aws-sdk/lib-dynamodb';
 import type {DynamoDBDocumentClient, TransactWriteCommandInput} from '@aws-sdk/lib-dynamodb';
 import type {AppConfig} from '../../config.js';
 import {registerLocalPasswordAuth, hashNewPassword} from './password.js';
 import {validPassword, compromisedCandidate} from './password-policy.js';
-import {bearerToken, challengeState, equalDigest, isAdultBirthDate, keyedHash, normalizeEmail, OTP_COOLDOWN_SECONDS, OTP_HOURLY_LIMIT, OTP_LIFETIME_SECONDS, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp} from './policy.js';
+import {bearerToken, challengeState, equalDigest, isAdultBirthDate, keyedHash, normalizeEmail, OTP_LIFETIME_SECONDS, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp} from './policy.js';
+import {issueEmailChallenge, requestIdFromHeader} from './email-budget.js';
 
 const authTable='uluv_auth_links';
 const usersTable='uluv_users';
@@ -34,39 +35,51 @@ export function registerLocalEmailAuth(app:FastifyInstance, db:DynamoDBDocumentC
   const emailHash=(email:string)=>keyedHash(secret,'email-subject',email);
   const otpDigest=(hash:string,nonce:string,code:string)=>keyedHash(secret,'email-otp',`${hash}:${nonce}:${code}`);
   const challengeKey=(hash:string)=>({PK:`OTP#EMAIL#${hash}`,SK:'CHALLENGE'});
-  const rateKey=(hash:string)=>({PK:`OTP#EMAIL#${hash}`,SK:'RATE'});
   const linkKey=(hash:string)=>({PK:`AUTH#EMAIL#${hash}`,SK:'META'});
   const userKey=(uid:string)=>({PK:`USER#${uid}`,SK:'META'});
   const localOutboxKey=(hash:string)=>hash;
 
+  // Anonymous responses are intentionally identical for an unknown login email,
+  // an existing signup email, cooldown, exhausted quota and a valid issuance.
+  // This avoids exposing whether another person's address is registered.
   app.post('/v1/auth/email/request', async(request,reply)=>{
-    const body=bodyOf(request.body);
-    const email=normalizeEmail(body?.email);
-    if (!email) return fail(reply,400,'invalid_email');
-    const purpose=body?.purpose??'login';
-    if(purpose!=='login' && purpose!=='signup') return fail(reply,400,'invalid_otp_purpose');
-    const hash=emailHash(email), key=challengeKey(hash), rkey=rateKey(hash), now=nowSeconds();
-    // Rate record survives OTP consumption. Atomic transaction + version CAS bounds concurrent issuance.
+    const input=bodyOf(request.body);
+    const email=normalizeEmail(input?.email);
+    if(!email)return fail(reply,400,'invalid_email');
+    const purpose=input?.purpose??'login';
+    if(purpose!=='signup' && purpose!=='login')return fail(reply,400,'invalid_otp_purpose');
+    const id=requestIdFromHeader(request.headers['x-uluv-request-id']);
+    if(!id)return fail(reply,400,'invalid_request_id');
+    const hash=emailHash(email);
+    const accepted={status:'otp_requested',delivery:'if_eligible',expiresInSeconds:OTP_LIFETIME_SECONDS};
     try {
-      for (let retry=0;retry<3;retry++) {
-        const previous=(await db.send(new GetCommand({TableName:authTable,Key:rkey,ConsistentRead:true}))).Item;
-        if (previous && Number(previous.nextAllowedAt)>now) return fail(reply,429,'otp_cooldown');
-        if (previous && Number(previous.windowEndAt)>now && Number(previous.issuedCount)>=OTP_HOURLY_LIMIT) return fail(reply,429,'otp_rate_limited');
-        const windowEndAt=previous && Number(previous.windowEndAt)>now ? Number(previous.windowEndAt) : now+3600;
-        const issuedCount=previous && Number(previous.windowEndAt)>now ? Number(previous.issuedCount)+1 : 1;
-        const nonce=randomUUID(),version=randomUUID();
-        const code=String(randomInt(0,1000000)).padStart(6,'0');
-        try {
-          await db.send(new TransactWriteCommand({TransactItems:[
-            {Put:{TableName:authTable,Item:{...rkey,version,windowEndAt,issuedCount,nextAllowedAt:now+OTP_COOLDOWN_SECONDS,expiresAt:windowEndAt+3600},ConditionExpression:previous?'#version = :previous':'attribute_not_exists(PK)',ExpressionAttributeNames:previous?{'#version':'version'}:undefined,ExpressionAttributeValues:previous?{':previous':previous.version}:undefined}},
-            {Put:{TableName:authTable,Item:{...key,kind:'email_otp',purpose,codeDigest:otpDigest(hash,nonce,code),nonce,version,issuedAt:now,expiresAt:now+OTP_LIFETIME_SECONDS,attempts:0}}}
-          ]}));
-          outbox.set(localOutboxKey(hash),{code,expiresAt:now+OTP_LIFETIME_SECONDS});
-          return reply.code(202).send({status:'otp_requested',delivery:'local_dev_outbox',expiresInSeconds:OTP_LIFETIME_SECONDS});
-        }catch(error) {if (!conditionalError(error)) throw error;}
+      const link=(await db.send(new GetCommand({TableName:authTable,Key:linkKey(hash),ConsistentRead:true}))).Item;
+      // No unnecessary email: signup cannot re-register, login cannot create an account.
+      if((purpose==='signup' && link)||(purpose==='login' && !link))return reply.code(202).send(accepted);
+      let uid:string|null=null;
+      if(purpose==='login'){
+        if(typeof link?.uid!=='string')return reply.code(202).send(accepted);
+        const knownUid:string=link.uid;
+        uid=knownUid;
+        const user=(await db.send(new GetCommand({TableName:usersTable,Key:userKey(knownUid),ConsistentRead:true}))).Item;
+        if(!user || user.status!=='active' || user.ageEligibility!=='self_declared_adult')return reply.code(202).send(accepted);
       }
-      return fail(reply,429,'otp_request_conflict');
-    }catch(_error) {return fail(reply,503,'auth_store_unavailable');}
+      await issueEmailChallenge({db,emailHash:hash,requestId:id,
+        makeItems:({code,nonce,version,now})=>[
+          {Put:{TableName:authTable,Item:{...challengeKey(hash),kind:'email_otp',purpose,
+            codeDigest:otpDigest(hash,nonce,code),nonce,version,issuedAt:now,
+            expiresAt:now+OTP_LIFETIME_SECONDS,attempts:0}}},
+          purpose==='signup'
+            ? {ConditionCheck:{TableName:authTable,Key:linkKey(hash),ConditionExpression:'attribute_not_exists(PK)'}}
+            : {ConditionCheck:{TableName:authTable,Key:linkKey(hash),ConditionExpression:'uid = :uid',ExpressionAttributeValues:{':uid':uid}}},
+          ...(uid?[{ConditionCheck:{TableName:usersTable,Key:userKey(uid),
+            ConditionExpression:'#status = :active AND ageEligibility = :adult',
+            ExpressionAttributeNames:{'#status':'status'},ExpressionAttributeValues:{':active':'active',':adult':'self_declared_adult'}}}]:[])
+        ],
+        onIssued:({code,now})=>outbox.set(localOutboxKey(hash),{code,expiresAt:now+OTP_LIFETIME_SECONDS})
+      });
+      return reply.code(202).send(accepted);
+    }catch(_error){return fail(reply,503,'auth_store_unavailable');}
   });
 
   // Explicitly local, gated by P00's private local key; no public bypass or OTP in logs.

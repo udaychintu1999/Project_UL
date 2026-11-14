@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
 
@@ -31,6 +32,7 @@ class _AuthScreenState extends State<AuthScreen> {
   String mode = 'password'; // password | signup | otp | recovery
   String accountPanel = 'home'; // home | setup | options | create | change
   bool? passwordConfigured; // unknown for an existing account reached by OTP
+  final Set<String> touched = <String>{}; // local guidance, never an authorization gate
 
   SignupPasswordAuthService? get registration => widget.service is SignupPasswordAuthService
       ? widget.service as SignupPasswordAuthService : null;
@@ -59,6 +61,7 @@ class _AuthScreenState extends State<AuthScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       mode = next;
+      touched.clear();
       message = 'Ready.';
       codeRequested = false;
       localCode = null;
@@ -80,6 +83,7 @@ class _AuthScreenState extends State<AuthScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       accountPanel = next;
+      touched.clear();
       message = next == 'home' ? 'Account ready.' : 'Manage your password.';
       password.clear();
       confirm.clear();
@@ -88,16 +92,66 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  bool passwordMatches(TextEditingController first, TextEditingController? second) {
-    if (second != null && first.text != second.text) {
-      setState(() => message = 'Passwords do not match.');
-      return false;
+  // Per-field feedback: the backend remains authoritative for rate limits,
+  // eligibility, compromised passwords and every authentication decision.
+  String? fieldError(String key) {
+    switch (key) {
+      case 'auth-email':
+        final value = email.text.trim().toLowerCase();
+        if (value.isEmpty) return 'Enter your email address.';
+        if (value.length > 254 || value.contains('..') ||
+            !RegExp(r"^[a-z0-9.!#\$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$")
+                .hasMatch(value)) {
+          return 'Enter a valid email address.';
+        }
+        return null;
+      case 'auth-password':
+      case 'auth-current-password':
+        return (key == 'auth-password' ? password.text : currentPassword.text).isEmpty
+            ? 'Enter your password.' : null;
+      case 'auth-create-password':
+      case 'auth-new-password':
+      case 'auth-recovery-password':
+        final value = key == 'auth-create-password' ? password.text
+            : key == 'auth-new-password' ? newPassword.text : newPassword.text;
+        final length = value.runes.length;
+        if (length < 15) return '$length/15 characters — add ${15 - length} more.';
+        if (length > 256 || utf8.encode(value).length > 1024 || RegExp(r'[\x00-\x1F\x7F]').hasMatch(value)) {
+          return 'Choose a shorter password without control characters.';
+        }
+        return null;
+      case 'auth-confirm-password':
+      case 'auth-recovery-confirm':
+        final target = key == 'auth-confirm-password' ? password.text : newPassword.text;
+        if (confirm.text.isEmpty) return 'Confirm your password.';
+        return confirm.text == target ? null : "Passwords don't match.";
+      case 'auth-code':
+      case 'auth-recovery-code':
+        final value = key == 'auth-code' ? code.text : recoveryCode.text;
+        return RegExp(r'^\d{6}$').hasMatch(value) ? null : 'Enter all six digits.';
+      case 'auth-dob':
+        if (dob == null) return 'Select your date of birth.';
+        final today = DateTime.now();
+        final eighteenth = DateTime(today.year - 18,today.month,today.day);
+        return dob!.isAfter(eighteenth) ? 'You must be at least 18 years old.' : null;
+      case 'auth-consent':
+        return consent ? null : 'Confirm your date of birth and registration consent.';
     }
-    if (first.text.runes.length < 15) {
-      setState(() => message = 'Use at least 15 characters. Symbols are optional.');
-      return false;
-    }
-    return true;
+    return null;
+  }
+
+  void touchedField(String field) => setState(() => touched.add(field));
+  bool validate(List<String> fields) {
+    setState(() => touched.addAll(fields));
+    return fields.every((field) => fieldError(field) == null);
+  }
+  Widget inlineError(String key) {
+    final error = touched.contains(key) ? fieldError(key) : null;
+    return error == null ? const SizedBox.shrink() : Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Semantics(liveRegion:true, child: Text(error,
+          key: Key('$key-error'),style: const TextStyle(color: Colors.red))),
+    );
   }
 
   Future<void> run(Future<AuthResult> Function() task, {String action = ''}) async {
@@ -177,7 +231,7 @@ class _AuthScreenState extends State<AuthScreen> {
       lastDate: now,
       helpText: 'Select your date of birth',
     );
-    if (mounted && chosen != null) setState(() => dob = chosen);
+    if (mounted && chosen != null) setState(() {dob = chosen;touched.add('auth-dob');});
   }
 
   String formattedDate(DateTime d) =>
@@ -190,7 +244,14 @@ class _AuthScreenState extends State<AuthScreen> {
     autofillHints: const [AutofillHints.email],
     keyboardType: TextInputType.emailAddress,
     textInputAction: TextInputAction.next,
-    decoration: const InputDecoration(labelText: 'Email address', border: OutlineInputBorder()),
+    onChanged: (_) => setState(() {
+      touched.add('auth-email');
+      // Do not display an OTP requested for a previous email address.
+      codeRequested = false; localCode = null; code.clear();
+      recoveryRequested = false; recoveryLocalCode = null; recoveryCode.clear();
+    }),
+    decoration: InputDecoration(labelText: 'Email address', border: const OutlineInputBorder(),
+      errorText: touched.contains('auth-email') ? fieldError('auth-email') : null),
   );
 
   Widget passwordField(String label, TextEditingController controller, String fieldKey) => TextField(
@@ -201,7 +262,9 @@ class _AuthScreenState extends State<AuthScreen> {
     autocorrect: false,
     enableSuggestions: false,
     autofillHints: const [AutofillHints.password],
+    onChanged: (_) => touchedField(fieldKey),
     decoration: InputDecoration(
+      errorText: touched.contains(fieldKey) ? fieldError(fieldKey) : null,
       labelText: label,
       border: const OutlineInputBorder(),
       suffixIcon: IconButton(
@@ -213,8 +276,12 @@ class _AuthScreenState extends State<AuthScreen> {
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(token != null ? 'U_luv · Account'
+  Widget build(BuildContext context) => PopScope(
+    // P01-2: authenticated Back must not reveal the P00 diagnostics buttons.
+    // P01-3 will handle app-restart persistence separately.
+    canPop: token == null,
+    child: Scaffold(
+    appBar: AppBar(automaticallyImplyLeading: token == null, title: Text(token != null ? 'U_luv · Account'
       : mode == 'signup' ? 'U_luv · Sign up'
       : mode == 'otp' ? 'U_luv · Email code login'
       : mode == 'recovery' ? 'U_luv · Recover password' : 'U_luv · Log in')),
@@ -251,9 +318,9 @@ class _AuthScreenState extends State<AuthScreen> {
               passwordField('Password', password, 'auth-password'),
               const SizedBox(height: 10),
               FilledButton(key: const Key('auth-password-login'),
-                onPressed: busy ? null : () => run(
+                onPressed: busy ? null : () => validate(['auth-email','auth-password']) ? run(
                   () => passwords!.passwordLogin(email.text, password.text),
-                  action: 'password-login'),
+                  action: 'password-login') : null,
                 child: const Text('Log in with password')),
               TextButton(onPressed: busy ? null : () => chooseMode('recovery'),
                   child: const Text('Forgot your password?')),
@@ -264,10 +331,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 : 'Sign in using a one-time email code.'),
               const SizedBox(height: 8),
               FilledButton(key: const Key('auth-request'),
-                onPressed: busy ? null : () => run(
+                onPressed: busy ? null : () => validate(['auth-email']) ? run(
                   () => mode == 'signup' && registration != null
-                    ? registration!.requestSignupCode(email.text) : widget.service.requestCode(email.text), action: 'request'),
+                    ? registration!.requestSignupCode(email.text) : widget.service.requestCode(email.text), action: 'request') : null,
                 child: const Text('Request email code')),
+              const Text('A maximum of 5 email codes may be issued per address in 24 hours. If eligible, check for a code. Already registered? Log in.'),
               if (codeRequested) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(key: const Key('auth-outbox'),
@@ -279,32 +347,35 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 10),
                 TextField(key: const Key('auth-code'), controller: code, enabled: !busy,
                   keyboardType: TextInputType.number, maxLength: 6,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(labelText: '6-digit code', border: OutlineInputBorder())),
+                  onChanged: (_) => touchedField('auth-code'),
+                  decoration: InputDecoration(labelText: '6-digit code', border: const OutlineInputBorder(),
+                    errorText: touched.contains('auth-code') ? fieldError('auth-code') : null)),
                 if (mode == 'signup') ...[
                   OutlinedButton(key: const Key('auth-dob'),
-                    onPressed: busy ? null : chooseDate,
+                    onPressed: busy ? null : () {touchedField('auth-dob');chooseDate();},
                     child: Text(dob == null ? 'Select date of birth' : 'Date of birth: ${formattedDate(dob!)}')),
                   CheckboxListTile(key: const Key('auth-consent'), value: consent,
-                    onChanged: busy ? null : (v) => setState(() => consent = v ?? false),
+                    onChanged: busy ? null : (v) => setState(() {consent = v ?? false;touched.add('auth-consent');}),
                     controlAffinity: ListTileControlAffinity.leading,
                     title: const Text('I confirm that my date of birth is accurate and agree to register.')),
+                  inlineError('auth-dob'),
+                  inlineError('auth-consent'),
                   const SizedBox(height: 8),
                   passwordField('Create password (15+ characters)', password, 'auth-create-password'),
                   const SizedBox(height: 8),
                   passwordField('Confirm password', confirm, 'auth-confirm-password'),
                   FilledButton(key: const Key('auth-signup-register'),
-                    onPressed: busy || dob == null || !consent || code.text.length != 6 || registration == null
-                      ? null : () => passwordMatches(password, confirm)
+                    onPressed: busy || registration == null
+                      ? null : () => validate(['auth-email','auth-code','auth-dob','auth-consent','auth-create-password','auth-confirm-password'])
                         ? run(() => registration!.registerAccount(email:email.text, code:code.text,
                           dateOfBirth:formattedDate(dob!), consent:consent, password:password.text),action:'signup') : null,
                     child: const Text('Create account')),
                 ] else
                   FilledButton(key: const Key('auth-verify'),
                     onPressed: busy || code.text.length != 6
-                      ? null : () => run(() => widget.service.verify(
+                      ? null : () => validate(['auth-email','auth-code']) ? run(() => widget.service.verify(
                         email: email.text, code: code.text,
-                        dateOfBirth: '', consent: false), action: 'verify'),
+                        dateOfBirth: '', consent: false), action: 'verify') : null,
                     child: const Text('Sign in with email code')),
 
               ],
@@ -312,8 +383,8 @@ class _AuthScreenState extends State<AuthScreen> {
             if (mode == 'recovery' && passwords != null) ...[
               const Text('Reset your password with a one-time email recovery code.'),
               FilledButton(key: const Key('auth-recovery-request'),
-                onPressed: busy ? null : () => run(
-                  () => passwords!.requestPasswordRecovery(email.text), action: 'recovery-request'),
+                onPressed: busy ? null : () => validate(['auth-email']) ? run(
+                  () => passwords!.requestPasswordRecovery(email.text), action: 'recovery-request') : null,
                 child: const Text('Request recovery code')),
               if (recoveryRequested) ...[
                 OutlinedButton(key: const Key('auth-recovery-outbox'),
@@ -324,14 +395,16 @@ class _AuthScreenState extends State<AuthScreen> {
                   SelectableText('Local recovery code: $recoveryLocalCode', key: const Key('auth-recovery-local-code')),
                 TextField(key: const Key('auth-recovery-code'), controller: recoveryCode,
                   enabled: !busy, maxLength: 6, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Recovery code')),
+                  onChanged: (_) => touchedField('auth-recovery-code'),
+                  decoration: InputDecoration(labelText: 'Recovery code',
+                    errorText: touched.contains('auth-recovery-code') ? fieldError('auth-recovery-code') : null)),
                 const SizedBox(height: 8),
                 passwordField('New password', newPassword, 'auth-recovery-password'),
                 const SizedBox(height: 8),
                 passwordField('Confirm new password', confirm, 'auth-recovery-confirm'),
                 const SizedBox(height: 8),
                 FilledButton(key: const Key('auth-recovery-reset'),
-                  onPressed: busy ? null : () => passwordMatches(newPassword, confirm)
+                  onPressed: busy ? null : () => validate(['auth-email','auth-recovery-code','auth-recovery-password','auth-recovery-confirm'])
                     ? run(() => passwords!.resetPassword(email.text, recoveryCode.text, newPassword.text),
                         action: 'password-reset') : null,
                   child: const Text('Reset password')),
@@ -351,7 +424,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 8),
               passwordField('Confirm password', confirm, 'auth-confirm-password'),
               FilledButton(key: const Key('auth-password-set'),
-                onPressed: busy ? null : () => passwordMatches(password, confirm)
+                onPressed: busy ? null : () => validate(['auth-create-password','auth-confirm-password'])
                   ? run(() => passwords!.setPassword(token!, password.text), action: 'password-set') : null,
                 child: const Text('Create password')),
               if (accountPanel == 'create') TextButton(
@@ -364,7 +437,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 8),
               passwordField('New password', newPassword, 'auth-new-password'),
               FilledButton(key: const Key('auth-password-change'),
-                onPressed: busy ? null : () => passwordMatches(newPassword, null)
+                onPressed: busy ? null : () => validate(['auth-current-password','auth-new-password'])
                   ? run(() => passwords!.changePassword(token!, currentPassword.text, newPassword.text),
                       action: 'password-change') : null,
                 child: const Text('Change password')),
@@ -405,5 +478,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ]),
       )),
     )),
+    ),
   );
 }

@@ -4,7 +4,8 @@ import type {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import {GetCommand, PutCommand, TransactWriteCommand, UpdateCommand} from '@aws-sdk/lib-dynamodb';
 import type {DynamoDBDocumentClient, TransactWriteCommandInput} from '@aws-sdk/lib-dynamodb';
 import {hash as argonHash, verify as argonVerify, Algorithm} from '@node-rs/argon2';
-import {bearerToken, challengeState, equalDigest, keyedHash, normalizeEmail, OTP_COOLDOWN_SECONDS, OTP_HOURLY_LIMIT, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp} from './policy.js';
+import {bearerToken, challengeState, equalDigest, keyedHash, normalizeEmail, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp} from './policy.js';
+import {issueEmailChallenge, requestIdFromHeader} from './email-budget.js';
 import {compromisedCandidate, LOGIN_ATTEMPT_LIMIT, LOGIN_WINDOW_SECONDS, PASSWORD_RECENT_AUTH_SECONDS, PASSWORD_RESET_LIFETIME_SECONDS, remainingWindow, validPassword, canonicalPassword} from './password-policy.js';
 
 const AUTH='uluv_auth_links';
@@ -25,7 +26,6 @@ export function registerLocalPasswordAuth(app:FastifyInstance,db:DynamoDBDocumen
   const emailHash=(email:string)=>keyedHash(secret,'email-subject',email);
   const emailLink=(hashed:string)=>({PK:`AUTH#EMAIL#${hashed}`,SK:'META'});
   const rateKey=(hashed:string)=>({PK:`PASSWORD#LOGIN#${hashed}`,SK:'RATE'});
-  const resetRate=(hashed:string)=>({PK:`PASSWORD#RESET#${hashed}`,SK:'RATE'});
   const resetChallenge=(hashed:string)=>({PK:`PASSWORD#RESET#${hashed}`,SK:'CHALLENGE'});
   const resetHash=(hashed:string,nonce:string,code:string)=>keyedHash(secret,'password-reset-otp',`${hashed}:${nonce}:${code}`);
   // Dummy hash prevents a missing account from skipping expensive verification.
@@ -128,28 +128,32 @@ export function registerLocalPasswordAuth(app:FastifyInstance,db:DynamoDBDocumen
     }catch(_error) {return fail(reply,503,'auth_store_unavailable');}
   });
 
-  // Recovery always responds identically for existing and unknown emails.
+  // Recovery and signup/login share the SAME per-email rolling email budget.
+  // Unknown/restricted/passwordless accounts never trigger a paid email.
   app.post('/v1/auth/password/recovery/request',async(request,reply)=>{
     const data=body(request.body), email=normalizeEmail(data.email);
     if(!email)return fail(reply,400,'invalid_email');
-    const hashed=emailHash(email), key=resetRate(hashed), challenge=resetChallenge(hashed);
-    const accepted={status:'recovery_requested',delivery:'local_dev_outbox'};
+    const requestId=requestIdFromHeader(request.headers['x-uluv-request-id']);
+    if(!requestId)return fail(reply,400,'invalid_request_id');
+    const hashed=emailHash(email);
+    const accepted={status:'recovery_requested',delivery:'if_eligible'};
     try {
-      for(let i=0;i<4;i++) {
-        const t=now(), prev=(await db.send(new GetCommand({TableName:AUTH,Key:key,ConsistentRead:true}))).Item;
-        if(prev && Number(prev.nextAllowedAt)>t)return reply.code(202).send(accepted);
-        const inside=prev&&Number(prev!.windowEndAt)>t;
-        if(inside&&Number(prev!.issuedCount)>=OTP_HOURLY_LIMIT)return reply.code(202).send(accepted);
-        const nonce=randomUUID(),code=String(randomInt(0,1000000)).padStart(6,'0'),version=randomUUID();
-        try {
-          await db.send(new TransactWriteCommand({TransactItems:[
-            {Put:{TableName:AUTH,Item:{...key,version,nextAllowedAt:t+OTP_COOLDOWN_SECONDS,windowEndAt:inside?Number(prev!.windowEndAt):t+3600,issuedCount:inside?Number(prev!.issuedCount)+1:1,expiresAt:t+7200},ConditionExpression:prev?'#v = :old':'attribute_not_exists(PK)',ExpressionAttributeNames:prev?{'#v':'version'}:undefined,ExpressionAttributeValues:prev?{':old':prev.version}:undefined}},
-            {Put:{TableName:AUTH,Item:{...challenge,kind:'password_reset',nonce,version,codeDigest:resetHash(hashed,nonce,code),attempts:0,expiresAt:t+PASSWORD_RESET_LIFETIME_SECONDS}}}
-          ]}));
-          resetOutbox.set(hashed,{code,expiresAt:t+PASSWORD_RESET_LIFETIME_SECONDS});
-          return reply.code(202).send(accepted);
-        }catch(error){if(!conflict(error))throw error;}
-      }
+      const linked=await lookupByEmail(email);
+      if(!linked?.user)return reply.code(202).send(accepted);
+      const cred=(await db.send(new GetCommand({TableName:AUTH,Key:credentials(linked.uid),ConsistentRead:true}))).Item;
+      if(cred?.kind!=='password')return reply.code(202).send(accepted);
+      await issueEmailChallenge({db,emailHash:hashed,requestId,
+        makeItems:({code,nonce,version,now}):NonNullable<TransactWriteCommandInput['TransactItems']>=>[
+          {Put:{TableName:AUTH,Item:{...resetChallenge(hashed),kind:'password_reset',nonce,version,
+            codeDigest:resetHash(hashed,nonce,code),attempts:0,expiresAt:now+PASSWORD_RESET_LIFETIME_SECONDS}}},
+          {ConditionCheck:{TableName:AUTH,Key:emailLink(hashed),ConditionExpression:'uid = :uid',ExpressionAttributeValues:{':uid':linked.uid}}},
+          {ConditionCheck:{TableName:AUTH,Key:credentials(linked.uid),ConditionExpression:'#kind = :kind',
+            ExpressionAttributeNames:{'#kind':'kind'},ExpressionAttributeValues:{':kind':'password'}}},
+          {ConditionCheck:{TableName:USERS,Key:account(linked.uid),ConditionExpression:'#status = :active AND ageEligibility = :adult',
+            ExpressionAttributeNames:{'#status':'status'},ExpressionAttributeValues:{':active':'active',':adult':'self_declared_adult'}}}
+        ],
+        onIssued:({code,now})=>resetOutbox.set(hashed,{code,expiresAt:now+PASSWORD_RESET_LIFETIME_SECONDS})
+      });
       return reply.code(202).send(accepted);
     }catch(_error){return fail(reply,503,'auth_store_unavailable');}
   });

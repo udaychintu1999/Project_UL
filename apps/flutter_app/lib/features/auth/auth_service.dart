@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 class AuthResult {
   const AuthResult({required this.ok, required this.message, this.token, this.uniqueId, this.code, this.newAccount});
@@ -106,12 +107,12 @@ AuthResult parseAuthResponse({required String path, required int status, require
   return AuthResult(
     ok: true,
     message: switch (path) {
-      '/v1/auth/email/request' => 'Code issued to local development outbox (not a real email).',
+      '/v1/auth/email/request' => 'If this email is eligible, a code is available in the local development outbox. Already registered? Log in. Up to 5 codes per 24 hours.',
       '/v1/auth/password/login' => 'Signed in with password.',
       '/v1/auth/signup/register' => 'Account created. You are signed in.',
       '/v1/auth/password/set' => 'Password created.',
       '/v1/auth/password/change' => 'Password changed. Sign in again.',
-      '/v1/auth/password/recovery/request' => 'If eligible, a recovery code was issued to the local development outbox.',
+      '/v1/auth/password/recovery/request' => 'If eligible, a recovery code is available in the local development outbox. Up to 5 codes per 24 hours.',
       '/v1/auth/password/recovery/reset' => 'Password reset. Sign in with your new password.',
       '/v1/dev/password/recovery/outbox' => 'Local recovery code retrieved.',
       '/v1/auth/email/verify' => 'Signed in with email code.',
@@ -160,6 +161,15 @@ class HttpAuthService implements AuthService, PasswordAuthService, SignupPasswor
     _ => 'authentication request',
   };
 
+  static final Random _random = Random.secure();
+  static String _newRequestId() {
+    final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final h = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';
+  }
+
   // Return only fixed transport categories: never echo exception text, which can
   // include a URL or arbitrary response material in some Dart runtimes.
   static String httpFailureCategory(String message) {
@@ -195,6 +205,9 @@ class HttpAuthService implements AuthService, PasswordAuthService, SignupPasswor
       // than implicit streamed/chunked framing for these short JSON messages.
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
       if (dev) request.headers.set('x-uluv-dev-key', devToken);
+      if (path == '/v1/auth/email/request' || path == '/v1/auth/password/recovery/request') {
+        request.headers.set('x-uluv-request-id', _newRequestId());
+      }
       if (token != null) request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
       if (body != null) {
         final payload = utf8.encode(jsonEncode(body));

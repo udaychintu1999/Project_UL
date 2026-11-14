@@ -7,8 +7,20 @@ const policy=read('apps/api/src/features/auth/policy.ts');
 const ui=read('apps/flutter_app/lib/features/auth/auth_screen.dart');
 const client=read('apps/flutter_app/lib/features/auth/auth_service.dart');
 for(const path of ['/v1/auth/email/request','/v1/auth/email/verify','/v1/auth/me','/v1/auth/logout','/v1/dev/otp/outbox']) assert.ok(routes.includes(path),`Missing route ${path}`);
-for(const guard of ['TransactWriteCommand','ConditionExpression','ConsistentRead:true','OTP_COOLDOWN_SECONDS','OTP_HOURLY_LIMIT','OTP_MAX_ATTEMPTS','isAdultBirthDate','equalDigest','sessionDigest','requireSession','ageEligibility']) assert.ok(routes.includes(guard),`Missing auth guard ${guard}`);
-assert.match(routes,/rateKey\(hash\)/); // issuance throttle survives challenge deletion
+for(const guard of ['TransactWriteCommand','ConditionExpression','ConsistentRead:true','OTP_MAX_ATTEMPTS','isAdultBirthDate','equalDigest','sessionDigest','requireSession','ageEligibility']) assert.ok(routes.includes(guard),`Missing auth guard ${guard}`);
+const budget=read('apps/api/src/features/auth/email-budget.ts');
+const model=read('apps/api/src/features/auth/email-budget-policy.ts');
+assert.match(routes,/issueEmailChallenge/);
+assert.match(budget,/TransactWriteCommand/);
+assert.match(budget,/ConditionExpression/);
+assert.match(model,/EMAIL_DAILY_LIMIT = 5/);
+assert.match(model,/EMAIL_ROLLING_SECONDS = 86400/);
+assert.match(routes,/requestIdFromHeader/);
+assert.match(read('apps/api/src/features/auth/password.ts'),/issueEmailChallenge/);
+assert.match(read('apps/api/src/features/auth/password.ts'),/requestIdFromHeader/);
+assert.match(client,/x-uluv-request-id/);
+assert.match(ui,/canPop: token == null/); // authenticated back guard
+
 assert.match(routes,/if\(config\.env==='local'\) app\.post\('\/v1\/dev\/otp\/outbox'/);
 assert.match(app,/registerLocalEmailAuth/);
 assert.match(policy,/createHmac/);

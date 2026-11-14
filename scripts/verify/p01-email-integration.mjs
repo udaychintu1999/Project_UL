@@ -30,18 +30,16 @@ async function resetTestCooldown(){
   await db.send(new UpdateCommand({TableName:'uluv_auth_links',Key:rateKey,UpdateExpression:'SET nextAllowedAt = :past',ConditionExpression:'attribute_exists(PK)',ExpressionAttributeValues:{':past':Math.floor(Date.now()/1000)-1}}));
 }
 try {
-  // OTP sign-in for an unknown email may issue a non-enumerating challenge,
-  // but it must never silently provision a user or verified email link.
+  // No email is issued for an unknown login. Anonymous response remains neutral.
   assert.equal((await api('/v1/auth/email/request',{email:absentEmail,purpose:'login'})).status,202);
-  const unknownCode=(await api('/v1/dev/otp/outbox',{email:absentEmail},{dev:true})).body.code;
-  assert.equal((await api('/v1/auth/email/verify',{email:absentEmail,code:unknownCode})).status,401);
+  assert.equal((await api('/v1/dev/otp/outbox',{email:absentEmail},{dev:true})).status,404);
   assert.equal((await db.send(new GetCommand({TableName:'uluv_auth_links',Key:{PK:`AUTH#EMAIL#${absentHash}`,SK:'META'},ConsistentRead:true}))).Item,undefined);
   const noAuth=await api('/v1/auth/me',{}, {method:'GET'});
   assert.equal(noAuth.status,401);
   assert.equal((await api('/v1/auth/email/request',{email:'bad'})).status,400);
   const issued=await api('/v1/auth/email/request',{email,purpose:'signup'});
-  assert.equal(issued.status,202); assert.equal(issued.body.delivery,'local_dev_outbox');
-  assert.equal((await api('/v1/auth/email/request',{email,purpose:'signup'})).status,429);
+  assert.equal(issued.status,202); assert.equal(issued.body.delivery,'if_eligible');
+  assert.equal((await api('/v1/auth/email/request',{email,purpose:'signup'})).status,202); // neutral cooldown
   assert.equal((await api('/v1/dev/otp/outbox',{email})).status,403);
   const outbox=await api('/v1/dev/otp/outbox',{email},{dev:true});
   assert.equal(outbox.status,200);assert.match(outbox.body.code,/^\d{6}$/);

@@ -10,6 +10,7 @@ const commands = [
   'test:integration',
   'test:p01:integration',
   'test:p01:password:integration',
+  'test:p01:email-budget:integration',
   'test:flutter',
   'test:flutter:e2e',
   'test:flutter:p01-2:e2e',

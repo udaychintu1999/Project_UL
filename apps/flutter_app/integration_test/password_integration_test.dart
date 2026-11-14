@@ -210,8 +210,11 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('auth-mode-recovery')));
     await tester.tap(find.byKey(const Key('auth-mode-recovery')));
     await tester.pumpAndSettle();
+    // The API deliberately returns a privacy-safe acknowledgement whether or
+    // not an email was issued. Do NOT assert the old misleading 'was issued'
+    // text. The following local outbox read is what proves actual issuance.
     await tapAuth(tester, observer, AuthOperation.recoveryRequest,
-        const Key('auth-recovery-request'), 'If eligible, a recovery code was issued');
+        const Key('auth-recovery-request'), 'If eligible, a recovery code is available');
     await tapAuth(tester, observer, AuthOperation.recoveryOutbox,
         const Key('auth-recovery-outbox'), 'Local recovery code retrieved.');
     final recovery = find.byKey(const Key('auth-recovery-local-code'));

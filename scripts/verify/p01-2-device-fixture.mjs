@@ -7,7 +7,7 @@
  */
 import {createHmac, randomBytes, randomUUID} from 'node:crypto';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient, DeleteCommand} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient, DeleteCommand, GetCommand, UpdateCommand} from '@aws-sdk/lib-dynamodb';
 import {assertLocalHttpEndpoint} from '../lib/local-endpoints.mjs';
 
 function validateLocal() {
@@ -104,6 +104,37 @@ export async function createP012DeviceFixture() {
     }
     tokens.push(preflight.data.token);
     requireStatus((await post('/v1/auth/logout', {}, false, preflight.data.token)).status, 200, 'preflight logout');
+    // The initial signup OTP is a REAL issued code and must remain counted
+    // against the shared rolling 24-hour five-code budget. It also sets the
+    // real 60-second resend cooldown. The Android test immediately exercises
+    // password recovery, and its run time varies with the Gradle build/device.
+    // On this synthetic, disposable LOCAL fixture only, expire the cooldown;
+    // never remove issuance history, increase quota, or touch production code.
+    const sharedBudgetKey = key(`OTP#EMAIL#${emailHash}`, 'RATE');
+    const sharedBudget = (await db.send(new GetCommand({
+      TableName: 'uluv_auth_links', Key: sharedBudgetKey, ConsistentRead: true,
+    }))).Item;
+    if (!sharedBudget || typeof sharedBudget.version !== 'string' ||
+        !Array.isArray(sharedBudget.issuances) || sharedBudget.issuances.length !== 1) {
+      throw Error('Synthetic P01-2 fixture shared email budget was not initialized as expected.');
+    }
+    await db.send(new UpdateCommand({
+      TableName: 'uluv_auth_links', Key: sharedBudgetKey,
+      UpdateExpression: 'SET nextAllowedAt = :past',
+      ConditionExpression: '#v = :expected AND attribute_exists(issuances)',
+      ExpressionAttributeNames: {'#v': 'version'},
+      ExpressionAttributeValues: {
+        ':expected': sharedBudget.version,
+        ':past': Math.floor(Date.now() / 1000) - 1,
+      },
+    }));
+    const adjusted = (await db.send(new GetCommand({
+      TableName: 'uluv_auth_links', Key: sharedBudgetKey, ConsistentRead: true,
+    }))).Item;
+    if (!adjusted || !Array.isArray(adjusted.issuances) ||
+        adjusted.issuances.length !== 1 || adjusted.nextAllowedAt > Math.floor(Date.now() / 1000)) {
+      throw Error('Synthetic P01-2 fixture did not preserve the email budget while adjusting its cooldown.');
+    }
     return {email, password, uid, cleanup};
   } catch (error) {
     try { await cleanup(); } catch { /* Preserve the setup failure, no data in output. */ }

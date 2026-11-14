@@ -1,3 +1,5 @@
+> **P01-2 email-quota gate (2026-11-14):** `npm run test:p01:email-budget:integration` is mandatory real DynamoDB Local verification for atomic shared rolling limits, 5th/6th, concurrency, idempotency and no-send privacy. The combined `verify:p01-2` must include it before device/manual QA.
+
 # Test automation contract — all phases (P00–P17)
 
 ## AUTOMATED-FIRST: required in every phase

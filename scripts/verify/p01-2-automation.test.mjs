@@ -129,7 +129,59 @@ test('new signup requires password before committing identity and OTP login neve
   assert.match(ui, /auth-signup-register/);
   assert.match(ui, /mode == 'otp'/);
   assert.match(ui, /auth-recovery-confirm/);
-  assert.match(ui, /passwordMatches\(newPassword, confirm\)/);
+  assert.match(ui, /validate\(\['auth-email','auth-recovery-code','auth-recovery-password','auth-recovery-confirm'\]\)/);
+});
+
+test('recovery transaction items use explicit AWS SDK contextual typing', () => {
+  const password = read('apps/api/src/features/auth/password.ts');
+  const budget = read('apps/api/src/features/auth/email-budget.ts');
+  // Without an explicit return type, TypeScript infers optional undefined
+  // properties across the differing ConditionCheck name dictionaries.
+  assert.match(password,
+    /makeItems:\s*\(\{code,nonce,version,now\}\):NonNullable<TransactWriteCommandInput\['TransactItems'\]>\s*=>/);
+  assert.match(password, /import type \{DynamoDBDocumentClient, TransactWriteCommandInput\}/);
+  assert.match(budget, /makeItems:.*NonNullable<TransactWriteCommandInput\['TransactItems'\]>/);
+});
+
+test('P01-2 recovery widget validation waits for rendered field rebuilds', () => {
+  const widgets = read('apps/flutter_app/test/password_auth_widget_test.dart');
+  const ui = read('apps/flutter_app/lib/features/auth/auth_screen.dart');
+  const section = widgets.split("testWidgets('P01-2 new-password and recovery-code validation updates while typing'")[1]?.split('\n  });')[0];
+  assert.ok(section, 'Missing recovery inline-validation widget regression');
+  for (const [key, input] of [
+    ['auth-recovery-code', '123'],
+    ['auth-recovery-code', '123456'],
+    ['auth-recovery-password', 'short'],
+    ['auth-recovery-password', 'A long valid passphrase 2026'],
+    ['auth-recovery-confirm', 'not matching'],
+  ]) {
+    const call = `await tester.enterText(find.byKey(const Key('${key}')), '${input}');`;
+    const at = section.indexOf(call);
+    assert.ok(at >= 0, `Missing tested input: ${key}`);
+    assert.match(section.slice(at + call.length), /^\s*await tester\.pump\(\);/,
+      `Advance a frame after ${key} text input before checking decoration.errorText`);
+  }
+  assert.match(ui, /onChanged: \(_\) => touchedField\('auth-recovery-code'\)/);
+  assert.match(section, /A valid six-digit code must clear the inline error/);
+});
+
+test('P01-2 Android recovery checks the current privacy-safe message and a REAL outbox code', () => {
+  const device=read('apps/flutter_app/integration_test/password_integration_test.dart');
+  const service=read('apps/flutter_app/lib/features/auth/auth_service.dart');
+  const fixture=read('scripts/verify/p01-2-device-fixture.mjs');
+  assert.match(service, /If eligible, a recovery code is available in the local development outbox/);
+  assert.match(device, /'If eligible, a recovery code is available'/);
+  assert.doesNotMatch(device, /'If eligible, a recovery code was issued'/);
+  assert.match(device, /AuthOperation\.recoveryOutbox/);
+  assert.match(device, /expect\(localCode, matches\(RegExp/);
+  // Only the synthetic local test fixture may advance the cooldown. Keep the
+  // original issuance in the 24-hour quota and reject unexpected fixture state.
+  assert.match(fixture, /import \{DynamoDBDocumentClient, DeleteCommand, GetCommand, UpdateCommand\}/);
+  assert.match(fixture, /sharedBudgetKey = key\(`OTP#EMAIL#\$\{emailHash\}`, 'RATE'\)/);
+  assert.match(fixture, /sharedBudget\.issuances\.length !== 1/);
+  assert.match(fixture, /UpdateExpression: 'SET nextAllowedAt = :past'/);
+  assert.match(fixture, /ConditionExpression: '#v = :expected AND attribute_exists\(issuances\)'/);
+  assert.match(fixture, /adjusted\.issuances\.length !== 1/);
 });
 
 test('automated-first rule is permanent and P01-1 exception stays explicit', () => {
@@ -180,7 +232,7 @@ test('full verifier invokes P01-2 physical-device command after every prior gate
   assert.deepEqual(r.calls, [
     'run verify:p01-2:portable', 'run typecheck', 'run test:db',
     'run test:integration', 'run test:p01:integration',
-    'run test:p01:password:integration', 'run test:flutter',
+    'run test:p01:password:integration', 'run test:p01:email-budget:integration', 'run test:flutter',
     'run test:flutter:e2e', 'run test:flutter:p01-2:e2e',
   ]);
 });
@@ -205,4 +257,34 @@ test('P01-1 and P01-2 existing-user OTP widget transitions use a settled, real b
   }
   assert.match(legacy, /expect\(service\.verifies,1/);
   assert.match(account, /expect\(service\.otpLogins,1/);
+});
+
+
+test('backend shared email budget is enforced across signup OTP and recovery', () => {
+  const budget=read('apps/api/src/features/auth/email-budget.ts');
+  const plan=read('apps/api/src/features/auth/email-budget-policy.ts');
+  const email=read('apps/api/src/features/auth/routes.ts');
+  const recovery=read('apps/api/src/features/auth/password.ts');
+  const integration=read('scripts/verify/p01-email-budget-integration.mjs');
+  assert.match(budget,/TransactWriteCommand/);
+  assert.match(budget,/ConditionExpression/);
+  assert.match(plan,/EMAIL_DAILY_LIMIT = 5/);
+  assert.match(plan,/EMAIL_ROLLING_SECONDS = 86400/);
+  assert.match(plan,/OTP_COOLDOWN_SECONDS = 60/);
+  assert.match(read('apps/api/src/features/auth/policy.ts'),/OTP_COOLDOWN_SECONDS = 60/);
+  assert.match(email,/issueEmailChallenge/);
+  assert.match(recovery,/issueEmailChallenge/);
+  assert.match(integration,/Promise\.all/);
+  assert.match(integration,/issuances\.length,5/);
+  assert.match(read('scripts/verify/p01-2-verifier.mjs'),/test:p01:email-budget:integration/);
+});
+
+test('Flutter validates locally and prevents authenticated Back to diagnostics',()=>{
+  const ui=read('apps/flutter_app/lib/features/auth/auth_screen.dart');
+  assert.match(ui,/PopScope/);assert.match(ui,/canPop: token == null/);
+  assert.match(ui,/fieldError\(String key\)/);
+  assert.match(ui,/touchedField\('auth-code'\)/);
+  assert.match(ui,/auth-recovery-code/);
+  assert.match(ui,/auth-consent/);
+  assert.match(ui,/utf8\.encode\(value\)\.length/);
 });

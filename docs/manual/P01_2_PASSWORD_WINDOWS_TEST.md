@@ -1,3 +1,26 @@
+
+## 2026-11-14 — Shared email quota and UX hardening acceptance (current)
+
+Run **all feasible automated gates** before manual acceptance. Java DynamoDB Local must be started manually and Fastify must remain running; no Docker/AWS or real email provider.
+
+```cmd
+npm run verify:p01-2:portable
+npm run typecheck
+npm run test:db
+npm run test:p01:integration
+npm run test:p01:password:integration
+npm run test:p01:email-budget:integration
+npm run test:flutter
+npm run test:flutter:p01-2:e2e
+npm run verify:p01-2
+```
+
+The backend now enforces **five actual issued codes per normalized email per rolling 24 hours across signup, existing-user code login and password recovery**, with a 60-second cooldown and idempotent UUID requests. Flutter only validates local inputs and displays guidance; it never enforces quota. Public signup responses are neutral for an already-registered email to avoid exposing account membership; no code is issued in that case. Unknown login and ineligible recovery also issue no code. A real production mail provider, source-IP anti-abuse caps and cost controls remain release blockers.
+
+After automation, use `npm run dev:flutter` to verify: typed invalid email shows inline feedback, empty login password stays local, new password gives 15-character feedback, confirmation mismatch stays local, six-digit code/DOB/consent validation is clear, and authenticated Back does not show the diagnostic buttons. App-restart persistence is **P01-3 and not implemented here**. Share sanitized PASS/FAIL for each step; never paste secrets, passwords or OTPs.
+
+**Historical instructions below:** Earlier 8-character-plus-symbol password rules were superseded by NIST-aligned 15-character minimum with no mandatory symbols. Earlier OTP hourly counters were superseded by this shared rolling 24-hour quota.
+
 > **Current P01-2 implementation update (2026-11-13):** The owner subsequently authorized proceeding after the design review. Source now splits signup from existing-user OTP login and adopts the new NIST password rules; the authoring portable suite passes, but Windows/Flutter/real database/Android acceptance remains **UNVERIFIED**. P01-3 implementation remains held. See `docs/qa/P01_2_INTENT_AND_NIST_IMPLEMENTATION_2026_11_13.md`. The earlier design-freeze notes below are historical and no longer describe the current source.
 
 > **P01-2/P01-3 design freeze (2026-11-13):** Analysis/documentation only. Owner approved NEW NIST password rules (15 Unicode code points, no mandatory symbol); current code/tests still enforce 8+symbol. Source behavior has NOT been updated. See `docs/design_reviews/P01_2_P01_3_DESIGN_AUDIT_READ_FIRST.md` and `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`. Known P01-2 issues: Email code login incorrectly requires DOB/consent and Android recovery Reset tap did not hit button. Do not mark P01-2 complete or start P01-3 implementation.

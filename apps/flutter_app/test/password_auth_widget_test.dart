@@ -208,4 +208,84 @@ void main(){
     expect(service.loginInputs[2].$1 == email && service.loginInputs[2].$2 == updated, isTrue,
         reason: 'Updated-password login submitted unexpected values; no credentials logged.');
   });
+  testWidgets('P01-2 empty email, malformed email and empty password are handled before API', (tester) async {
+    final service = PasswordFake();
+    await tester.pumpWidget(MaterialApp(home: AuthScreen(service:service)));
+    await tester.tap(find.byKey(const Key('auth-password-login')));
+    await tester.pumpAndSettle();
+    expect(service.logins,0);
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-email'))).decoration!.errorText,
+      'Enter your email address.');
+    await tester.enterText(find.byKey(const Key('auth-email')), 'not an email');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-email'))).decoration!.errorText,
+      'Enter a valid email address.');
+    await tester.enterText(find.byKey(const Key('auth-email')), 'valid@example.invalid');
+    await tester.tap(find.byKey(const Key('auth-password-login')));
+    await tester.pumpAndSettle();
+    expect(service.logins,0);
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-password'))).decoration!.errorText,
+      'Enter your password.');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'legacy-short!');
+    await tester.tap(find.byKey(const Key('auth-password-login')));
+    await tester.pumpAndSettle();
+    expect(service.logins,1,reason:'Legacy passwords remain eligible at login');
+  });
+
+  testWidgets('P01-2 new-password and recovery-code validation updates while typing', (tester) async {
+    final service=PasswordFake();
+    await tester.pumpWidget(MaterialApp(home:AuthScreen(service:service)));
+    await tester.tap(find.byKey(const Key('auth-mode-recovery')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('auth-email')),'recover@example.invalid');
+    await tester.tap(find.byKey(const Key('auth-recovery-request')));
+    await tester.pumpAndSettle();
+    // TextEditingController is updated immediately, but onChanged/setState
+    // schedules a rebuild. Check the rendered InputDecoration only after a frame.
+    await tester.enterText(find.byKey(const Key('auth-recovery-code')), '123');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-recovery-code'))).decoration!.errorText,
+      'Enter all six digits.');
+    await tester.enterText(find.byKey(const Key('auth-recovery-code')), '123456');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-recovery-code'))).decoration!.errorText,
+      isNull, reason: 'A valid six-digit code must clear the inline error.');
+    await tester.enterText(find.byKey(const Key('auth-recovery-password')), 'short');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-recovery-password'))).decoration!.errorText,
+      contains('15 characters'));
+    await tester.enterText(find.byKey(const Key('auth-recovery-password')), 'A long valid passphrase 2026');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-recovery-password'))).decoration!.errorText,
+      isNull, reason: 'A valid passphrase must clear the inline length error.');
+    await tester.enterText(find.byKey(const Key('auth-recovery-confirm')), 'not matching');
+    await tester.pump();
+    expect(tester.widget<TextField>(find.byKey(const Key('auth-recovery-confirm'))).decoration!.errorText,
+      "Passwords don't match.");
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('auth-recovery-reset')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('auth-recovery-reset')));
+    await tester.pumpAndSettle();
+    expect(service.resets,0,reason:'Invalid confirmation must not reach Fastify');
+  });
+
+  testWidgets('P01-2 authenticated Back cannot reveal P00 diagnostic route', (tester) async {
+    final service=PasswordFake();
+    await tester.pumpWidget(MaterialApp(home:Scaffold(body:Builder(builder:(context)=>
+      FilledButton(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(
+        builder:(_)=>AuthScreen(service:service))), child:const Text('Open auth'))))));
+    await tester.tap(find.text('Open auth'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('auth-email')),'test@example.invalid');
+    await tester.enterText(find.byKey(const Key('auth-password')),'A valid example passphrase');
+    await tester.tap(find.byKey(const Key('auth-password-login')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-me')),findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-me')),findsOneWidget,
+      reason:'Back must retain the signed-in account, not show P00');
+  });
 }

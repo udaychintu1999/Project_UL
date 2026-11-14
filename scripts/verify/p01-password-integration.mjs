@@ -41,6 +41,8 @@ try {
   assert.equal((await api('/v1/auth/me',{}, {method:'GET',token:pwLogin.body.token})).status,401,'password change must revoke prior sessions');
   assert.equal((await api('/v1/auth/password/login',{email,password:password1})).status,401);
   const changed=await api('/v1/auth/password/login',{email,password:password2});assert.equal(changed.status,200);sessions.push(changed.body.token);
+  // Synthetic test fixture advances the shared OTP/recovery cooldown without waiting 60 seconds.
+  await db.send(new UpdateCommand({TableName:auth,Key:authKey(`OTP#EMAIL#${emailHash}`,'RATE'),UpdateExpression:'SET nextAllowedAt = :past',ExpressionAttributeValues:{':past':Math.floor(Date.now()/1000)-1}}));
   assert.equal((await api('/v1/auth/password/recovery/request',{email})).status,202);
   assert.equal((await api('/v1/dev/password/recovery/outbox',{email})).status,403);
   const resetOtp=await api('/v1/dev/password/recovery/outbox',{email},{dev:true});assert.equal(resetOtp.status,200);

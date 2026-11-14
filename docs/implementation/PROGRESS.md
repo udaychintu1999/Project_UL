@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **CURRENT STATUS 2026-11-14 — DESIGN REVIEW:** The owner explicitly reported all latest P01-2 automated tests and manual UX checks PASS after the existing-email-signup notice update, so **P01-2 is OWNER-ACCEPTED**. This is owner-reported evidence; older partial/pending entries below are historical snapshots and must not override this checkpoint. **P01-3: DESIGN REVIEWED, NOT IMPLEMENTED, NOT TESTED**; see `docs/design_reviews/P01_3_DEEP_ANALYSIS_MASTER_2026_11_14.md`. **P02: NOT STARTED.** P01-1 Android OTP automation remains a documented FAILED dev-local exception (not silently passed).
+
 > **2026-11-14 P01-2 existing-email signup:** Owner earlier verified full pipeline PASS. New signup-only explicit registration error + Flutter login action added; no-code/quota rule preserved. Security enumeration risk documented. Local portable tests PASS; post-patch Windows/Android UNVERIFIED. P01-3/P02 not started. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 > **2026-11-14 — P01-2 Android recovery E2E correction (pending Windows rerun):** Owner USB Android reported a FAIL when the device test still asserted obsolete `was issued` copy; the Flutter client now correctly displays a privacy-safe `if eligible` acknowledgement. Also identified a synthetic-fixture cross-purpose cooldown that can suppress a later recovery issuance on fast device runs. Narrow **test/fixture-only** correction aligns the expected message, preserves real outbox proof and advances only the disposable fixture cooldown while retaining its consumed rolling quota. See `docs/qa/P01_2_ANDROID_RECOVERY_ACK_AND_FIXTURE_COOLDOWN_2026_11_14.md`. Owner real-device check after patch **UNVERIFIED**; P01-3 not started.

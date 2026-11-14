@@ -1,3 +1,9 @@
+## 2026-11-14 — P01-3 V3 approved design package (DOCS ONLY)
+
+Owner confirmed simple refresh rotation, CAS single-winner, no grace/recovery receipts and fresh login on irrecoverable failure; approved Android Keystore device proof and server secret key isolation. Updated 84-case matrix, mandatory real DB + Android acceptance tests, UX/runbook, project checkpoint and threat register. No app/backend/scripts/dependencies/DB changed; no P01-3 test results. P01-2 owner accepted; P01-1 Android OTP automated local exception retained. See `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md`.
+
+---
+
 > **2026-11-14:** P01-2 existing-signup-email notice + Go to Log in; preserves no-send quota and session behavior; public enumeration risk documented; authoring portable PASS, Windows pending. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 ## 2026-11-14 — P01-2 Android recovery status and local fixture cooldown

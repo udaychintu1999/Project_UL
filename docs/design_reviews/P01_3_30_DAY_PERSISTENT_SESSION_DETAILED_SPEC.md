@@ -1,3 +1,8 @@
+> **AUTHORITATIVE 2026-11-14 P01-3 V3 APPROVED DESIGN:** See [`P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md`](P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md). Owner accepted simple single-use refresh rotation (one atomic winner; old tokens always rejected; no grace/retry receipts; re-login when unrecoverable), Android Keystore device proof, and purpose-separated server secrets. The earlier candidate lost-response recovery protocol and PENDING decision markers below are **SUPERSEDED HISTORICAL DESIGN TEXT**, not implementation instructions. P01-3 is DESIGN APPROVED but NOT CODED; P01-2 was owner-accepted, and P01-1 Android OTP automation remains a documented local-development-only FAIL.
+
+
+> **2026-11-14 superseding design addendum:** The deeper code-specific design, test matrix and unresolved decisions are in `P01_3_DEEP_ANALYSIS_MASTER_2026_11_14.md`, `P01_3_API_DYNAMODB_TOKEN_PROTOCOL_V2.md`, `P01_3_FLUTTER_ANDROID_LIFECYCLE_V2.md`, `P01_3_PERMUTATION_EDGE_CASE_MATRIX.md`, `P01_3_AUTOMATED_FIRST_VERIFICATION_MATRIX.md`, and `P01_3_DECISION_AND_THREAT_REGISTER.md`. The following 2026-11-13 proposal remains historical context, not authorized implementation. P01-2 has since been owner-accepted.
+
 # P01-3 — Secure persistent sign-in: complete design and acceptance contract
 
 **Status:** PROPOSED DESIGN, NOT IMPLEMENTED. **Date:** 2026-11-13. **Dependency:** P01-2 identity, eligibility, password and OTP semantics must be reviewed and stabilized before implementation. **No code, database, or cloud operations authorized by this document.**

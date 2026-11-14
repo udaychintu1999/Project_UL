@@ -1,3 +1,6 @@
+
+> **2026-11-14 P01-3 pending decisions:** `docs/design_reviews/P01_3_DECISION_AND_THREAT_REGISTER.md` defines D13-01…D13-16 and recommended but NOT YET owner-approved parameters. P01-2 accepted; do not treat proposed P01-3 designs as implemented decisions.
+
 > **ADR-IMP-014 (2026-11-14):** Owner requests direct “email already registered” on signup code request, with no OTP/quota debit. Implements signup-only 409, explicitly accepts a development UX trade-off but **does not approve production exposure without a further security review**. Name/handle collection to be specified in P02; immutable UID is created in P01. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 # Implementation planning decisions (2026-11-10)
@@ -18,3 +21,8 @@
 - ADR-IMP-011: P01-2 new password policy is NIST SP 800-63B-4-aligned (15+ Unicode code points for single-factor email+password, no mandatory punctuation/character-class composition, >=64 supported and meaningful compromised-password screening). Replaces the previous owner decision of 8+symbol. **Existing source/tests still enforce the old rule; implementation pending.** See `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`.
 - ADR-IMP-012: P01-2/P01-3 implementation is on hold for a full, traceable state-machine/edge-case/design approval. Confirmed P01-2 defect: Email-code login shows signup DOB/consent and can create an account. The latest Android recovery E2E failure is an untappable Reset target, NOT proven reset-API failure. Keep both recorded as failures.
 - ADR-IMP-013: P01-3 is 30-day persistent sign-in, NOT P02. NIST AAL1 overall reauthentication (recommended <=30d) and persistence of bearer session secrets require explicit policy/technical review before implementing silent renewal.
+
+
+## 2026-11-14 — P01-3 V3 approved (documentation-only)
+
+Owner approved Android Keystore non-exportable device key, purpose-separated server secrets, 30-day reauthentication design defaults, simple single-use refresh rotation and atomic DynamoDB CAS. Explicit **NO** to complex response-loss receipt/grace recovery: reject old refresh and request interactive login if recovery impossible. Network/503 Retry retains sealed credential; client coalesces refresh. **P01-3 implementation remains NOT STARTED** until a separate coding go-ahead. See `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and `docs/design_reviews/P01_3_DECISION_AND_THREAT_REGISTER.md`.

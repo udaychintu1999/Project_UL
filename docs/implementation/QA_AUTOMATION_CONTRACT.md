@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **2026-11-14 P01-3 acceptance gate:** Read `docs/design_reviews/P01_3_AUTOMATED_FIRST_VERIFICATION_MATRIX.md`. P01-3 must test real Android device/Keystore, actual Java DynamoDB/Fastify CAS/replay/epoch/revocation, 30-day server-time boundaries and cross-device scenarios. Do not accept portable-only checks or P00 diagnostic device clicks as persistence verification. Current P01-3 commands shown in the matrix are PROPOSED, not yet implemented.
+
 > **P01-2 email-quota gate (2026-11-14):** `npm run test:p01:email-budget:integration` is mandatory real DynamoDB Local verification for atomic shared rolling limits, 5th/6th, concurrency, idempotency and no-send privacy. The combined `verify:p01-2` must include it before device/manual QA.
 
 # Test automation contract — all phases (P00–P17)

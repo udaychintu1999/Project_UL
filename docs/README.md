@@ -1,3 +1,11 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
 **Manual verification escalation (all phases):** AI Chats and coding agents must proactively request an owner-run manual test when repeated/unavailable automation cannot validate a real workflow. Exact commands, steps, expected results, and manual-vs-automated evidence rules: [`qa/MANUAL_VERIFICATION_ESCALATION.md`](qa/MANUAL_VERIFICATION_ESCALATION.md).
 
 > **Current engineering state (2026-11-13):** P00 owner-confirmed `CORE_FLOW_VERIFIED`; P01 slice 01 in progress and `PARTIALLY_VERIFIED`. Owner's Windows P01 API/DB tests passed, Flutter analyzer/widgets passed, TypeScript and USB Android tests exposed repairable defects; a small corrective patch awaits owner Windows re-verification. See `qa/P01_WINDOWS_REPAIR_2026_11_13.md` and `manual/P01_EMAIL_OTP_WINDOWS_TEST.md`. Older documentation/handoff history below should not override `NEXT_STEP.md` or `implementation/PROGRESS.md`.

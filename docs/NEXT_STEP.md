@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **NEXT STEP (2026-11-14) — P01-3 REVIEW AND DECISION GATE:** Owner has accepted latest P01-2 automated and manual checks. P01-3 code is NOT started; full analysis is in `docs/design_reviews/P01_3_DEEP_ANALYSIS_MASTER_2026_11_14.md` and six supporting P01-3 design docs. Resolve D13-01…D13-16 (especially 30-day reauth, device binding, lost-response retry, backup and revocation) before implementing a bounded P01-3 slice. Preserve 18 DynamoDB tables, local Java DB, no AWS actions; P02 deferred. Prior P01-1 Android OTP E2E remains FAILED with accepted local-dev exception, never PASS.
+
 > **Next P01-2 verification:** Existing email signup now returns 409 with Go to Log in and no OTP; rerun full owner Windows tests first then manual signup UX check. Security anti-probing review required before public release. P01-3 and P02 not started. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 # Current next step — P01-2 recovery Android E2E rerun (2026-11-14)

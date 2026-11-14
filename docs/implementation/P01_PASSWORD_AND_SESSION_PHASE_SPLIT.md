@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **2026-11-14 clarification:** P01-2 is owner accepted based on reported full Windows/Android and manual checks. P01-3 is separately planned, NOT CODED; `docs/design_reviews/P01_3_DEEP_ANALYSIS_MASTER_2026_11_14.md` supersedes prior unreviewed implementation assumptions. NIST-aligned <=30-day interactive reauthentication is a **proposed**, not finalized parameter. Device binding and lost-response recovery remain release-blocking decisions.
+
 > **Current P01-2 implementation update (2026-11-13):** The owner subsequently authorized proceeding after the design review. Source now splits signup from existing-user OTP login and adopts the new NIST password rules; the authoring portable suite passes, but Windows/Flutter/real database/Android acceptance remains **UNVERIFIED**. P01-3 implementation remains held. See `docs/qa/P01_2_INTENT_AND_NIST_IMPLEMENTATION_2026_11_13.md`. The earlier design-freeze notes below are historical and no longer describe the current source.
 
 # Approved P01 slice boundaries — 2026-11-13
@@ -8,7 +19,7 @@ Retain OTP sign-up/sign-in, 18+ self-declaration, consent, opaque server-side se
 ## P01-2 — Email/password integration (this slice)
 - Primary returning-user path: **email + password**, no OTP delivery on normal successful login.
 - New user verifies email by existing P01-1 OTP flow, accepts adult eligibility/consent, then creates a password on the **same immutable account**. Existing OTP-only accounts may sign in with OTP and attach a password; no second account or new `uniqueId`.
-- **UPDATED owner-approved password policy (2026-11-13):** NIST SP 800-63B-4-aligned single-factor minimum **15 Unicode code points**, **no mandatory symbol/digit/letter-category composition**, accept spaces/passphrases/Unicode, support >=64 characters, password managers/paste, common/compromised whole-password blocklist, and no routine forced change. Current code still enforces the superseded 8+punctuation rule and has a small offline blocklist; updating implementation/tests and resolving legacy 8–14-character credentials are required before P01-2 acceptance. See `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`.
+- **UPDATED owner-approved password policy (2026-11-13):** NIST SP 800-63B-4-aligned single-factor minimum **15 Unicode code points**, **no mandatory symbol/digit/letter-category composition**, accept spaces/passphrases/Unicode, support >=64 characters, password managers/paste, common/compromised whole-password blocklist, and no routine forced change. Historical note superseded: P01-2 NIST 15+ character rule and tests were implemented and owner accepted P01-2 by 2026-11-14. See `docs/design_reviews/P01_NIST_PASSWORD_POLICY_DECISION_2026_11_13.md`.
 - Argon2id credential hashing and unique salts via vetted library. No plaintext, reversible password or JWT. Credentials are separately stored in `uluv_auth_links`; no new DynamoDB table/GSI or Scan.
 - Incorrect sign-in returns generic credentials error; per-normalized-email atomic throttling (10 attempts per fixed 15-minute window starting at the first attempt); no mail on routine login. Recovery issuance is non-enumerating, local-dev-outbox only, 60-second cooldown and 5/hour, challenge expiration 10 minutes, 5 invalid attempts; replay prohibited. Real delivery provider remains absent.
 - Password set requires an eligible active signed-in account and recent authentication <=10 minutes. Password change requires current password; reset requires a recovery OTP. Both increment `uluv_users.sessionEpoch` to invalidate all preexisting sessions at their next request without scanning session records. No 30-day persistence in this slice.

@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **Current project checkpoint (2026-11-14):** P01-2 authentication, quota and UX owner-accepted after testing. P01-3 30-day persistent login **design review only**; start with `docs/design_reviews/P01_3_DEEP_ANALYSIS_MASTER_2026_11_14.md` and decision gate. P02 profiles not started. P01-1 Android OTP automated dev-only exception remains explicitly recorded.
+
 > **P01-2 follow-up:** Existing signup email shows a specific registered-email message without issuing OTP. UID is backend-generated in P01; public name/handle requirements belong to P02 design. Post-patch Windows verification pending. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 > **P01-2 verification note (2026-11-14):** The most recent owner Android password E2E failed because the test expected obsolete recovery acknowledgement wording. The current message intentionally does not reveal whether a code was issued. The LOCAL synthetic fixture now avoids a shared-cooldown timing race without reducing the five-code quota. See `docs/qa/P01_2_ANDROID_RECOVERY_ACK_AND_FIXTURE_COOLDOWN_2026_11_14.md`; owner physical-device rerun after the patch is not yet verified.

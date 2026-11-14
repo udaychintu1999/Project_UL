@@ -1,3 +1,14 @@
+# CURRENT PROJECT CHECKPOINT — 2026-11-14 (P01-3 V3)
+
+**P00:** historical owner `CORE_FLOW_VERIFIED`. **P01-1:** manual core accepted, Android OTP automated FAIL accepted only for local development (not a PASS). **P01-2:** owner explicitly reported all latest automated and manual checks PASS, accepted. **P01-3:** design and security decisions APPROVED, **NO CODE YET**; owner requested complete docs before authorizing coding. **P02:** not started.
+
+**Current P01-3 authority:** `docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md` and companion simple-refresh/device/UX/QA docs. V2 proposals and archived `PENDING` markers are historical, not present directions. No AWS, live email, Google, or payment authorization.
+
+---
+
+
+> **2026-11-14 P01-3 design evidence:** `docs/qa/P01_3_DEEP_ANALYSIS_EVIDENCE_2026_11_14.md`. No P01-3 code or tests run. Owner reported latest P01-2 tests/manual QA PASS after registered-email signup notice; record as owner acceptance, not independent authoring-machine re-execution. P01-1 Android OTP E2E exception remains a known FAIL.
+
 > **2026-11-14:** Owner previous P01-2 full E2E PASS. New existing-email signup patch: local portable suite PASS, 17 automation contracts PASS; real DB/typecheck/Flutter/Android post-patch UNVERIFIED. Account-enumeration risk recorded. See `docs/qa/P01_2_EXISTING_EMAIL_SIGNUP_MESSAGE_2026_11_14.md`.
 
 > **2026-11-14 owner Android evidence:** `npm run test:flutter:p01-2:e2e` **FAILED** at the stale recovery-request status assertion; app showed the updated privacy-neutral message. A 202 alone does NOT prove code issuance. The outbox and reset steps were **NOT REACHED**. Test/fixture-only correction prepared; authoring portable verification separately recorded in `docs/qa/P01_2_ANDROID_RECOVERY_ACK_AND_FIXTURE_COOLDOWN_2026_11_14.md`. Physical Android after patch **UNVERIFIED**.

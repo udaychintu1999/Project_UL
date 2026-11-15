@@ -17,6 +17,12 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.uluv"
+        // Only the P02-1 physical Android runner enables this suffix. The
+        // installed app, preferences and non-exportable Android Keystore keys
+        // are isolated from the developer's normal com.example.uluv app.
+        if (System.getenv("ULUV_P02_1_ISOLATED_ANDROID_TEST") == "1") {
+            applicationIdSuffix = ".p02isolated"
+        }
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

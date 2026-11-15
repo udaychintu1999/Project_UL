@@ -138,6 +138,56 @@ try {
   assert.equal(after.data.profiles.friendship.displayName, 'Friendship Name');
   assertPrivate(after.data);
 
+  // The onboarding gate is server-derived from persisted account + shared +
+  // selected mode drafts. No image or discovery activation occurs here.
+  assert.equal(after.data.onboarding.ready, false);
+  const setup = (revision, datingEnabled, friendshipEnabled) => ({
+    expectedRevision: revision, commonName: 'Common Person', locality: 'Hyderabad',
+    gender: 'prefer_not_to_say', selectedModes: { dating: datingEnabled, friendship: friendshipEnabled },
+  });
+  assert.equal((await api('/v1/profiles/me/setup', setup(0, true, false), { method: 'PUT' })).status, 401);
+  assert.equal((await api('/v1/profiles/me/setup', { ...setup(0, true, false), uniqueId: b.uid },
+    { token: a.token, method: 'PUT' })).status, 400);
+  assert.equal((await api('/v1/profiles/me/setup', { ...setup(0, true, false), locality: '1 Baker Street' },
+    { token: a.token, method: 'PUT' })).status, 400);
+  const selected = await api('/v1/profiles/me/setup', setup(0, true, false), { token: a.token, method: 'PUT' });
+  assert.equal(selected.status, 200);
+  assert.equal(selected.data.shared.setupRevision, 1);
+  assert.ok(Number.isInteger(selected.data.shared.age) && selected.data.shared.age >= 18);
+  assert.equal(selected.data.shared.localitySource, 'self_declared');
+  assert.equal(selected.data.onboarding.ready, true);
+  assert.equal(selected.data.profiles.dating.visibility, 'inactive');
+  assertPrivate(selected.data);
+  const staleSetup = await api('/v1/profiles/me/setup', setup(0, false, false), { token: a.token, method: 'PUT' });
+  assert.equal(staleSetup.status, 409);
+  const none = await api('/v1/profiles/me/setup', setup(1, false, false), { token: a.token, method: 'PUT' });
+  assert.equal(none.status, 200);
+  assert.equal(none.data.onboarding.ready, false);
+  assert.ok(none.data.onboarding.missing.includes('selectMode'));
+  const restored = await api('/v1/profiles/me/setup', setup(2, true, false), { token: a.token, method: 'PUT' });
+  assert.equal(restored.data.onboarding.ready, true);
+  const emptyFriendship = await api('/v1/profiles/me/setup', setup(0, false, true), { token: b.token, method: 'PUT' });
+  assert.equal(emptyFriendship.status, 200);
+  assert.equal(emptyFriendship.data.onboarding.ready, false);
+  assert.ok(emptyFriendship.data.onboarding.missing.includes('friendship.draft'));
+  assert.notEqual(emptyFriendship.data.shared.commonName, after.data.profiles.dating.displayName,
+    'other account cannot read first account private profile contents');
+  const inherited = await api('/v1/profiles/me/friendship', draft(0, '', 'Friendship'),
+    { token: b.token, method: 'PUT' });
+  assert.equal(inherited.status, 200);
+  assert.equal(inherited.data.displayName, '');
+  assert.equal(inherited.data.effectiveDisplayName, 'Common Person');
+  const bAfter = await api('/v1/profiles/me', undefined, { token: b.token });
+  assert.equal(bAfter.data.onboarding.ready, true, 'common name applies without a duplicated mode nickname');
+  assert.equal((await api('/v1/profiles/me', undefined, { token: a.token })).data.onboarding.ready, true,
+    'server setup status survives reload');
+  const setupRace = await Promise.all([
+    api('/v1/profiles/me/setup', setup(3, true, false), { token: a.token, method: 'PUT' }),
+    api('/v1/profiles/me/setup', setup(3, true, true), { token: a.token, method: 'PUT' }),
+  ]);
+  assert.deepEqual(setupRace.map((result) => result.status).sort((x, y) => x - y), [200, 409],
+    'two concurrent mode-setting writes cannot both commit');
+
   const [one, two] = await Promise.all([
     api('/v1/profiles/me/dating', draft(1, 'One wins'), { token: a.token, method: 'PUT' }),
     api('/v1/profiles/me/dating', draft(1, 'Other edit'), { token: a.token, method: 'PUT' }),
@@ -145,7 +195,28 @@ try {
   assert.deepEqual([one.status, two.status].sort((x, y) => x - y), [200, 409], 'only one CAS write accepted');
   assert.equal((await api('/v1/profiles/me/dating', undefined, { token: a.token })).data.version, 2);
   assert.equal((await api('/v1/profiles/me/friendship', undefined, { token: a.token })).data.version, 1);
-  assert.equal((await api('/v1/profiles/me/friendship', undefined, { token: b.token })).data.exists, false, 'other account cannot see private draft');
+  // Account B has already saved its *own* Friendship draft above. Checking
+  // exists=false here is incorrect and confuses valid isolation with a leak.
+  // Instead prove that B sees its own record, cannot see A's Dating record,
+  // and that A's independent Friendship draft was not overwritten by B.
+  const bFriendship = await api('/v1/profiles/me/friendship', undefined, { token: b.token });
+  assert.equal(bFriendship.status, 200);
+  assert.equal(bFriendship.data.exists, true, 'B reads its own saved Friendship draft');
+  assert.equal(bFriendship.data.displayName, '');
+  assert.equal(bFriendship.data.effectiveDisplayName, 'Common Person');
+  assert.equal(bFriendship.data.version, 1);
+  assertPrivate(bFriendship.data);
+  const bDating = await api('/v1/profiles/me/dating', undefined, { token: b.token });
+  assert.equal(bDating.status, 200);
+  assert.equal(bDating.data.exists, false, 'B cannot see A-only Dating record');
+  assert.equal(bDating.data.displayName, '');
+  assert.equal(bDating.data.bio, '');
+  assertPrivate(bDating.data);
+  const aFriendship = await api('/v1/profiles/me/friendship', undefined, { token: a.token });
+  assert.equal(aFriendship.status, 200);
+  assert.equal(aFriendship.data.exists, true);
+  assert.equal(aFriendship.data.displayName, 'Friendship Name', 'B writes do not affect A draft');
+  assert.equal(aFriendship.data.version, 1);
   const stored = await db.send(new GetCommand({ TableName: profiles, Key: key(`USER#${a.uid}`, 'MODE#DATING'), ConsistentRead: true }));
   assert.equal(stored.Item?.version, 2, 'real DynamoDB persistence');
   assert.equal(stored.Item?.requestedActive, false);
@@ -155,7 +226,8 @@ try {
     ExpressionAttributeValues: { ':restricted': 'restricted' } }));
   assert.equal((await api('/v1/profiles/me', undefined, { token: a.token })).status, 403, 'restricted account denied');
   assert.equal((await api('/v1/profiles/me/dating', draft(2, 'No'), { token: a.token, method: 'PUT' })).status, 403);
-  console.log('PASS P02-1: real local registration, authentication, unique atomic handles, revision conflicts, mode-isolated persisted drafts, validation, privacy and restriction');
+  assert.equal((await api('/v1/profiles/me/setup', setup(4, false, true), { token: a.token, method: 'PUT' })).status, 403);
+  console.log('PASS P02-1: real local registration, authentication, unique atomic handles, revision conflicts, mode-isolated persisted drafts, validation, privacy, setup-gate persistence and restriction');
 } finally {
   for (const person of identities) {
     const entries = [

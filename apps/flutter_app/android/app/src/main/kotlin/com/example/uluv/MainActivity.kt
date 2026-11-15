@@ -108,6 +108,9 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel).setMethodCallHandler { call, result ->
             try {
                 when (call.method) {
+                    // Read-only Android package identity allows the physical
+                    // P02 E2E test to prove it is NOT running in the normal app.
+                    "applicationId" -> result.success(packageName)
                     "publicKey" -> result.success(ensureSigner())
                     "sign" -> result.success(signProof(call.arguments as? Map<*, *> ?: emptyMap<String, String>()))
                     "read" -> result.success(read())

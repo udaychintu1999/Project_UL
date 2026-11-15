@@ -86,3 +86,87 @@ export function draftMissing(fields: DraftFields, handle: string | null, localit
   if (!locality) missing.push('locality');
   return missing;
 }
+
+/** Shared profile belongs to the account, not either connection mode.
+ *  Locality is explicitly self-declared and never trusted as a discovery cell.
+ */
+export type SetupSelections = { dating: boolean; friendship: boolean };
+export type SharedSetup = {
+  commonName: string;
+  locality: string;
+  gender: '' | 'woman' | 'man' | 'non_binary' | 'another_identity' | 'prefer_not_to_say';
+  selectedModes: SetupSelections;
+};
+export type SetupInput = SharedSetup & { expectedRevision: number };
+
+const allowedGenders = new Set(['', 'woman', 'man', 'non_binary', 'another_identity', 'prefer_not_to_say']);
+
+export function parseSetup(raw: unknown): { value: SetupInput } | { error: string } {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: 'invalid_shared_profile' };
+  const data = raw as Record<string, unknown>;
+  const allowed = new Set(['expectedRevision', 'commonName', 'locality', 'gender', 'selectedModes']);
+  if (Object.keys(data).some((key) => !allowed.has(key))) return { error: 'invalid_shared_profile_fields' };
+  const revision = data.expectedRevision;
+  if (!Number.isSafeInteger(revision) || (revision as number) < 0 || (revision as number) > 1_000_000_000) {
+    return { error: 'invalid_setup_revision' };
+  }
+  const commonName = cleanString(data.commonName, 60, true);
+  if (commonName === null) return { error: 'invalid_common_name' };
+  // A broad city/locality label only. Never accept address numbers, GPS,
+  // postcodes, URL or precise coordinates as a trusted discovery location.
+  const locality = cleanString(data.locality, 60, true);
+  if (locality === null || (locality.length > 0 && !/^[\p{L}\p{M}][\p{L}\p{M} '\-]{1,59}$/u.test(locality))) {
+    return { error: 'invalid_broad_locality' };
+  }
+  const gender = data.gender;
+  if (typeof gender !== 'string' || !allowedGenders.has(gender)) return { error: 'invalid_gender' };
+  const selections = data.selectedModes;
+  if (!selections || typeof selections !== 'object' || Array.isArray(selections)) {
+    return { error: 'invalid_mode_selection' };
+  }
+  const modes = selections as Record<string, unknown>;
+  if (Object.keys(modes).some((key) => key !== 'dating' && key !== 'friendship') ||
+      typeof modes.dating !== 'boolean' || typeof modes.friendship !== 'boolean') {
+    return { error: 'invalid_mode_selection' };
+  }
+  return { value: {
+    expectedRevision: revision as number, commonName, locality,
+    gender: gender as SharedSetup['gender'],
+    selectedModes: { dating: modes.dating as boolean, friendship: modes.friendship as boolean }
+  } };
+}
+
+/** The onboarding gate is distinct from the P02-3 discovery/photo gate.
+ *  Only persisted, authenticated owner records count toward setup completion.
+ */
+export function onboardingMissing(
+  handle: string | null, shared: SharedSetup,
+  profiles: Partial<Record<ProfileMode, DraftFields | undefined>>
+): string[] {
+  const missing: string[] = [];
+  if (!handle) missing.push('handle');
+  if (!shared.commonName) missing.push('commonName');
+  if (!shared.locality) missing.push('locality');
+  if (!shared.selectedModes.dating && !shared.selectedModes.friendship) missing.push('selectMode');
+  for (const mode of ['dating', 'friendship'] as const) {
+    if (!shared.selectedModes[mode]) continue;
+    const profile = profiles[mode];
+    if (!profile) { missing.push(`${mode}.draft`); continue; }
+    if (!(profile.displayName || shared.commonName)) missing.push(`${mode}.displayName`);
+    if (!profile.bio) missing.push(`${mode}.bio`);
+    if (!profile.intention) missing.push(`${mode}.intention`);
+    if (profile.interests.length === 0) missing.push(`${mode}.interests`);
+  }
+  return missing;
+}
+
+/** Age from self-declared signup DOB, computed server-side at UTC day boundary. */
+export function ageFromBirthDate(value: unknown, now = new Date()): number | null {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(now.getTime())) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return null;
+  let age = now.getUTCFullYear() - year;
+  if (now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day)) age--;
+  return age >= 18 && age <= 130 ? age : null;
+}

@@ -9,6 +9,10 @@ abstract class ProfileRepository {
     {required String displayName, required String bio,
       required List<String> interests, required String intention});
   Future<ProfileResult<String>> saveHandle(String handle, int revision);
+  Future<ProfileResult<ProfileDashboard>> saveSetup(int revision, {
+    required String commonName, required String locality, required String gender,
+    required bool dating, required bool friendship,
+  });
 }
 
 /// Local API only. A fresh P01-3 token is requested for each operation, so a
@@ -97,6 +101,23 @@ class HttpProfileRepository implements ProfileRepository {
     });
     if (!response.ok) return ProfileResult.failure(response.error, response.status);
     return ProfileResult.success(ProfileDraft.fromJson(response.value!));
+  }
+
+  @override
+  Future<ProfileResult<ProfileDashboard>> saveSetup(int revision, {
+    required String commonName, required String locality, required String gender,
+    required bool dating, required bool friendship,
+  }) async {
+    final response = await _request('PUT', '/v1/profiles/me/setup', {
+      'expectedRevision': revision,
+      'commonName': commonName,
+      'locality': locality,
+      'gender': gender,
+      'selectedModes': {'dating': dating, 'friendship': friendship},
+    });
+    if (!response.ok) return ProfileResult.failure(response.error, response.status);
+    try { return ProfileResult.success(ProfileDashboard.fromJson(response.value!)); }
+    catch (_) { return const ProfileResult.failure('invalid_response', 502); }
   }
 
   @override

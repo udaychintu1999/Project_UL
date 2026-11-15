@@ -1,3 +1,25 @@
+## 2026-11-15 — P02-1 V4 handle-only refresh / Flutter controller-value regression
+
+- Owner reports portable, typecheck, lint, Fastify/DynamoDB and physical Android all PASS. One Flutter widget still FAILS to find unsaved common-name text after handle save.
+- Prevent handle-only status refresh from reloading common or mode draft editors, regardless of dirty-flag timing; preserve authorization-failure handling.
+- Strengthen widget test to verify keyed `TextField` controllers before and after saving, assert no unrelated writes, and add formatting-tolerant negative structural regression guard.
+- Keep local-only/cloud safety and normal Android test isolation; full Flutter/Android post-V4 testing requires owner's Windows environment. See `docs/qa/P02_1_FINAL_WIDGET_STATE_RETENTION_REPAIR_2026_11_15.md`.
+
+---
+
+## 2026-11-15 — P02-1 Flutter widget frame and Android teardown safety repair
+
+- Fixed Flutter test-frame sequencing after text edits; retained strict setup-ready and independent draft/handle assertions with positive repository checks.
+- Disabled Flutter's base-app teardown uninstall for isolated P02 integration tests (`--no-uninstall`); exact isolated-package cleanup remains host-owned. Other E2E suites unchanged.
+- Added executable Node tests for the P02 CLI safety flag and actual stubbed Flutter invocation. No backend/auth/media/schema changes. Owner Windows Flutter/Android retest pending.
+- Full report: `docs/qa/P02_1_FLUTTER_WIDGET_AND_UNINSTALL_SAFETY_REPAIR_2026_11_15.md`.
+
+---
+
+> **2026-11-15 — P02-1 second Windows-test failure repair:** Exact-package ADB inspection now supports never-installed isolated test app without aborting or printing a false cleanup failure. Android cleanup stages are explicit and independent local-fixture cleanup is more reliable. Flutter handle Save is decoupled from unsaved common/mode editors and reloads authoritative readiness without erasing typed fields. Added five offline package tests, a Flutter regression test and updated QA/manual instructions. Owner's real API/DynamoDB integration reported PASS before repair; post-repair Flutter widgets and Android E2E await Windows verification. No backend profile logic, AWS, schema or auth changes. See `docs/qa/P02_1_WIDGET_AND_ANDROID_RUNNER_REPAIR_2026_11_15.md`.
+
+> **2026-11-15 P02-1 regression repair:** Correct contradictory account-isolation integration assertion; isolate physical Android P02 test APK/session from normal app, check actual package ID before test credentials and avoid logging sealed credentials; retain busy state through onboarding-ready refresh; inline handle conflict error; strengthen regression tests. No P02-2 or cloud work. See `docs/qa/P02_1_COMMON_SETUP_WINDOWS_FAILURE_REPAIR_2026_11_15.md`.
+
 # 2026-11-15 — P02-1 continuation: authenticated Home / Settings bottom navigation
 
 - Added Material 3 two-tab signed-in shell: Home directly contains independently persisted Dating/Friendship profile drafts; Settings reuses existing password, account verification, device management and sign-out features.

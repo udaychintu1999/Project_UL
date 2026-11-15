@@ -10,6 +10,7 @@ import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {localFlutterConnection} from '../../apps/flutter_app/dev_connection.config.mjs';
+import {integrationTestCleanupFlags} from '../lib/flutter-integration-cleanup.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const flutterRoot = path.join(root, 'apps/flutter_app');
@@ -142,6 +143,10 @@ if (action === 'setup') {
         `--dart-define=ULUV_P01_3_FIXTURE_UID=${uid}`);
     }
     if (action === 'p02-1-e2e') {
+      if (process.env.ULUV_P02_1_ISOLATED_ANDROID_TEST !== '1') {
+        fail('P02-1 Android E2E requires an isolated test app; launch through npm run test:flutter:p02-1:e2e.');
+      }
+      define.push('--dart-define=ULUV_P02_1_ISOLATED_ANDROID_TEST=true');
       const email = process.env.ULUV_P02_1_FIXTURE_EMAIL ?? '';
       const password = process.env.ULUV_P02_1_FIXTURE_PASSWORD ?? '';
       const uid = process.env.ULUV_P02_1_FIXTURE_UID ?? '';
@@ -167,7 +172,11 @@ if (action === 'setup') {
         `--dart-define=ULUV_P01_2_FIXTURE_PASSWORD=${pass}`,
         `--dart-define=ULUV_P01_2_FIXTURE_UID=${uid}`);
     }
-    runFlutter(['test', suite, ...device, ...define]);
+    // Flutter's integration-test teardown can misidentify an Android package
+    // when Gradle applies applicationIdSuffix. Never let it uninstall the real
+    // U_luv app while testing the disposable P02 package. The P02 host runner
+    // performs exact-package cleanup itself after the Flutter test exits.
+    runFlutter(['test', suite, ...device, ...define, ...integrationTestCleanupFlags(action)]);
     console.log(`${action === 'p01-e2e' ? 'P01-1 auth' : action === 'p01-2-e2e' ? 'P01-2 password' : action === 'p01-3-e2e' ? 'P01-3 persistent sessions' : action === 'p02-1-e2e' ? 'P02-1 profiles' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
   }
 }

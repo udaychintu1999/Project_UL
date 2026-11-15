@@ -153,3 +153,30 @@ test('Flutter run/e2e commands execute via an isolated stub and preserve exit co
     rmSync(dir, {recursive: true, force: true});
   }
 });
+
+
+test('P02 isolated real-device test opts out of Flutter package uninstall (stubbed SDK)', () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'uluv-p02-flutter-guard-'));
+  try {
+    // Synthetic local fixture only; never read owner .env or a real session.
+    const stubEnv = {
+      ...createFakeSdk(dir),
+      ULUV_P02_1_ISOLATED_ANDROID_TEST: '1',
+      ULUV_P02_1_FIXTURE_EMAIL:
+        'p01-2-device-00000000-0000-4000-8000-000000000000@example.invalid',
+      ULUV_P02_1_FIXTURE_PASSWORD: 'DeviceStart@' + 'a'.repeat(20),
+      ULUV_P02_1_FIXTURE_UID: '00000000-0000-4000-8000-000000000000',
+    };
+    const p02 = runWithFakeSdk(stubEnv, 'p02-1-e2e');
+    assert.equal(p02.status, 0, p02.stderr);
+    const testArgs = readFileSync(stubEnv.ULUV_TEST_FLUTTER_ARGS, 'utf8');
+    assert.match(testArgs, /test integration_test\/p02_1_profile_integration_test\.dart/);
+    assert.match(testArgs, /--no-uninstall/);
+    // The existing unrelated P00 test command is not modified.
+    const p00 = runWithFakeSdk(stubEnv, 'e2e');
+    assert.equal(p00.status, 0, p00.stderr);
+    assert.doesNotMatch(readFileSync(stubEnv.ULUV_TEST_FLUTTER_ARGS, 'utf8'), /--no-uninstall/);
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
+});

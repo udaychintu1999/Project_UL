@@ -28,12 +28,50 @@ class ProfileDraft {
   }
 }
 
+/// Private account-level setup data. Locality is self-declared and must not
+/// be treated as a verified discovery location or published coordinates.
+class SharedProfile {
+  const SharedProfile({this.commonName = '', this.locality = '', this.gender = '',
+    this.age, this.setupRevision = 0, this.dating = false, this.friendship = false});
+  final String commonName, locality, gender;
+  final int? age;
+  final int setupRevision;
+  final bool dating, friendship;
+
+  factory SharedProfile.fromJson(Map<String, dynamic> json) {
+    final selected = json['selectedModes'];
+    final modes = selected is Map ? selected : const <String, dynamic>{};
+    return SharedProfile(
+      commonName: json['commonName'] is String ? json['commonName'] as String : '',
+      locality: json['locality'] is String ? json['locality'] as String : '',
+      gender: json['gender'] is String ? json['gender'] as String : '',
+      age: json['age'] is int ? json['age'] as int : null,
+      setupRevision: json['setupRevision'] is int ? json['setupRevision'] as int : 0,
+      dating: modes['dating'] == true, friendship: modes['friendship'] == true,
+    );
+  }
+}
+
+class OnboardingStatus {
+  const OnboardingStatus({this.ready = false, this.missing = const []});
+  final bool ready;
+  final List<String> missing;
+  factory OnboardingStatus.fromJson(Map<String, dynamic> json) => OnboardingStatus(
+    ready: json['ready'] == true,
+    missing: (json['missing'] is List ? json['missing'] as List : const [])
+      .whereType<String>().toList(growable: false),
+  );
+}
+
 class ProfileDashboard {
   const ProfileDashboard({required this.handle, required this.identityRevision,
-    required this.locality, required this.profiles});
+    required this.locality, required this.profiles,
+    this.shared = const SharedProfile(), this.onboarding = const OnboardingStatus()});
   final String? handle, locality;
   final int identityRevision;
   final Map<String, ProfileDraft> profiles;
+  final SharedProfile shared;
+  final OnboardingStatus onboarding;
 
   factory ProfileDashboard.fromJson(Map<String, dynamic> json) {
     final profiles = json['profiles'];
@@ -44,6 +82,12 @@ class ProfileDashboard {
       handle: json['handle'] is String ? json['handle'] as String : null,
       locality: json['locality'] is String ? json['locality'] as String : null,
       identityRevision: json['identityRevision'] is int ? json['identityRevision'] as int : 1,
+      shared: json['shared'] is Map
+        ? SharedProfile.fromJson(Map<String, dynamic>.from(json['shared'] as Map))
+        : const SharedProfile(),
+      onboarding: json['onboarding'] is Map
+        ? OnboardingStatus.fromJson(Map<String, dynamic>.from(json['onboarding'] as Map))
+        : const OnboardingStatus(),
       profiles: {
         'dating': ProfileDraft.fromJson(Map<String, dynamic>.from(profiles['dating'] as Map)),
         'friendship': ProfileDraft.fromJson(Map<String, dynamic>.from(profiles['friendship'] as Map)),

@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk/lib-dynamodb';
-import { draftMissing, parseDraft, parseHandleInput, parseMode } from './validation.js';
-import type { DraftFields, ProfileMode } from './validation.js';
+import { ageFromBirthDate, draftMissing, onboardingMissing, parseDraft, parseHandleInput, parseMode, parseSetup } from './validation.js';
+import type { DraftFields, ProfileMode, SharedSetup } from './validation.js';
 
 const usersTable = 'uluv_users';
 const profilesTable = 'uluv_profiles';
@@ -31,12 +31,14 @@ function normalizedFields(raw?: Item): DraftFields {
 function revisionOf(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : fallback;
 }
-function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, locality: string | null) {
+function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, commonName = '') {
   const fields = normalizedFields(raw);
   const photoIds = Array.isArray(raw?.photoIds) ? raw.photoIds.filter((x): x is string => typeof x === 'string').slice(0, 6) : [];
-  const missing = draftMissing(fields, handle, locality, photoIds);
+  // A typed city label may complete onboarding but is NOT a trusted locality
+  // for P02-3 discovery/activation. Keep the future eligibility gate closed.
+  const missing = draftMissing({ ...fields, displayName: fields.displayName || commonName }, handle, null, photoIds);
   return {
-    mode, exists: Boolean(raw), ...fields, photoIds,
+    mode, exists: Boolean(raw), ...fields, effectiveDisplayName: fields.displayName || commonName, photoIds,
     requestedActive: raw?.requestedActive === true,
     // No P02-1 draft becomes visible; activation and photo access are P02-3/P02-2.
     completeness: { ready: missing.length === 0, missing },
@@ -54,6 +56,51 @@ async function ownerAccount(db: DynamoDBDocumentClient, uid: string): Promise<It
 function localityLabel(item?: Item): string | null {
   return typeof item?.localityLabel === 'string' && item.localityLabel.length > 0 ? item.localityLabel : null;
 }
+function sharedSetup(settings?: Item): SharedSetup {
+  const modes = settings?.selectedModes as Record<string, unknown> | undefined;
+  const gender = settings?.gender;
+  return {
+    commonName: typeof settings?.commonName === 'string' ? settings.commonName : '',
+    locality: localityLabel(settings) ?? '',
+    gender: gender === 'woman' || gender === 'man' || gender === 'non_binary' ||
+      gender === 'another_identity' || gender === 'prefer_not_to_say' ? gender : '',
+    selectedModes: { dating: modes?.dating === true, friendship: modes?.friendship === true }
+  };
+}
+
+async function ownerDashboard(db: DynamoDBDocumentClient, uid: string) {
+  const [account, settings, dating, friendship] = await Promise.all([
+    ownerAccount(db, uid), getItem(db, settingsTable, settingsKey(uid)),
+    getItem(db, profilesTable, modeKey(uid, 'dating')),
+    getItem(db, profilesTable, modeKey(uid, 'friendship'))
+  ]);
+  if (!account) return null;
+  const handle = typeof account.handle === 'string' ? account.handle : null;
+  const shared = sharedSetup(settings);
+  const drafts = {
+    dating: dating ? normalizedFields(dating) : undefined,
+    friendship: friendship ? normalizedFields(friendship) : undefined
+  };
+  const missing = onboardingMissing(handle, shared, drafts);
+  const age = ageFromBirthDate(account.birthDate);
+  if (age === null) missing.push('ageEligibility');
+  return {
+    handle, identityRevision: revisionOf(account.identityRevision, 1),
+    locality: shared.locality || null, localityRevision: revisionOf(settings?.localityRevision),
+    shared: {
+      commonName: shared.commonName, locality: shared.locality,
+      localitySource: 'self_declared', gender: shared.gender,
+      age, selectedModes: shared.selectedModes,
+      setupRevision: revisionOf(settings?.setupRevision)
+    },
+    onboarding: { ready: missing.length === 0, missing },
+    profiles: {
+      dating: ownerDto('dating', dating, handle, shared.commonName),
+      friendship: ownerDto('friendship', friendship, handle, shared.commonName)
+    }
+  };
+}
+
 /** Use the exact existing P01 session guard; never create a parallel profile authenticator. */
 export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocumentClient, requireSession: SessionGuard): void {
   app.get('/v1/profiles/me', async (request, reply) => {
@@ -61,20 +108,51 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
     const auth = await requireSession(request, reply);
     if (!auth) return reply;
     try {
-      const [account, settings, dating, friendship] = await Promise.all([
-        ownerAccount(db, auth.uid), getItem(db, settingsTable, settingsKey(auth.uid)),
-        getItem(db, profilesTable, modeKey(auth.uid, 'dating')),
-        getItem(db, profilesTable, modeKey(auth.uid, 'friendship'))
-      ]);
-      if (!account) return failure(reply, 403, 'account_unavailable');
-      const handle = typeof account.handle === 'string' ? account.handle : null;
-      const locality = localityLabel(settings);
-      return {
-        handle, identityRevision: revisionOf(account.identityRevision, 1),
-        locality, localityRevision: revisionOf(settings?.localityRevision),
-        profiles: { dating: ownerDto('dating', dating, handle, locality), friendship: ownerDto('friendship', friendship, handle, locality) }
-      };
+      const dashboard = await ownerDashboard(db, auth.uid);
+      return dashboard ?? failure(reply, 403, 'account_unavailable');
     } catch { return failure(reply, 503, 'profile_store_unavailable'); }
+  });
+
+  // Shared details and mode choices never activate discovery. Both modes may
+  // be unselected while setup is a draft; the server readiness gate stays shut.
+  app.put('/v1/profiles/me/setup', async (request, reply) => {
+    noStore(reply);
+    const auth = await requireSession(request, reply);
+    if (!auth) return reply;
+    const parsed = parseSetup(request.body);
+    if ('error' in parsed) return failure(reply, 400, parsed.error);
+    const { expectedRevision, commonName, locality, gender, selectedModes } = parsed.value;
+    try {
+      await db.send(new TransactWriteCommand({ TransactItems: [
+        { ConditionCheck: {
+          TableName: usersTable, Key: accountKey(auth.uid),
+          ConditionExpression: '#state = :active AND ageEligibility = :adult',
+          ExpressionAttributeNames: { '#state': 'status' },
+          ExpressionAttributeValues: { ':active': 'active', ':adult': 'self_declared_adult' }
+        } },
+        { Update: {
+          TableName: settingsTable, Key: settingsKey(auth.uid),
+          UpdateExpression: 'SET commonName = :name, localityLabel = :locality, gender = :gender, selectedModes = :modes, setupRevision = :next',
+          ConditionExpression: 'attribute_exists(PK) AND ' +
+            (expectedRevision === 0 ? 'attribute_not_exists(setupRevision)' : 'setupRevision = :expected'),
+          ExpressionAttributeValues: {
+            ':name': commonName, ':locality': locality, ':gender': gender,
+            ':modes': selectedModes, ':next': expectedRevision + 1,
+            ...(expectedRevision === 0 ? {} : { ':expected': expectedRevision })
+          }
+        } }
+      ] }));
+      const dashboard = await ownerDashboard(db, auth.uid);
+      return dashboard ?? failure(reply, 403, 'account_unavailable');
+    } catch (error) {
+      if (conditionalFailure(error)) {
+        try {
+          if (!await ownerAccount(db, auth.uid)) return failure(reply, 403, 'account_unavailable');
+        } catch { return failure(reply, 503, 'profile_store_unavailable'); }
+        return failure(reply, 409, 'setup_revision_conflict');
+      }
+      return failure(reply, 503, 'profile_store_unavailable');
+    }
   });
 
   app.put('/v1/profiles/me/handle', async (request, reply) => {
@@ -147,7 +225,7 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         getItem(db, profilesTable, modeKey(auth.uid, mode))
       ]);
       if (!account) return failure(reply, 403, 'account_unavailable');
-      return ownerDto(mode, profile, typeof account.handle === 'string' ? account.handle : null, localityLabel(settings));
+      return ownerDto(mode, profile, typeof account.handle === 'string' ? account.handle : null, sharedSetup(settings).commonName);
     } catch { return failure(reply, 503, 'profile_store_unavailable'); }
   });
 
@@ -193,7 +271,7 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         ownerAccount(db, auth.uid), getItem(db, settingsTable, settingsKey(auth.uid)), getItem(db, profilesTable, key)
       ]);
       if (!account) return failure(reply, 403, 'account_unavailable');
-      return ownerDto(mode, record, typeof account.handle === 'string' ? account.handle : null, localityLabel(settings));
+      return ownerDto(mode, record, typeof account.handle === 'string' ? account.handle : null, sharedSetup(settings).commonName);
     } catch (error) {
       if (conditionalFailure(error)) {
         try {

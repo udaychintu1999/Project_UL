@@ -1,5 +1,6 @@
 // Physical Android: real Keystore session + real local API profile draft writes.
 // Fixture credentials are synthetic, local-only and created by the Windows host runner.
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:uluv/features/auth/auth_service.dart';
@@ -13,13 +14,26 @@ void main() {
   const email = String.fromEnvironment('ULUV_P02_1_FIXTURE_EMAIL', defaultValue: '');
   const password = String.fromEnvironment('ULUV_P02_1_FIXTURE_PASSWORD', defaultValue: '');
   const uid = String.fromEnvironment('ULUV_P02_1_FIXTURE_UID', defaultValue: '');
+  const isolated = bool.fromEnvironment('ULUV_P02_1_ISOLATED_ANDROID_TEST', defaultValue: false);
 
   testWidgets('P02-1 Android authenticated handle and independent drafts persist after session restoration', (tester) async {
+    expect(isolated, isTrue, reason: 'P02 tests must run under an isolated Android application ID.');
+    // A Dart define alone cannot guarantee the installed app package. Verify
+    // the actual Android package before touching any device credentials.
+    const channel = MethodChannel('uluv/p01_3_secure');
+    final packageId = await tester.runAsync(
+      () => channel.invokeMethod<String>('applicationId'));
+    expect(packageId, 'com.example.uluv.p02isolated',
+      reason: 'P02 tests must never write to the normal installed U_luv app.');
     expect(email, startsWith('p01-2-device-'));
     expect(uid, isNotEmpty);
     const vault = AndroidDeviceVault();
     final existing = await tester.runAsync(() => vault.read());
-    expect(existing, isNull, reason: 'Use fresh test-app storage only; do not erase a real session.');
+    // Do not use expect(existing, isNull): Flutter would print the entire
+    // sealed-session JSON, including the refresh credential, on failure.
+    if (existing != null) {
+      fail('Isolated P02 Android test app has pre-existing state. The runner must reset only its dedicated test package.');
+    }
     final login = await tester.runAsync(() => HttpAuthService(baseUrl: base, devToken: dev).passwordLogin(email, password));
     expect(login, isNotNull);
     expect(login!.ok, isTrue);
@@ -51,6 +65,15 @@ void main() {
       expect(friends!.ok, isTrue);
       expect(dating.value!.version, 1);
       expect(friends.value!.version, 1);
+      final beforeSetup = await tester.runAsync(repo.dashboard);
+      expect(beforeSetup!.value!.onboarding.ready, isFalse);
+      final setup = await tester.runAsync(() => repo.saveSetup(0,
+        commonName: 'Common Name', locality: 'Hyderabad', gender: 'prefer_not_to_say',
+        dating: true, friendship: false));
+      expect(setup, isNotNull);
+      expect(setup!.ok, isTrue);
+      expect(setup.value!.onboarding.ready, isTrue);
+      expect(setup.value!.profiles['dating']!.missing, contains('photos'));
       final relaunched = PersistentSessionController(vault: vault, api: const DeviceSessionApi(base));
       await tester.runAsync(relaunched.restore);
       activeSession = relaunched;
@@ -59,6 +82,10 @@ void main() {
       expect(after, isNotNull);
       expect(after!.ok, isTrue);
       expect(after.value!.handle, handle);
+      expect(after.value!.shared.commonName, 'Common Name');
+      expect(after.value!.shared.dating, isTrue);
+      expect(after.value!.shared.friendship, isFalse);
+      expect(after.value!.onboarding.ready, isTrue);
       expect(after.value!.profiles['dating']!.displayName, 'Dating Name');
       expect(after.value!.profiles['friendship']!.displayName, 'Friendship Name');
       expect(after.value!.profiles['dating']!.missing, contains('photos'));

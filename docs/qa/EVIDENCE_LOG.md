@@ -1,3 +1,9 @@
+# 2026-11-15 — P02-1 shared onboarding gate: authoring verification
+
+Portable chain `npm run verify:p02-1:portable` **PASS**; 33 API unit tests incl. 3 new onboarding cases PASS; global TypeScript syntax transpile of changed API files PASS. Flutter SDK, semantic TS compile, ESLint, live local Fastify/DB and physical Android after this update **UNVERIFIED**. Owner previously manually accepted Home/Settings and provided live P02-1/Android passes for the previous code. See `docs/qa/P02_1_COMMON_PROFILE_SETUP_GATE_EVIDENCE_2026_11_15.md`. No claim of P02-2/media/discovery activation.
+
+---
+
 # 2026-11-15 — P02-1 source/portable authoring evidence
 
 New P02-1 Node unit tests 5/5, full `apps/api/tests/unit/*.test.ts` 30/30, existing `verify:p01-3:portable` exit 0 and P02-1 security source-contract negative tests PASS. TS syntax AST parse and new scripts `node --check` PASS. **TypeScript semantic, lint, Fastify/DynamoDB Local, Flutter analyze/widgets, physical Android and owner manual flow UNVERIFIED** until owner Windows results arrive. Documentation: `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`. P01-1 Android OTP automation remains FAILED local-development exception.

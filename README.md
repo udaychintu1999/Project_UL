@@ -1,3 +1,10 @@
+> **Current P02-1 QA checkpoint (2026-11-15):** Owner-reported common-setup failures are being repaired; see `docs/qa/P02_1_COMMON_SETUP_WINDOWS_FAILURE_REPAIR_2026_11_15.md` and run the Windows checks there before P02-2. No AWS integration or new schema.
+
+> **2026-11-15 P02-1 verification:** Real local profile integration passed on Windows. A subsequent Flutter widget and isolated Android E2E runner issue is addressed in the update-only P02-1 widget/runner repair patch; portable tests pass, **post-patch Windows Flutter/device acceptance remains pending**. See `docs/manual/P02_1_WIDGET_ANDROID_RETEST_2026_11_15.md`.
+
+
+> **Current P02-1 checkpoint (2026-11-15):** Common profile + enabled Dating/Friendship selections + per-mode drafts and server-computed onboarding gate implemented; portable checks PASS, updated Windows/Android checks pending. This is **setup readiness**, not discovery activation. The full Home/discovery UI, photos and trusted geographic eligibility are future phases. See `docs/manual/P02_1_COMMON_PROFILE_WINDOWS_ACCEPTANCE_2026_11_15.md`.
+
 # Current implementation milestone — P02-1 (2026-11-15)
 
 P02-1 adds authenticated shared handles and independent saved Dating/Friendship profile drafts (Fastify + DynamoDB Local + Flutter). Source and portable tests are in the update; owner must still run Windows/Android verification before acceptance. See `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Media uploads, active discovery and precise locality are not part of this slice; `.local/media/` remains developer-only for later P02-2. No AWS or extra tables.

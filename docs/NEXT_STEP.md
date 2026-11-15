@@ -1,3 +1,23 @@
+# CURRENT ACTION — 2026-11-15 P02-1 Home / Settings continuation owner verification
+
+Authenticated **two-tab Home / Settings** source implementation is delivered. Before P02-2, run `npm run verify:p02-1:portable`, `npm run typecheck`, `npm run lint`, `npm run test:flutter`, live `npm run test:p02-1:integration`, and the existing physical Android `npm run test:flutter:p02-1:e2e` with owner-managed Java DynamoDB Local. Then manually verify both new tabs, preserved unsaved draft on tab switch, password/device actions, Back, logout and restart. See `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`.
+
+The owner previously **PASSED** live P02-1 API/DB and Android E2E, portable checks, and 40 Flutter widget tests, but reported TypeScript TS18046. This continuation corrects that source error; the owner must rerun the semantic compiler and Flutter tests. Authoring portable tests passed; Flutter/device unavailable in authoring container. **Do not mark this continuation OWNER_ACCEPTED until new evidence arrives.** P02-2 remains unstarted. All historical statuses below are preserved.
+
+---
+
+# NEXT ACTION — Verify P02-1 on Windows/Android (2026-11-15)
+
+**SOURCE_IMPLEMENTED / PARTIALLY_VERIFIED — NOT OWNER ACCEPTED.** P02-1 backend and Flutter account handle/two-mode draft workflow plus test runners are packaged. In project root, run `npm ci`, `npm run verify:p02-1:portable`, `npm run typecheck`, `npm run lint`, `npm run test:flutter`; with manually started Java DynamoDB Local and Fastify, run `npm run test:p02-1:integration` and `npm run test:flutter:p02-1:e2e`. Then manually accept the real in-app editor workflow. Report failure logs without secrets. See `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Do **not** mark P02 complete or start P02-2 until owner authorization. **P02-2:** dev-only media; **P02-3:** trusted locality, activation and public preview.
+
+---
+
+# NEXT MILESTONE — P02-1 PROFILE IDENTITY + DRAFTS (2026-11-15)
+
+**P02-0 design documentation is prepared.** Eight product decisions have owner approval; API/validation and media thresholds marked `PROPOSED` still require implementation-source review. Next **coding** slice P02-1: reuse the existing P01 session guard without changing token behavior; implement unique public handle, independently saved/edited Dating/Friendship drafts, server-derived age and selected broad locality; wire to real Flutter authenticated UI and real local Fastify/DynamoDB operations; add functional negative/concurrency/recovery tests. **Do not claim this is implemented.** P02-2 media, P02-3 activation/privacy and P02-4 end-to-end acceptance follow. Local `.local/media/` remains dev-only; no AWS/cloud/payment/P03 work. See `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md` and companion contract/QA docs.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

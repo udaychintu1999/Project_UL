@@ -1,3 +1,15 @@
+# Current implementation milestone — P02-1 (2026-11-15)
+
+P02-1 adds authenticated shared handles and independent saved Dating/Friendship profile drafts (Fastify + DynamoDB Local + Flutter). Source and portable tests are in the update; owner must still run Windows/Android verification before acceptance. See `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Media uploads, active discovery and precise locality are not part of this slice; `.local/media/` remains developer-only for later P02-2. No AWS or extra tables.
+
+---
+
+# Current project milestone — P02-0 (2026-11-15)
+
+P00/P01 accepted local-development baseline is preserved. P02-0 records owner-approved profile product decisions and a documentation-only implementation blueprint; **P02 profile runtime is not yet built**. Next implementation slice is P02-1 unique account handle and independent Dating/Friendship draft editing. Read `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md` and `docs/NEXT_STEP.md`. Local `.local/media/` is temporary developer-only storage, not production. No live cloud/provider work authorized.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

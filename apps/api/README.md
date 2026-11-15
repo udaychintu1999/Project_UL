@@ -1,3 +1,7 @@
+## P02-1 profile API (local/test only)
+
+Four authenticated routes are wired under `/v1/profiles/me`: owner dashboard GET, mode draft GET/PUT (`dating` or `friendship`), and account handle PUT (`/handle`). They reuse the P01 `requireSession` callback. Mode drafts use conditional DynamoDB writes; handle reservations use same-table atomic transactions; no new tables or cloud calls. `npm run test:p02-1:integration` exercises real Java DynamoDB Local; full local instructions: `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. No photo upload, public preview or activation yet.
+
 # U_luv API — local development and code map
 
 This directory contains U_luv's **existing** Fastify/TypeScript API. The current implementation is deliberately **local/test only**, with Java DynamoDB Local. It must not silently enable real AWS, a production email provider, or payment operations.

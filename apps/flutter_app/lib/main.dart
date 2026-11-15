@@ -33,7 +33,7 @@ class UluvApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'U_luv Diagnostics',
+      title: persistentMode ? 'U_luv' : 'U_luv Diagnostics',
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF2757E)),
           useMaterial3: true),

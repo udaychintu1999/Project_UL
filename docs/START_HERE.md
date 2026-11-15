@@ -1,3 +1,15 @@
+# Current milestone: P02-1 source delivered, owner verification pending (2026-11-15)
+
+Read `docs/design_reviews/P02_1_SOURCE_IMPLEMENTATION_CONTRACT_2026_11_15.md` and `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. P02-1 profile identity/drafts code is included in the update, but live Java DynamoDB Local, Flutter and Android verification are still pending. Keep accepted P00/P01 and the P01-1 automation exception unchanged. No AWS or P02 photo upload.
+
+---
+
+# CURRENT CHECKPOINT — P02-0 DESIGN MILESTONE (2026-11-15)
+
+P02 product decisions owner-approved; P02-0 design/requirements documentation prepared. **No P02 API, Flutter UI, media or test code implemented yet.** P02-1 is next source milestone. Read `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md`; preserve accepted P00/P01 and P01-1 Android OTP automation exception. P00–P16 Java DynamoDB Local, media adapter local for tests, no AWS calls without separately scoped approval. Older status blocks below are historical checkpoints.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

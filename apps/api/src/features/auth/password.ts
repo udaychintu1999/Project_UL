@@ -1,10 +1,10 @@
 /** P01-2: password credentials are separate from the verified email link and canonical user. */
-import { randomBytes, randomInt, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { GetCommand, PutCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk/lib-dynamodb';
 import { hash as argonHash, verify as argonVerify, Algorithm } from '@node-rs/argon2';
-import { bearerToken, challengeState, equalDigest, keyedHash, normalizeEmail, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp } from './policy.js';
+import { challengeState, equalDigest, keyedHash, normalizeEmail, OTP_MAX_ATTEMPTS, SESSION_LIFETIME_SECONDS, validOtp } from './policy.js';
 import { issueEmailChallenge, requestIdFromHeader } from './email-budget.js';
 import {
   compromisedCandidate,

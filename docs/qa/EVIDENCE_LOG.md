@@ -1,3 +1,15 @@
+# 2026-11-15 — P02-1 source/portable authoring evidence
+
+New P02-1 Node unit tests 5/5, full `apps/api/tests/unit/*.test.ts` 30/30, existing `verify:p01-3:portable` exit 0 and P02-1 security source-contract negative tests PASS. TS syntax AST parse and new scripts `node --check` PASS. **TypeScript semantic, lint, Fastify/DynamoDB Local, Flutter analyze/widgets, physical Android and owner manual flow UNVERIFIED** until owner Windows results arrive. Documentation: `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`. P01-1 Android OTP automation remains FAILED local-development exception.
+
+---
+
+# 2026-11-15 — P02-0 documentation milestone (no P02 runtime claims)
+
+Owner approved eight P02 product recommendations and local-only temporary media storage. P02-0 documents implementation requirements and proposed contracts. **NO P02 source/API/Flutter tests run or completed.** Documentation/secret/cloud/packaging results, if executed, are recorded in `docs/qa/P02_0_DESIGN_DOCUMENTATION_EVIDENCE_2026_11_15.md`. P01-1 Android OTP automation remains historical `FAILED` with local-only owner exception; no change to P00/P01 acceptance evidence.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

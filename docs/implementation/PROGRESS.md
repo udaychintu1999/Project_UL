@@ -1,3 +1,21 @@
+# 2026-11-15 — P02-1 navigation continuation: SOURCE_IMPLEMENTED / OWNER_RETEST_PENDING
+
+Owner Windows reported P02-1 real Fastify/DynamoDB integration **PASS** and physical Android Keystore/real API/profile persistence E2E **PASS**; portable source checks and 40 Flutter widget tests also **PASS**. One semantic compiler failure at `apps/api/src/app.ts` (TS18046 `unknown` error) was reported. This continuation adds exactly two signed-in bottom tabs (**Home** with direct Dating/Friendship draft editor; **Settings** with existing password, devices, account verification and logout), resolves the `error.code` type narrowing, and adds navigation regression tests. Authoring portable tests **PASS**; post-patch typecheck, Flutter widgets, Android manual navigation and owner acceptance **PENDING**. P02-2 not started. Read `docs/qa/P02_1_HOME_SETTINGS_CONTINUATION_EVIDENCE_2026_11_15.md` and `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical checkpoints below are preserved.
+
+---
+
+# 2026-11-15 — P02-1 SOURCE IMPLEMENTED; local/Android acceptance PENDING
+
+P02-1 authenticated shared @handle (conditional alias transaction), independent Dating/Friendship drafts (versioned CAS), Flutter editor/API connection and automated tests are in source. Authoring Node validation (30/30) and P01-3 portable regressions pass; real Java DynamoDB Local, typecheck/lint, Flutter and physical Android are **UNVERIFIED** until owner Windows commands run. See `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`, `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Locality write is held pending approved coarse locality catalog; P02-2 media/P02-3 activation not implemented.
+
+---
+
+# 2026-11-15 — P02-0 DESIGN_DOCUMENTED; P02-1..4 NOT IMPLEMENTED
+
+Owner approved eight product decisions for P02 (single account `@handle`, mode-specific names, 2–6 photos, shared photo objects, independent activation, age from *self-declared* DOB, broad locality and practical-not-comprehensive media checks), and confirmed `.local/media/` is disposable **development-only** storage. P02-0 design specification, API proposals, DynamoDB/media security blueprint, traceability/tests and future Windows runbook are documented at `docs/design_reviews/P02_0_*` and `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. **This is documentation only. No P02 routes/UI/tests or new tables exist. P02 runtime is NOT_IMPLEMENTED/UNVERIFIED; P02 has not been owner-accepted.** Next: P02-1 end-to-end handle + draft profile editing, respecting P01 regression and explicit approval gates. Historical checkpoints below remain true for their dates.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

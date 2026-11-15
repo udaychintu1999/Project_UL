@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'auth_screen.dart';
 import 'auth_service.dart';
 import 'persistent_session.dart';
+import '../profiles/profile_service.dart';
+import '../profiles/profile_workspace.dart';
 
 /// P01-3 root: no P00 buttons and no unverified account content during restore.
 /// The controller owns the session state; this widget only selects its UI.
@@ -104,7 +106,23 @@ class _PersistentAuthGateState extends State<PersistentAuthGate> {
           service: service,
           initialToken: sessions.accessToken,
           initialUid: sessions.record!.uid,
-          accountExtra: DeviceManagementPanel(controller: sessions));
+          bottomNavigation: true,
+          homeContent: ProfileWorkspace(
+            initiallyExpanded: true,
+            repository: HttpProfileRepository(
+              baseUrl: widget.service.baseUrl,
+              access: sessions.access,
+              onAccessDenied: () async {
+                try {
+                  await sessions.refresh();
+                } catch (_) {
+                  // The persistent gate owns session recovery and sign-out.
+                }
+              },
+            ),
+          ),
+          settingsContent: DeviceManagementPanel(controller: sessions),
+          );
     }
 
     return AuthScreen(

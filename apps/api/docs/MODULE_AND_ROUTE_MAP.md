@@ -1,3 +1,9 @@
+## P02-1 additions (2026-11-15)
+
+`features/profiles/validation.ts`: owner-input draft and @handle parsing. `features/profiles/routes.ts`: GET/PUT `/v1/profiles/me` dashboard/drafts and `/v1/profiles/me/handle`; exact-key DynamoDB operations and conditional transactions. Registration happens via `features/auth/routes.ts` with the existing validated `requireSession`, preventing a parallel token implementation. No photo or public discovery endpoints in this slice.
+
+---
+
 # API module and route map — current local implementation
 
 This is an orientation map extracted from the owner-provided API source. It is not a new routing design.

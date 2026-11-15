@@ -95,6 +95,11 @@ export function buildApp(config: AppConfig, db: DynamoDBDocumentClient) {
     // Fastify can deliver non-Error throwables. Log only a safe category, never raw payloads.
     const errorName = error instanceof Error ? error.name : 'UnknownError';
     app.log.error({ errorName }, 'request failed');
+    if (typeof error === 'object' && error !== null &&
+        'code' in error && error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
+      reply.code(413).send({ error: 'payload_too_large' });
+      return;
+    }
     reply.code(500).send({ error: 'internal_error' });
   });
   return app;

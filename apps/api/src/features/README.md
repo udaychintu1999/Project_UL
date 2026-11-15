@@ -1,3 +1,7 @@
+## P02-1 profiles feature
+
+`profiles/validation.ts` owns provisional draft/public-text and shared handle input rules; `profiles/routes.ts` owns authenticated owner CRUD and DynamoDB transactional writes. Registered within `auth/routes.ts` using the existing validated `requireSession` callback, not a copied auth check. Media and public viewing intentionally absent until P02-2/3.
+
 # API feature modules
 
 The existing `auth/` module covers P01-1 email OTP, P01-2 password and shared email quota, and P01-3 device-bound persistent sessions. The owner has accepted these phases for local development; this module does **not** implement real SMTP/Google, public cloud production authentication, or other later phase features.

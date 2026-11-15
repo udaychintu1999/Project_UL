@@ -20,6 +20,7 @@ import {
 import { issueEmailChallenge, requestIdFromHeader } from './email-budget.js';
 import { registerDeviceSessionRoutes } from './device-sessions.js';
 import { p13Keys, accessDigest } from './device-session-policy.js';
+import { registerProfileRoutes } from '../profiles/routes.js';
 
 const authTable = 'uluv_auth_links';
 const usersTable = 'uluv_users';
@@ -396,6 +397,8 @@ export function registerLocalEmailAuth(app: FastifyInstance, db: DynamoDBDocumen
     }
   }
   registerLocalPasswordAuth(app, db, secret, config.env === 'local', requireSession);
+  // P02-1 reuses this exact validated P01-2/P01-3 session guard.
+  registerProfileRoutes(app, db, requireSession);
   const devices = registerDeviceSessionRoutes(app, db, secret, requireSession);
   app.get('/v1/auth/me', async (request, reply) => {
     const auth = await requireSession(request, reply);

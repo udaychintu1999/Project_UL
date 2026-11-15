@@ -1,3 +1,7 @@
+## P02-1 profile editor
+
+An inline authenticated account section now offers shared handle selection and two independent, persistent Dating/Friendship drafts; profile API requests use fresh P01-3 device access via `sessions.access`. Photo uploads, mode activation and locality selection remain disabled/not shipped. Run `npm run test:flutter` and the P02-1 device runner from the repository root; details in `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`.
+
 # U_luv Flutter — Android app, local diagnostics and authentication
 
 **Connection setting:** edit `apps/flutter_app/dev_connection.config.mjs` (a plain commented JavaScript config, not a secret file). Switch `target` between `'usb'` (default) and `'emulator'`; update the corresponding URL only if your PC API port changes. Do **not** set a LAN/public IP, put tokens in this file or bind Fastify to `0.0.0.0`.
@@ -69,3 +73,9 @@ older regex-based source tests.
 See [Frontend Code Quality V1](docs/FRONTEND_CODE_QUALITY_V1.md),
 [Module Map](docs/FRONTEND_MODULE_MAP.md) and
 [Verification Record](docs/FRONTEND_QUALITY_VERIFICATION.md).
+
+## P02-1 authenticated Home / Settings (2026-11-15 continuation)
+
+The real `PersistentAuthGate` now shows only **Home** and **Settings** in a Material 3 bottom navigation bar after successful P01-3 session restoration. Home opens `ProfileWorkspace` directly with handle + independent Dating/Friendship drafts. Settings reuses P01 password/account actions and P01-3 device management and logout. `IndexedStack` preserves unsaved home edits across tab changes; leaving Settings clears transient password inputs. The unauthenticated sign-in screen and legacy P01 test surfaces do not show this bottom bar.
+
+The new widgets are in `lib/features/auth/account_navigation.dart` and `test/p02_1_account_navigation_test.dart`. For the Windows QA checklist and commands, see `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`. This does **not** introduce photo storage, activation or discovery.

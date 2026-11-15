@@ -1,3 +1,15 @@
+# Current code checkpoint — P02-1 (2026-11-15)
+
+P02-1 profile identity/draft implementation is added; existing P01-3 authorization is reused as callback and must not be cloned. P02-1 authoring portable tests passed; Windows/Android owner validation and acceptance remain pending. Read `docs/design_reviews/P02_1_SOURCE_IMPLEMENTATION_CONTRACT_2026_11_15.md` before profile changes. Photo uploads, locality catalog and activation are later milestones. Existing security/secret/no-AWS rules remain binding.
+
+---
+
+# CURRENT AUTHORITATIVE CHECKPOINT — P02-0 DESIGN DOCUMENTED (2026-11-15)
+
+**P02-0:** Owner approved all eight P02 design recommendations and temporary LOCAL-ONLY `.local/media/` (not production); documentation/requirements design freeze prepared. **P02-1..4 runtime implementation NOT STARTED; P02 not functionally verified or owner-accepted.** P00/P01 status and historical exceptions immediately below are unchanged. Start with `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md`, then the P02-0 API/database/QA companion documents. No P03, real AWS, payments, auth protocol changes or production activation authorized. This note supersedes the older "P02 NOT STARTED" statements below for **design** status only; P02 runtime remains unimplemented.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

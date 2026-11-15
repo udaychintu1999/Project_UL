@@ -1,3 +1,33 @@
+# 2026-11-15 — P02-1 continuation: authenticated Home / Settings bottom navigation
+
+- Added Material 3 two-tab signed-in shell: Home directly contains independently persisted Dating/Friendship profile drafts; Settings reuses existing password, account verification, device management and sign-out features.
+- `IndexedStack` preserves unsaved profile edits across tab switches; sensitive unsubmitted password fields clear on leaving Settings; Back is contained within the authenticated shell.
+- Corrected reported `TS18046` unknown-error guard in Fastify and removed three unused imports. Added widget and negative structural regression checks.
+- Owner's pre-continuation P02-1 Fastify/DynamoDB and physical Android tests **PASSED**; owner Windows typecheck failed and now needs retesting. Authoring portable suite **PASS**; Flutter/device tests **not run here**.
+- See `docs/qa/P02_1_HOME_SETTINGS_CONTINUATION_EVIDENCE_2026_11_15.md` and `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`. P02-2 not started. No schema, cloud or dependency changes.
+
+---
+
+# 2026-11-15 — P02-1 handle + independent draft editor (source milestone)
+
+- Added authenticated local-only `GET/PUT` profile routes and real DynamoDB exact-key versioned transactional writes. Unique account-level public handles are conditionally reserved/renamed without changing immutable UID or P01 sessions.
+- Added bounded draft input sanitization, no public activation, no photo ID injection, safe owner DTOs, private cache headers and 413 payload-size category.
+- Added Flutter local API repository and in-place authenticated account editor (handle, Dating and Friendship drafts, conflict/discard/retry).
+- Added policy unit tests, P02 structural security contract, real local DB/Fastify runner, widget tests and physical Android/session runner.
+- Authoring portable P01 regression and 30 Node unit tests pass. TypeScript semantic, live local database, Flutter/Android tests require owner Windows/phone evidence. No cloud calls, new tables, photo uploads or P03 features.
+- Full details: `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`.
+
+---
+
+# 2026-11-15 — P02-0 design/requirements milestone (docs only)
+
+- Captured owner-approved P02 product decisions and the restriction that `.local/media/` is temporary local developer storage, **not production**.
+- Documented P02-1..4 vertical-slice boundary, proposed profile API/validation, exact existing DynamoDB keys, media ownership/transaction/race handling, privacy safeguards and test matrix.
+- Added P02-1 Windows planned runbook and design evidence/status; updated current checkpoints without rewriting historic P01 results. No app/API/test source, dependencies, DynamoDB provisioner, AWS, Flutter or production configuration changes.
+- P02-1 implementation, live integration, Flutter/Android verification, media functionality and owner acceptance remain outstanding.
+
+---
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

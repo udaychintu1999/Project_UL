@@ -21,7 +21,12 @@ class DeferredAuthService implements AuthService {
   @override
   Future<AuthResult> localOutboxCode(String email) => _defer('outbox');
   @override
-  Future<AuthResult> verify({required String email, required String code, required String dateOfBirth, required bool consent}) => _defer('verify');
+  Future<AuthResult> verify(
+          {required String email,
+          required String code,
+          required String dateOfBirth,
+          required bool consent}) =>
+      _defer('verify');
   @override
   Future<AuthResult> me(String token) => _defer('me');
   @override
@@ -29,7 +34,8 @@ class DeferredAuthService implements AuthService {
 }
 
 void main() {
-  test('observer starts no HTTP action before a test explicitly executes it', () {
+  test('observer starts no HTTP action before a test explicitly executes it',
+      () {
     final fake = DeferredAuthService();
     final observer = ObservedAuthService(fake);
     final uiResult = observer.requestCode('synthetic@example.invalid');
@@ -38,22 +44,31 @@ void main() {
     expect(fake.requests, isEmpty);
   });
 
-  test('all five P01 operations delegate exactly once after an explicit execute', () async {
+  test(
+      'all five P01 operations delegate exactly once after an explicit execute',
+      () async {
     final fake = DeferredAuthService();
     final observer = ObservedAuthService(fake);
     final uiFutures = <AuthOperation, Future<AuthResult>>{
       AuthOperation.request: observer.requestCode('synthetic@example.invalid'),
-      AuthOperation.outbox: observer.localOutboxCode('synthetic@example.invalid'),
-      AuthOperation.verify: observer.verify(email: 'synthetic@example.invalid', code: '000000', dateOfBirth: '2000-01-01', consent: true),
+      AuthOperation.outbox:
+          observer.localOutboxCode('synthetic@example.invalid'),
+      AuthOperation.verify: observer.verify(
+          email: 'synthetic@example.invalid',
+          code: '000000',
+          dateOfBirth: '2000-01-01',
+          consent: true),
       AuthOperation.me: observer.me('fixture-only'),
       AuthOperation.logout: observer.logout('fixture-only'),
     };
-    expect(fake.requests, isEmpty); // queueing UI requests is never a network call
+    expect(
+        fake.requests, isEmpty); // queueing UI requests is never a network call
     for (final entry in uiFutures.entries) {
       final action = entry.key.name;
       final execution = observer.pending(entry.key)!.execute();
       expect(fake.requests.last, action);
-      fake.completers[action]!.complete(const AuthResult(ok: true, message: 'Synthetic completion'));
+      fake.completers[action]!.complete(
+          const AuthResult(ok: true, message: 'Synthetic completion'));
       final actualResult = await execution;
       expect(identical(await entry.value, actualResult), isTrue);
     }
@@ -67,7 +82,8 @@ void main() {
     final pending = observer.pending(AuthOperation.me)!;
     final first = pending.execute();
     await expectLater(pending.execute(), throwsStateError);
-    fake.completers['me']!.complete(const AuthResult(ok: true, message: 'Synthetic completion'));
+    fake.completers['me']!
+        .complete(const AuthResult(ok: true, message: 'Synthetic completion'));
     expect((await first).ok, isTrue);
     expect(fake.requests, ['me']);
   });

@@ -37,29 +37,63 @@ assert.ok(read('apps/flutter_app/test/auth_response_test.dart').includes('valid 
 
 // Regression for the owner-observed Android HttpException on local outbox POST.
 // Dart HttpClientRequest commits headers when request.add begins sending the
-// body. All developer and bearer headers must be assigned BEFORE that write.
-const sendStart=client.indexOf('Future<AuthResult> _send(');
-const sendEnd=client.indexOf('  @override',sendStart);
-assert.ok(sendStart>=0 && sendEnd>sendStart,'Missing real Flutter HTTP sender');
-const sender=client.slice(sendStart,sendEnd);
-const postBodyWrite=sender.indexOf('request.add(payload)');
-assert.ok(postBodyWrite>0,'UTF-8 JSON request body must be sent');
-assert.ok(sender.indexOf('final payload = utf8.encode(jsonEncode(body))')>=0 && sender.indexOf('final payload = utf8.encode(jsonEncode(body))')<postBodyWrite, 'Encode JSON to UTF-8 bytes before writing');
-assert.ok(sender.indexOf('request.contentLength = payload.length')>=0 && sender.indexOf('request.contentLength = payload.length')<postBodyWrite, 'Explicit fixed JSON Content-Length required before body write');
-assert.ok(sender.indexOf('request.persistentConnection = false')>=0 && sender.indexOf('request.persistentConnection = false')<postBodyWrite, 'Avoid persistent ADB-forwarded connections');
-for(const h of [
-  "request.headers.set(HttpHeaders.acceptHeader, 'application/json')",
-  "request.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8')",
-  "request.headers.set('x-uluv-dev-key', devToken)",
-  "request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token')",
-]) {
-  const at=sender.indexOf(h);
-  assert.ok(at>=0 && at<postBodyWrite,`Set Flutter HTTP header before JSON write: ${h}`);
+// body. Every developer and bearer header must be assigned BEFORE that write.
+// Accept dart format line wrapping while still enforcing the same ordering.
+const sendStartMatch = /Future\s*<\s*AuthResult\s*>\s*_send\s*\(/.exec(client);
+const sendStart = sendStartMatch?.index ?? -1;
+const sendEnd = client.indexOf('@override', sendStart);
+assert.ok(sendStart >= 0 && sendEnd > sendStart, 'Missing real Flutter HTTP sender');
+const sender = client.slice(sendStart, sendEnd);
+const bodyWriteMatch = /\brequest\s*\.\s*add\s*\(\s*payload\s*\)/.exec(sender);
+assert.ok(bodyWriteMatch, 'UTF-8 JSON request body must be sent');
+const beforeBodyWrite = sender.slice(0, bodyWriteMatch.index);
+
+// Assert the *call* exists before body write, not that it occupies one line.
+// This keeps the security regression check meaningful after dart format.
+function requireBeforeBodyWrite(pattern, reason) {
+  assert.match(beforeBodyWrite, pattern, reason);
 }
-assert.ok(sender.indexOf("if (dev) request.headers.set('x-uluv-dev-key', devToken)")<postBodyWrite,
-  'Development outbox header must precede body write');
-assert.ok(sender.indexOf('if (token != null) request.headers.set(HttpHeaders.authorizationHeader')<postBodyWrite,
-  'Bearer header must precede body write on logout');
+requireBeforeBodyWrite(
+  /final\s+payload\s*=\s*utf8\s*\.\s*encode\s*\(\s*jsonEncode\s*\(\s*body\s*\)\s*\)/,
+  'Encode JSON to UTF-8 bytes before writing'
+);
+requireBeforeBodyWrite(
+  /request\s*\.\s*contentLength\s*=\s*payload\s*\.\s*length\b/,
+  'Explicit fixed JSON Content-Length required before body write'
+);
+requireBeforeBodyWrite(
+  /request\s*\.\s*persistentConnection\s*=\s*false\b/,
+  'Avoid persistent ADB-forwarded connections'
+);
+const requiredHeaders = [
+  {
+    pattern: /request\s*\.\s*headers\s*\.\s*set\s*\(\s*HttpHeaders\s*\.\s*acceptHeader\s*,\s*'application\/json'\s*\)/,
+    name: 'Accept: application/json'
+  },
+  {
+    pattern: /request\s*\.\s*headers\s*\.\s*set\s*\(\s*HttpHeaders\s*\.\s*contentTypeHeader\s*,\s*'application\/json; charset=utf-8'\s*\)/,
+    name: 'Content-Type: application/json; charset=utf-8'
+  },
+  {
+    pattern: /request\s*\.\s*headers\s*\.\s*set\s*\(\s*'x-uluv-dev-key'\s*,\s*devToken\s*\)/,
+    name: 'development outbox key'
+  },
+  {
+    pattern: /request\s*\.\s*headers\s*\.\s*set\s*\(\s*HttpHeaders\s*\.\s*authorizationHeader\s*,\s*'Bearer \$token'\s*\)/,
+    name: 'bearer authorization'
+  }
+];
+for (const {pattern, name} of requiredHeaders) {
+  requireBeforeBodyWrite(pattern, `Set Flutter HTTP ${name} header before JSON write`);
+}
+requireBeforeBodyWrite(
+  /if\s*\(\s*dev\s*\)\s*request\s*\.\s*headers\s*\.\s*set\s*\(\s*'x-uluv-dev-key'\s*,\s*devToken\s*\)/,
+  'Development outbox header must precede body write'
+);
+requireBeforeBodyWrite(
+  /if\s*\(\s*token\s*!=\s*null\s*\)\s*request\s*\.\s*headers\s*\.\s*set\s*\(\s*HttpHeaders\s*\.\s*authorizationHeader/,
+  'Bearer header must precede body write on logout'
+);
 
 const deviceTest=read('apps/flutter_app/integration_test/auth_integration_test.dart');
 assert.match(deviceTest,/tapAndWaitForAuth/);

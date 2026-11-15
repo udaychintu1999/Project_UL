@@ -19,6 +19,39 @@ const fixture = read('scripts/verify/p01-2-device-fixture.mjs');
 const dart = read('apps/flutter_app/integration_test/password_integration_test.dart');
 const observer = read('apps/flutter_app/integration_test/auth_test_observer.dart');
 
+
+// Match behaviorally important Dart expressions across `dart format` layout.
+// Keep field names, order, and assertions exact; accept only whitespace and
+// optional Dart trailing commas where they are syntactically equivalent.
+const accountSetupPattern = /\bif\s*\(\s*accountPanel\s*==\s*'setup'\s*\|\|\s*accountPanel\s*==\s*'create'\s*\)/;
+const accountChangePattern = /\belse\s+if\s*\(\s*accountPanel\s*==\s*'change'\s*\)/;
+const accountWidgetPattern = /find\.byKey\s*\(\s*const\s+Key\s*\(\s*'auth-me'\s*\)\s*\)\s*,\s*findsOneWidget\b/;
+const currentPasswordHiddenPattern = /find\.byKey\s*\(\s*const\s+Key\s*\(\s*'auth-current-password'\s*\)\s*\)\s*,\s*findsNothing\b/;
+const recoveryValidationPattern = /\bvalidate\s*\(\s*\[\s*'auth-email'\s*,\s*'auth-recovery-code'\s*,\s*'auth-recovery-password'\s*,\s*'auth-recovery-confirm'\s*,?\s*\]\s*\)/;
+// Match the full response field mapping rather than its specific line layout.
+const newAccountResultPattern = /\bnewAccount\s*:\s*decoded\s*\[\s*'newAccount'\s*\]\s+is\s+bool\s*\?\s*decoded\s*\[\s*'newAccount'\s*\]\s+as\s+bool\s*:\s*null\b/;
+// A recovery-code edit must still trigger field-specific inline validation.
+const recoveryCodeOnChangedPattern = /\bonChanged\s*:\s*\(\s*_\s*\)\s*=>\s*touchedField\s*\(\s*'auth-recovery-code'\s*,?\s*\)/;
+
+function escapePattern(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function textEntryPattern(key, value) {
+  return new RegExp(
+    String.raw`await\s+tester\.enterText\s*\(\s*find\.byKey\s*\(\s*const\s+Key\s*\(\s*'${escapePattern(key)}'\s*\)\s*\)\s*,\s*'${escapePattern(value)}'\s*,?\s*\)\s*;`
+  );
+}
+
+function namedWidgetTestBody(source, title) {
+  const heading = new RegExp(String.raw`\btestWidgets\s*\(\s*'${escapePattern(title)}'`);
+  const match = heading.exec(source);
+  assert.ok(match, `Missing widget regression: ${title}`);
+  const remainder = source.slice(match.index + match[0].length);
+  const nextTest = /\btestWidgets\s*\(/.exec(remainder);
+  return nextTest ? remainder.slice(0, nextTest.index) : remainder;
+}
+
 test('P01-2 device E2E is a required, discoverable real-device gate', () => {
   assert.equal(packageJson.scripts['test:flutter:p01-2:e2e'],
     'node --env-file=apps/api/.env scripts/verify/p01-2-android-e2e.mjs');
@@ -102,14 +135,14 @@ test('P01-2 login, signup, password setup and account settings have distinct UI 
   const widgets = read('apps/flutter_app/test/password_auth_widget_test.dart');
   assert.match(ui, /accountPanel = 'home'/);
   assert.match(ui, /auth-signup-register/);
-  assert.match(ui, /if \(accountPanel == 'setup' \|\| accountPanel == 'create'\)/);
-  assert.match(ui, /else if \(accountPanel == 'change'\)/);
+  assert.match(ui, accountSetupPattern);
+  assert.match(ui, accountChangePattern);
   assert.match(ui, /auth-password-settings/);
   assert.match(ui, /auth-mode-signup/);
-  assert.match(client, /newAccount: decoded\['newAccount'\] is bool/);
+  assert.match(client, newAccountResultPattern);
   assert.match(widgets, /sign-up requires OTP then creates password atomically before account/);
   assert.match(widgets, /existing OTP user goes to account rather than password setup/);
-  assert.match(widgets, /find\.byKey\(const Key\('auth-current-password'\)\),findsNothing/);
+  assert.match(widgets, currentPasswordHiddenPattern);
 });
 
 
@@ -129,7 +162,7 @@ test('new signup requires password before committing identity and OTP login neve
   assert.match(ui, /auth-signup-register/);
   assert.match(ui, /mode == 'otp'/);
   assert.match(ui, /auth-recovery-confirm/);
-  assert.match(ui, /validate\(\['auth-email','auth-recovery-code','auth-recovery-password','auth-recovery-confirm'\]\)/);
+  assert.match(ui, recoveryValidationPattern);
 });
 
 test('recovery transaction items use explicit AWS SDK contextual typing', () => {
@@ -146,8 +179,9 @@ test('recovery transaction items use explicit AWS SDK contextual typing', () => 
 test('P01-2 recovery widget validation waits for rendered field rebuilds', () => {
   const widgets = read('apps/flutter_app/test/password_auth_widget_test.dart');
   const ui = read('apps/flutter_app/lib/features/auth/auth_screen.dart');
-  const section = widgets.split("testWidgets('P01-2 new-password and recovery-code validation updates while typing'")[1]?.split('\n  });')[0];
-  assert.ok(section, 'Missing recovery inline-validation widget regression');
+  const section = namedWidgetTestBody(
+    widgets, 'P01-2 new-password and recovery-code validation updates while typing'
+  );
   for (const [key, input] of [
     ['auth-recovery-code', '123'],
     ['auth-recovery-code', '123456'],
@@ -155,13 +189,13 @@ test('P01-2 recovery widget validation waits for rendered field rebuilds', () =>
     ['auth-recovery-password', 'A long valid passphrase 2026'],
     ['auth-recovery-confirm', 'not matching'],
   ]) {
-    const call = `await tester.enterText(find.byKey(const Key('${key}')), '${input}');`;
-    const at = section.indexOf(call);
-    assert.ok(at >= 0, `Missing tested input: ${key}`);
-    assert.match(section.slice(at + call.length), /^\s*await tester\.pump\(\);/,
+    const call = textEntryPattern(key, input).exec(section);
+    assert.ok(call, `Missing tested input: ${key}`);
+    const afterInput = section.slice(call.index + call[0].length);
+    assert.match(afterInput, /^\s*await\s+tester\.pump\s*\(\s*\)\s*;/,
       `Advance a frame after ${key} text input before checking decoration.errorText`);
   }
-  assert.match(ui, /onChanged: \(_\) => touchedField\('auth-recovery-code'\)/);
+  assert.match(ui, recoveryCodeOnChangedPattern);
   assert.match(section, /A valid six-digit code must clear the inline error/);
 });
 
@@ -253,10 +287,10 @@ test('P01-1 and P01-2 existing-user OTP widget transitions use a settled, real b
     assert.match(widgetTest, /await tester\.ensureVisible\(verifyButton\);\s*await tester\.pumpAndSettle\(\)/);
     assert.match(widgetTest, /tester\.widget<FilledButton>\(verifyButton\)\.onPressed/);
     assert.match(widgetTest, /await tester\.tap\(verifyButton\);\s*await tester\.pumpAndSettle\(\)/);
-    assert.match(widgetTest, /find\.byKey\(const Key\('auth-me'\)\),findsOneWidget/);
+    assert.match(widgetTest, accountWidgetPattern);
   }
-  assert.match(legacy, /expect\(service\.verifies,1/);
-  assert.match(account, /expect\(service\.otpLogins,1/);
+  assert.match(legacy, /expect\s*\(\s*service\.verifies\s*,\s*1\b/);
+  assert.match(account, /expect\s*\(\s*service\.otpLogins\s*,\s*1\b/);
 });
 
 
@@ -301,4 +335,54 @@ test('P01-2 existing signup email is rejected before OTP, shows safe login actio
   assert.match(widget,/registered signup email shows message without OTP form/);
   assert.match(integration,/already registered signup never consumes another slot/);
   assert.match(integration,/duplicateSignup\.code,409/);
+});
+
+
+test('Dart source contract recognizes compact and formatted syntax, but not changed semantics', () => {
+  for (const valid of [
+    "if (accountPanel == 'setup' || accountPanel == 'create')",
+    "if (\n  accountPanel == 'setup' ||\n  accountPanel == 'create'\n)",
+  ]) assert.match(valid, accountSetupPattern);
+  assert.doesNotMatch("if (accountPanel == 'setup' && accountPanel == 'create')", accountSetupPattern);
+
+  for (const valid of [
+    "validate(['auth-email','auth-recovery-code','auth-recovery-password','auth-recovery-confirm'])",
+    "validate([\n 'auth-email',\n 'auth-recovery-code',\n 'auth-recovery-password',\n 'auth-recovery-confirm',\n])",
+  ]) assert.match(valid, recoveryValidationPattern);
+  assert.doesNotMatch("validate(['auth-email','auth-recovery-password','auth-recovery-confirm'])", recoveryValidationPattern);
+  assert.doesNotMatch("validate(['auth-email','auth-code','auth-recovery-password','auth-recovery-confirm'])", recoveryValidationPattern);
+
+  for (const valid of [
+    "await tester.enterText(find.byKey(const Key('auth-recovery-code')), '123');",
+    "await tester.enterText(\n    find.byKey(const Key('auth-recovery-code')),\n    '123',\n  );",
+  ]) assert.match(valid, textEntryPattern('auth-recovery-code', '123'));
+  assert.doesNotMatch(
+    "await tester.enterText(find.byKey(const Key('auth-recovery-code')), '123456');",
+    textEntryPattern('auth-recovery-code', '123')
+  );
+  assert.match("expect(\n  find.byKey(const Key('auth-me')),\n  findsOneWidget,\n)", accountWidgetPattern);
+  assert.doesNotMatch("expect(find.byKey(const Key('auth-me')), findsNothing)", accountWidgetPattern);
+});
+
+
+test('newAccount mapping and recovery callback tolerate formatted Dart and reject changed semantics', () => {
+  for (const valid of [
+    "newAccount: decoded['newAccount'] is bool ? decoded['newAccount'] as bool : null",
+    "newAccount:\n  decoded['newAccount'] is bool\n    ? decoded['newAccount'] as bool\n    : null,",
+  ]) assert.match(valid, newAccountResultPattern);
+  for (const invalid of [
+    "newAccount: decoded['newAccount'] is String ? decoded['newAccount'] as bool : null",
+    "newAccount: decoded['newAccount'] is bool ? false : null",
+    "newAccount: decoded['newAccount'] is bool ? decoded['newAccount'] as bool : false",
+  ]) assert.doesNotMatch(invalid, newAccountResultPattern);
+
+  for (const valid of [
+    "onChanged: (_) => touchedField('auth-recovery-code')",
+    "onChanged:\n  (_) => touchedField(\n    'auth-recovery-code',\n  )",
+  ]) assert.match(valid, recoveryCodeOnChangedPattern);
+  for (const invalid of [
+    "onChanged: (_) => touchedField('auth-code')",
+    "onChanged: (_) => touchedField('auth-recovery-password')",
+    "onSubmitted: (_) => touchedField('auth-recovery-code')",
+  ]) assert.doesNotMatch(invalid, recoveryCodeOnChangedPattern);
 });

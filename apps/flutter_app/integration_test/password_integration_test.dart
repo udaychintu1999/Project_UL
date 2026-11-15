@@ -36,8 +36,16 @@ Future<void> tapAuth(
   await tester.pumpAndSettle();
   if (action == AuthOperation.passwordLogin) {
     final before = observer.expectedLoginFieldMatches(
-      tester.widget<TextField>(find.byKey(const Key('auth-email'))).controller?.text ?? '',
-      tester.widget<TextField>(find.byKey(const Key('auth-password'))).controller?.text ?? '',
+      tester
+              .widget<TextField>(find.byKey(const Key('auth-email')))
+              .controller
+              ?.text ??
+          '',
+      tester
+              .widget<TextField>(find.byKey(const Key('auth-password')))
+              .controller
+              ?.text ??
+          '',
     );
     if (before == null || !before.email || !before.password) {
       throw TestFailure('P01-2 login input changed BEFORE button tap '
@@ -50,27 +58,33 @@ Future<void> tapAuth(
   await tester.pump();
   final pending = observer.pending(action);
   if (pending == null) {
-    throw TestFailure('P01-2 ${action.name}: UI did not trigger a request. Status: ${currentStatus(tester)}');
+    throw TestFailure(
+        'P01-2 ${action.name}: UI did not trigger a request. Status: ${currentStatus(tester)}');
   }
-  if (action == AuthOperation.passwordLogin && observer.lastLoginInputsMatch == false) {
+  if (action == AuthOperation.passwordLogin &&
+      observer.lastLoginInputsMatch == false) {
     throw TestFailure('P01-2 login input changed DURING button tap '
         '(email match: ${observer.lastLoginEmailMatch}, '
         'password match: ${observer.lastLoginPasswordMatch}). '
         'No credentials logged.');
   }
-  if (action == AuthOperation.passwordChange && observer.lastChangeInputsMatch == false) {
-    throw TestFailure('P01-2 password-change UI submitted unexpected current/new values. No credentials logged.');
+  if (action == AuthOperation.passwordChange &&
+      observer.lastChangeInputsMatch == false) {
+    throw TestFailure(
+        'P01-2 password-change UI submitted unexpected current/new values. No credentials logged.');
   }
   // Run the actual HTTP operation in Flutter's real async test zone, exactly
   // once. Never repeat a password/recovery write after an uncertain outcome.
   final result = await tester.runAsync(
     () => pending.execute().timeout(const Duration(seconds: 35)),
   );
-  if (result == null) throw TestFailure('P01-2 ${action.name}: request did not finish.');
+  if (result == null)
+    throw TestFailure('P01-2 ${action.name}: request did not finish.');
   await tester.pumpAndSettle();
   final visible = currentStatus(tester);
   if (result.ok != shouldSucceed || !visible.startsWith(expectedStatus)) {
-    throw TestFailure('P01-2 ${action.name}: ${result.message}; UI status: $visible');
+    throw TestFailure(
+        'P01-2 ${action.name}: ${result.message}; UI status: $visible');
   }
 }
 
@@ -86,18 +100,24 @@ Future<void> verifyChangedPasswordAtAPI(
   String uid,
 ) async {
   final result = await tester.runAsync(() async {
-    final signedIn = await api.passwordLogin(email, nextPassword)
+    final signedIn = await api
+        .passwordLogin(email, nextPassword)
         .timeout(const Duration(seconds: 35));
     if (signedIn.ok && signedIn.token != null) {
-      final logout = await api.logout(signedIn.token!)
+      final logout = await api
+          .logout(signedIn.token!)
           .timeout(const Duration(seconds: 35));
-      if (!logout.ok) return const AuthResult(
-          ok: false, message: 'Changed-password API probe could not revoke its temporary session.');
+      if (!logout.ok)
+        return const AuthResult(
+            ok: false,
+            message:
+                'Changed-password API probe could not revoke its temporary session.');
     }
     return signedIn;
   });
   if (result == null || !result.ok || result.uniqueId != uid) {
-    throw TestFailure('P01-2 new-password API probe failed after a reported successful change: '
+    throw TestFailure(
+        'P01-2 new-password API probe failed after a reported successful change: '
         '${result?.message ?? 'No response'}. This is not a UI input assertion.');
   }
   await tester.pump();
@@ -118,7 +138,8 @@ Future<void> enter(WidgetTester tester, Key key, String value) async {
   final field = tester.widget<TextField>(target);
   if (field.controller?.text != value) {
     final fieldKind = key == const Key('auth-email') ? 'email' : 'password';
-    throw TestFailure('P01-2 Android text driver did not update $fieldKind field. No credentials logged.');
+    throw TestFailure(
+        'P01-2 Android text driver did not update $fieldKind field. No credentials logged.');
   }
 }
 
@@ -129,19 +150,25 @@ Future<void> enterLoginCredentials(
     WidgetTester tester, String email, String password) async {
   await enter(tester, const Key('auth-email'), email);
   await enter(tester, const Key('auth-password'), password);
-  final emailField = tester.widget<TextField>(find.byKey(const Key('auth-email')));
-  final passwordField = tester.widget<TextField>(find.byKey(const Key('auth-password')));
+  final emailField =
+      tester.widget<TextField>(find.byKey(const Key('auth-email')));
+  final passwordField =
+      tester.widget<TextField>(find.byKey(const Key('auth-password')));
   if (emailField.controller?.text != email ||
       passwordField.controller?.text != password) {
-    throw TestFailure('P01-2 Android form changed login inputs after text entry. No credentials logged.');
+    throw TestFailure(
+        'P01-2 Android form changed login inputs after text entry. No credentials logged.');
   }
 }
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('P01-2 physical Android: real password login, access, change, recovery, logout', (tester) async {
-    const base = String.fromEnvironment('ULUV_API_BASE_URL', defaultValue: 'http://10.0.2.2:3000');
+  testWidgets(
+      'P01-2 physical Android: real password login, access, change, recovery, logout',
+      (tester) async {
+    const base = String.fromEnvironment('ULUV_API_BASE_URL',
+        defaultValue: 'http://10.0.2.2:3000');
     const devKey = String.fromEnvironment('ULUV_DEV_TOKEN', defaultValue: '');
     const email = String.fromEnvironment('ULUV_P01_2_FIXTURE_EMAIL');
     const password = String.fromEnvironment('ULUV_P01_2_FIXTURE_PASSWORD');
@@ -149,7 +176,8 @@ void main() {
     // Synthetic fixture only; the Dart test refuses to run without the
     // owner-hosted setup script. Do not log fixture credentials.
     if (email.isEmpty || password.isEmpty || uid.isEmpty) {
-      throw TestFailure('P01-2 synthetic fixture missing. Run npm run test:flutter:p01-2:e2e.');
+      throw TestFailure(
+          'P01-2 synthetic fixture missing. Run npm run test:flutter:p01-2:e2e.');
     }
     const nextPassword = 'DeviceChanged#P012';
     const resetPassword = 'DeviceReset!P012';
@@ -164,15 +192,21 @@ void main() {
     expect(find.byKey(const Key('auth-password-login')), findsOneWidget,
         reason: 'The P01-2 primary password UI must be shown on Android.');
     await enterLoginCredentials(tester, email, password);
-    expect(tester.widget<TextField>(find.byKey(const Key('auth-password'))).controller?.text,
-        password, reason: 'The real Flutter password input must contain the host-verified fixture value.');
+    expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('auth-password')))
+            .controller
+            ?.text,
+        password,
+        reason:
+            'The real Flutter password input must contain the host-verified fixture value.');
     observer.expectLoginInputs(email, password);
     await tapAuth(tester, observer, AuthOperation.passwordLogin,
         const Key('auth-password-login'), 'Signed in with password.');
     expect(find.textContaining(uid), findsOneWidget,
         reason: 'Password sign-in must reuse the fixture\'s immutable ID.');
-    await tapAuth(tester, observer, AuthOperation.me,
-        const Key('auth-me'), 'Account access confirmed.');
+    await tapAuth(tester, observer, AuthOperation.me, const Key('auth-me'),
+        'Account access confirmed.');
 
     // Password management is a separate screen; it must not appear automatically.
     expect(find.byKey(const Key('auth-create-password')), findsNothing);
@@ -213,19 +247,28 @@ void main() {
     // The API deliberately returns a privacy-safe acknowledgement whether or
     // not an email was issued. Do NOT assert the old misleading 'was issued'
     // text. The following local outbox read is what proves actual issuance.
-    await tapAuth(tester, observer, AuthOperation.recoveryRequest,
-        const Key('auth-recovery-request'), 'If eligible, a recovery code is available');
+    await tapAuth(
+        tester,
+        observer,
+        AuthOperation.recoveryRequest,
+        const Key('auth-recovery-request'),
+        'If eligible, a recovery code is available');
     await tapAuth(tester, observer, AuthOperation.recoveryOutbox,
         const Key('auth-recovery-outbox'), 'Local recovery code retrieved.');
     final recovery = find.byKey(const Key('auth-recovery-local-code'));
     expect(recovery, findsOneWidget);
-    final localCode = tester.widget<SelectableText>(recovery).data!.split(': ').last;
+    final localCode =
+        tester.widget<SelectableText>(recovery).data!.split(': ').last;
     expect(localCode, matches(RegExp(r'^\d{6}$')));
     await enter(tester, const Key('auth-recovery-code'), localCode);
     await enter(tester, const Key('auth-recovery-password'), resetPassword);
     await enter(tester, const Key('auth-recovery-confirm'), resetPassword);
-    await tapAuth(tester, observer, AuthOperation.passwordReset,
-        const Key('auth-recovery-reset'), 'Password reset. Sign in with your new password.');
+    await tapAuth(
+        tester,
+        observer,
+        AuthOperation.passwordReset,
+        const Key('auth-recovery-reset'),
+        'Password reset. Sign in with your new password.');
 
     // Recovery must reject the previous password while retaining the user ID.
     await enterLoginCredentials(tester, email, nextPassword);
@@ -238,8 +281,8 @@ void main() {
     await tapAuth(tester, observer, AuthOperation.passwordLogin,
         const Key('auth-password-login'), 'Signed in with password.');
     expect(find.textContaining(uid), findsOneWidget);
-    await tapAuth(tester, observer, AuthOperation.me,
-        const Key('auth-me'), 'Account access confirmed.');
+    await tapAuth(tester, observer, AuthOperation.me, const Key('auth-me'),
+        'Account access confirmed.');
     await tapAuth(tester, observer, AuthOperation.logout,
         const Key('auth-logout'), 'Signed out.');
     expect(find.byKey(const Key('auth-password-login')), findsOneWidget);

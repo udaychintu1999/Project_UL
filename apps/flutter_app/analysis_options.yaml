@@ -1,3 +1,5 @@
+# Keep the accepted P01 analyzer contract stable during readability-only changes.
+# Additional rules require their own tracked cleanup and Flutter SDK verification.
 analyzer:
   errors:
     invalid_use_of_visible_for_testing_member: error

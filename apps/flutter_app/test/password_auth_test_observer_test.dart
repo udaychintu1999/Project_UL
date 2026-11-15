@@ -14,21 +14,36 @@ class FakePasswordDelegate implements PasswordAuthService, AuthService {
     completers[action] = pending;
     return pending.future;
   }
+
   Future<AuthResult> requestCode(String email) => hold('request');
   Future<AuthResult> localOutboxCode(String email) => hold('outbox');
-  Future<AuthResult> verify({required String email,required String code,required String dateOfBirth,required bool consent}) => hold('verify');
+  Future<AuthResult> verify(
+          {required String email,
+          required String code,
+          required String dateOfBirth,
+          required bool consent}) =>
+      hold('verify');
   Future<AuthResult> me(String token) => hold('me');
   Future<AuthResult> logout(String token) => hold('logout');
-  Future<AuthResult> passwordLogin(String email,String password) => hold('passwordLogin');
-  Future<AuthResult> setPassword(String token,String password) => hold('passwordSet');
-  Future<AuthResult> changePassword(String token,String currentPassword,String newPassword) => hold('passwordChange');
-  Future<AuthResult> requestPasswordRecovery(String email) => hold('recoveryRequest');
-  Future<AuthResult> localPasswordRecoveryCode(String email) => hold('recoveryOutbox');
-  Future<AuthResult> resetPassword(String email,String code,String newPassword) => hold('passwordReset');
+  Future<AuthResult> passwordLogin(String email, String password) =>
+      hold('passwordLogin');
+  Future<AuthResult> setPassword(String token, String password) =>
+      hold('passwordSet');
+  Future<AuthResult> changePassword(
+          String token, String currentPassword, String newPassword) =>
+      hold('passwordChange');
+  Future<AuthResult> requestPasswordRecovery(String email) =>
+      hold('recoveryRequest');
+  Future<AuthResult> localPasswordRecoveryCode(String email) =>
+      hold('recoveryOutbox');
+  Future<AuthResult> resetPassword(
+          String email, String code, String newPassword) =>
+      hold('passwordReset');
 }
 
 void main() {
-  test('P01-2 observer compares UI input without logging fixture credentials', () {
+  test('P01-2 observer compares UI input without logging fixture credentials',
+      () {
     final observer = ObservedPasswordAuthService(
         HttpAuthService(baseUrl: 'http://127.0.0.1:3000', devToken: ''));
     observer.expectLoginInputs('test@example.invalid', 'Expected#2026');
@@ -49,8 +64,12 @@ void main() {
     expect(observer.lastLoginInputsMatch, isTrue);
     expect(observer.lastLoginEmailMatch, isTrue);
     expect(observer.lastLoginPasswordMatch, isTrue);
-    expect(observer.expectedLoginFieldMatches('test@example.invalid', 'Expected#2026'), isNull,
-        reason: 'Expectations are cleared after the service callback; no replay.');
+    expect(
+        observer.expectedLoginFieldMatches(
+            'test@example.invalid', 'Expected#2026'),
+        isNull,
+        reason:
+            'Expectations are cleared after the service callback; no replay.');
     observer.expectChangeInputs('Old#2026', 'New#2026');
     observer.changePassword('synthetic-token', 'Old#2026', 'Changed#2026');
     expect(observer.lastChangeInputsMatch, isFalse);
@@ -61,12 +80,19 @@ void main() {
     // equality/queuing test, with zero HTTP requests and zero real secrets.
   });
 
-  test('P01-2 six password operations are queued, executed once, and completed', () async {
+  test('P01-2 six password operations are queued, executed once, and completed',
+      () async {
     final fake = FakePasswordDelegate();
     // The device observer constructor accepts the concrete service, so its
     // underlying queue semantics are checked using PendingAuthCall directly.
-    final actions = <String>['passwordLogin','passwordSet','passwordChange',
-      'recoveryRequest','recoveryOutbox','passwordReset'];
+    final actions = <String>[
+      'passwordLogin',
+      'passwordSet',
+      'passwordChange',
+      'recoveryRequest',
+      'recoveryOutbox',
+      'passwordReset'
+    ];
     for (final name in actions) {
       final call = PendingAuthCall(() => fake.hold(name));
       expect(fake.calls, isNot(contains(name)));
@@ -74,10 +100,11 @@ void main() {
       final started = call.execute();
       expect(fake.calls.last, name);
       await expectLater(call.execute(), throwsStateError);
-      fake.completers[name]!.complete(const AuthResult(ok: true,message: 'Done'));
+      fake.completers[name]!
+          .complete(const AuthResult(ok: true, message: 'Done'));
       final result = await started;
       expect(result.ok, isTrue);
-      expect(identical(await ui,result), isTrue);
+      expect(identical(await ui, result), isTrue);
     }
     expect(fake.calls, actions);
   });

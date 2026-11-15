@@ -7,7 +7,19 @@ import 'dart:async';
 
 import 'package:uluv/features/auth/auth_service.dart';
 
-enum AuthOperation { request, outbox, verify, me, logout, passwordLogin, passwordSet, passwordChange, recoveryRequest, recoveryOutbox, passwordReset }
+enum AuthOperation {
+  request,
+  outbox,
+  verify,
+  me,
+  logout,
+  passwordLogin,
+  passwordSet,
+  passwordChange,
+  recoveryRequest,
+  recoveryOutbox,
+  passwordReset
+}
 
 class PendingAuthCall {
   PendingAuthCall(this._invoke);
@@ -46,7 +58,8 @@ class ObservedAuthService implements AuthService {
 
   PendingAuthCall? pending(AuthOperation operation) => _pending[operation];
 
-  Future<AuthResult> _record(AuthOperation operation, Future<AuthResult> Function() invoke) {
+  Future<AuthResult> _record(
+      AuthOperation operation, Future<AuthResult> Function() invoke) {
     final call = PendingAuthCall(invoke);
     _pending[operation] = call;
     return call.uiResult;
@@ -61,8 +74,18 @@ class ObservedAuthService implements AuthService {
       _record(AuthOperation.outbox, () => delegate.localOutboxCode(email));
 
   @override
-  Future<AuthResult> verify({required String email, required String code, required String dateOfBirth, required bool consent}) =>
-      _record(AuthOperation.verify, () => delegate.verify(email: email, code: code, dateOfBirth: dateOfBirth, consent: consent));
+  Future<AuthResult> verify(
+          {required String email,
+          required String code,
+          required String dateOfBirth,
+          required bool consent}) =>
+      _record(
+          AuthOperation.verify,
+          () => delegate.verify(
+              email: email,
+              code: code,
+              dateOfBirth: dateOfBirth,
+              consent: consent));
 
   @override
   Future<AuthResult> me(String token) =>
@@ -73,13 +96,14 @@ class ObservedAuthService implements AuthService {
       _record(AuthOperation.logout, () => delegate.logout(token));
 }
 
-
 /// P01-2 test-only adapter. Preserve the P01-1 adapter's OTP-only behavior,
 /// while exposing password methods so AuthScreen renders its real password UI.
 /// No service call happens until the test executes its queued operation.
-class ObservedPasswordAuthService extends ObservedAuthService implements PasswordAuthService {
+class ObservedPasswordAuthService extends ObservedAuthService
+    implements PasswordAuthService {
   ObservedPasswordAuthService(HttpAuthService delegate)
-      : passwordDelegate = delegate, super(delegate);
+      : passwordDelegate = delegate,
+        super(delegate);
 
   final PasswordAuthService passwordDelegate;
 
@@ -123,31 +147,40 @@ class ObservedPasswordAuthService extends ObservedAuthService implements Passwor
   Future<AuthResult> passwordLogin(String email, String password) {
     lastLoginEmailMatch = _expectedLoginEmail?.call(email);
     lastLoginPasswordMatch = _expectedLoginPassword?.call(password);
-    lastLoginInputsMatch = lastLoginEmailMatch == null || lastLoginPasswordMatch == null
-        ? null
-        : lastLoginEmailMatch! && lastLoginPasswordMatch!;
+    lastLoginInputsMatch =
+        lastLoginEmailMatch == null || lastLoginPasswordMatch == null
+            ? null
+            : lastLoginEmailMatch! && lastLoginPasswordMatch!;
     _expectedLoginEmail = null;
     _expectedLoginPassword = null;
     return _record(AuthOperation.passwordLogin,
         () => passwordDelegate.passwordLogin(email, password));
   }
+
   @override
-  Future<AuthResult> setPassword(String token, String password) =>
-      _record(AuthOperation.passwordSet, () => passwordDelegate.setPassword(token, password));
+  Future<AuthResult> setPassword(String token, String password) => _record(
+      AuthOperation.passwordSet,
+      () => passwordDelegate.setPassword(token, password));
   @override
-  Future<AuthResult> changePassword(String token, String oldPassword, String newPassword) {
+  Future<AuthResult> changePassword(
+      String token, String oldPassword, String newPassword) {
     lastChangeInputsMatch = _expectedChange?.call(oldPassword, newPassword);
     _expectedChange = null;
     return _record(AuthOperation.passwordChange,
         () => passwordDelegate.changePassword(token, oldPassword, newPassword));
   }
+
   @override
-  Future<AuthResult> requestPasswordRecovery(String email) =>
-      _record(AuthOperation.recoveryRequest, () => passwordDelegate.requestPasswordRecovery(email));
+  Future<AuthResult> requestPasswordRecovery(String email) => _record(
+      AuthOperation.recoveryRequest,
+      () => passwordDelegate.requestPasswordRecovery(email));
   @override
-  Future<AuthResult> localPasswordRecoveryCode(String email) =>
-      _record(AuthOperation.recoveryOutbox, () => passwordDelegate.localPasswordRecoveryCode(email));
+  Future<AuthResult> localPasswordRecoveryCode(String email) => _record(
+      AuthOperation.recoveryOutbox,
+      () => passwordDelegate.localPasswordRecoveryCode(email));
   @override
-  Future<AuthResult> resetPassword(String email, String code, String newPassword) =>
-      _record(AuthOperation.passwordReset, () => passwordDelegate.resetPassword(email, code, newPassword));
+  Future<AuthResult> resetPassword(
+          String email, String code, String newPassword) =>
+      _record(AuthOperation.passwordReset,
+          () => passwordDelegate.resetPassword(email, code, newPassword));
 }

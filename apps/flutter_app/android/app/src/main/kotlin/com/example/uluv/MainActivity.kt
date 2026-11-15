@@ -30,6 +30,7 @@ class MainActivity : FlutterActivity() {
     private fun shaUrl(value: String): String = Base64.encodeToString(MessageDigest.getInstance("SHA-256")
         .digest(value.toByteArray(Charsets.UTF_8)), Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING)
 
+    /** Generate a non-exportable Android Keystore P-256 signer once per install. */
     private fun ensureSigner(): String {
         require(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { "Android 6 or newer is required for secure sessions" }
         if (!ks().containsAlias(signingAlias)) {
@@ -47,6 +48,7 @@ class MainActivity : FlutterActivity() {
         "Device signing key not found"
     }
 
+    /** Bind every signature to purpose, route, identity, slot and token generation. */
     private fun signProof(arguments: Map<*, *>): String {
         val op = arguments["operation"] as? String ?: error("Missing proof purpose")
         require(op in setOf("enroll", "refresh", "logout"))
@@ -68,6 +70,7 @@ class MainActivity : FlutterActivity() {
         return base64(signature.sign())
     }
 
+    /** AES-GCM sealing key is separate from the device's signing key. */
     private fun encryptionKey(create: Boolean): SecretKey {
         if (!ks().containsAlias(cipherAlias)) {
             require(create) { "Device encryption key is no longer available" }
@@ -81,6 +84,7 @@ class MainActivity : FlutterActivity() {
         return requireNotNull(ks().getKey(cipherAlias, null) as? SecretKey)
     }
 
+    /** A restored preference without its Keystore key is not an authorized session. */
     private fun read(): String? {
         val value = getSharedPreferences(preferences, MODE_PRIVATE).getString(storedKey, null) ?: return null
         val all = Base64.decode(value, Base64.NO_WRAP)
@@ -90,6 +94,7 @@ class MainActivity : FlutterActivity() {
         return String(cipher.doFinal(all.copyOfRange(12, all.size)), Charsets.UTF_8)
     }
 
+    /** Use the platform cipher's random GCM IV; never serialize raw credentials. */
     private fun write(value: String): Boolean {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, encryptionKey(true))
@@ -97,6 +102,7 @@ class MainActivity : FlutterActivity() {
         return getSharedPreferences(preferences, MODE_PRIVATE).edit().putString(storedKey, base64(encoded)).commit()
     }
 
+    /** Narrow MethodChannel surface; native errors never echo protected material. */
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel).setMethodCallHandler { call, result ->

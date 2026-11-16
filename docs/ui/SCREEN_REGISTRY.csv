@@ -1,0 +1,85 @@
+screen_id,kind,group,title,purpose,main_tab,png_path
+S01,mobile,01_Onboarding,Welcome,Brand splash and start,,images/canonical_screens/S01_welcome.png
+S02,mobile,01_Onboarding,Discover U_luv,Product value and intro,,images/canonical_screens/S02_discover_u_luv.png
+S03,mobile,01_Onboarding,Sign in / Sign up,Google Sign-In and email OTP,,images/canonical_screens/S03_sign_in___sign_up.png
+S04,mobile,01_Onboarding,Email verification,Email OTP without phone auth,,images/canonical_screens/S04_email_verification.png
+S05,mobile,01_Onboarding,18+ eligibility,"Adult eligibility, no age estimation as sole proof",,images/canonical_screens/S05_18+_eligibility.png
+S06,mobile,01_Onboarding,Choose your mode,"Dating, Friendship or Both",,images/canonical_screens/S06_choose_your_mode.png
+S07,mobile,01_Onboarding,Choose locality,"Location area selection, no precise GPS publication",,images/canonical_screens/S07_choose_locality.png
+S08,mobile,01_Onboarding,Interests,Editable interests,,images/canonical_screens/S08_interests.png
+S09,mobile,02_Profiles,Add profile photos,2-6 photos per mode,,images/canonical_screens/S09_add_profile_photos.png
+S10,mobile,02_Profiles,Edit Dating profile,"Dating profile bio, intention, preferences",,images/canonical_screens/S10_edit_dating_profile.png
+S11,mobile,02_Profiles,Edit Friendship profile,Independent platonic profile,,images/canonical_screens/S11_edit_friendship_profile.png
+S12,mobile,02_Profiles,Discovery settings,"Four distance choices including All, nearest first",,images/canonical_screens/S12_discovery_settings.png
+S13,mobile,02_Profiles,Dating public preview,Public dating preview excludes exact DOB/contact,,images/canonical_screens/S13_dating_public_preview.png
+S14,mobile,02_Profiles,Friendship public preview,Friendship profile preview,,images/canonical_screens/S14_friendship_public_preview.png
+S15,mobile,02_Profiles,Manage photos,Separate mode photo sets,,images/canonical_screens/S15_manage_photos.png
+S16,mobile,02_Profiles,Profile visibility,Independent mode enable/disable,,images/canonical_screens/S16_profile_visibility.png
+S17,mobile,03_Dating,Dating discover,"Ordinary dating Like is free, Pass is free",Dating,images/canonical_screens/S17_dating_discover.png
+S18,mobile,03_Dating,Dating profile,Full preview before ordinary Like,Dating,images/canonical_screens/S18_dating_profile.png
+S19,mobile,03_Dating,Dating filters,Transparent user-chosen filter,Dating,images/canonical_screens/S19_dating_filters.png
+S20,mobile,03_Dating,Liked You,All incoming Likes displayed free,Connects,images/canonical_screens/S20_liked_you.png
+S21,mobile,03_Dating,Incoming Like detail,Safe preview; no forced chat unlock,Connects,images/canonical_screens/S21_incoming_like_detail.png
+S22,mobile,03_Dating,Confirm Like Back,"Like Back charges 1, match only",Connects,images/canonical_screens/S22_confirm_like_back.png
+S23,mobile,03_Dating,Mutual matches,Match list split by chat entitlement,Connects,images/canonical_screens/S23_mutual_matches.png
+S24,mobile,03_Dating,Confirm Connect,Independent Connect charge once per pair,Connects,images/canonical_screens/S24_confirm_connect.png
+S25,mobile,04_Dating_States,Free mutual match,Free mutual discovery match,Connects,images/canonical_screens/S25_free_mutual_match.png
+S26,mobile,04_Dating_States,Likes Sent,Outgoing Dating Likes states,Connects,images/canonical_screens/S26_likes_sent.png
+S27,mobile,04_Dating_States,Connection unlocked,Chat access after one Connect,Connects,images/canonical_screens/S27_connection_unlocked.png
+S28,mobile,04_Dating_States,Matched · chat locked,No chat before one Connect payment,Connects,images/canonical_screens/S28_matched_·_chat_locked.png
+S29,mobile,04_Dating_States,Daily Like balance,100 daily free Likes initially,Dating,images/canonical_screens/S29_daily_like_balance.png
+S30,mobile,04_Dating_States,Unmatch person,Unmatch respects existing paid entitlement,Connects,images/canonical_screens/S30_unmatch_person.png
+S31,mobile,04_Dating_States,Blocked connection,Blocks override paid chat permissions,Connects,images/canonical_screens/S31_blocked_connection.png
+S32,mobile,04_Dating_States,No nearby Dating profiles,Empty discovery; no automatic radius expansion,Dating,images/canonical_screens/S32_no_nearby_dating_profiles.png
+S33,mobile,05_Friendship,Friendship People,"All-gender platonic discovery, nearest first",Friendship,images/canonical_screens/S33_friendship_people.png
+S34,mobile,05_Friendship,Friendship person,"Profile detail, one credit invitation",Friendship,images/canonical_screens/S34_friendship_person.png
+S35,mobile,05_Friendship,Confirm friendship request,Nonrefundable after successful send,Connects,images/canonical_screens/S35_confirm_friendship_request.png
+S36,mobile,05_Friendship,Friendship request sent,"Sent state, no refund except failed action",Connects,images/canonical_screens/S36_friendship_request_sent.png
+S37,mobile,05_Friendship,Received requests,Incoming invite list,Connects,images/canonical_screens/S37_received_requests.png
+S38,mobile,05_Friendship,Friendship accepted,Acceptance unlocks lifetime friendship conversation,Connects,images/canonical_screens/S38_friendship_accepted.png
+S39,mobile,05_Friendship,Pending requests,"Pending limit, expiry",Connects,images/canonical_screens/S39_pending_requests.png
+S40,mobile,05_Friendship,No Friendship results,Friendship empty state,Friendship,images/canonical_screens/S40_no_friendship_results.png
+S41,mobile,06_Local,Local Feed,Local posts with nearest-band priority,Friendship,images/canonical_screens/S41_local_feed.png
+S42,mobile,06_Local,Local post detail,Canonical post detail,Friendship,images/canonical_screens/S42_local_post_detail.png
+S43,mobile,06_Local,Create Local post,Posting limits and max 5 photos,Friendship,images/canonical_screens/S43_create_local_post.png
+S44,mobile,06_Local,Local comments,"Comments, reactions and rate limit",Friendship,images/canonical_screens/S44_local_comments.png
+S45,mobile,06_Local,Local Feed settings,"Local radius and category, no nationwide feed",Friendship,images/canonical_screens/S45_local_feed_settings.png
+S46,mobile,06_Local,Nearby Activities,"Activity cards, no group/event tools",Friendship,images/canonical_screens/S46_nearby_activities.png
+S47,mobile,06_Local,Create Activity,"Activity fields, no roster or group chat",Friendship,images/canonical_screens/S47_create_activity.png
+S48,mobile,06_Local,Activity details,Activity detail leads to Friendship request,Friendship,images/canonical_screens/S48_activity_details.png
+S49,mobile,07_Chat,Connects hub,Connects tab hub,Connects,images/canonical_screens/S49_connects_hub.png
+S50,mobile,07_Chat,Chat inbox,One-to-one unlocked chat list,Connects,images/canonical_screens/S50_chat_inbox.png
+S51,mobile,07_Chat,Conversation,"Text chat; no calls, voice, group-chat",Connects,images/canonical_screens/S51_conversation.png
+S52,mobile,07_Chat,Attach a photo,Private image attachment,Connects,images/canonical_screens/S52_attach_a_photo.png
+S53,mobile,07_Chat,View chat photo,Authenticated short-lived image access,Connects,images/canonical_screens/S53_view_chat_photo.png
+S54,mobile,07_Chat,Clear chat for both,"Both-side history deletion, entitlement retained",Connects,images/canonical_screens/S54_clear_chat_for_both.png
+S55,mobile,07_Chat,Message expired,7-day content expiry visible state,Connects,images/canonical_screens/S55_message_expired.png
+S56,mobile,07_Chat,No chats yet,Empty inbox,Connects,images/canonical_screens/S56_no_chats_yet.png
+S57,mobile,08_Wallet,Wallet,Separate free and purchased balances,Profile,images/canonical_screens/S57_wallet.png
+S58,mobile,08_Wallet,Buy credits,Approved INR price targets,Profile,images/canonical_screens/S58_buy_credits.png
+S59,mobile,08_Wallet,Purchase confirmation,External billing provider UI separate from internal wallet,Profile,images/canonical_screens/S59_purchase_confirmation.png
+S60,mobile,08_Wallet,Purchase receipt,"Verified purchase reconciliation, no double grant",Profile,images/canonical_screens/S60_purchase_receipt.png
+S61,mobile,08_Wallet,Credit activity,Ledger shows separate paid actions,Profile,images/canonical_screens/S61_credit_activity.png
+S62,mobile,08_Wallet,Monthly grants,Approved monthly free grant policy,Profile,images/canonical_screens/S62_monthly_grants.png
+S63,mobile,08_Wallet,Not enough credits,Zero-balance guard prevents paid action,Profile,images/canonical_screens/S63_not_enough_credits.png
+S64,mobile,08_Wallet,Charge could not complete,Failed transaction never drains wallet,Profile,images/canonical_screens/S64_charge_could_not_complete.png
+S65,mobile,09_Settings_Safety,Your Profile,Main Profile tab,Profile,images/canonical_screens/S65_your_profile.png
+S66,mobile,09_Settings_Safety,Privacy & visibility,"Private by default, independent modes",Profile,images/canonical_screens/S66_privacy_&_visibility.png
+S67,mobile,09_Settings_Safety,Notification preferences,"Genuine notifications only, quiet hours",Profile,images/canonical_screens/S67_notification_preferences.png
+S68,mobile,09_Settings_Safety,Notifications,No fabricated likes or countdowns,Profile,images/canonical_screens/S68_notifications.png
+S69,mobile,09_Settings_Safety,Block account,Block safeguards all modes,Profile,images/canonical_screens/S69_block_account.png
+S70,mobile,09_Settings_Safety,Report a user,Simplified user report,Profile,images/canonical_screens/S70_report_a_user.png
+S71,mobile,09_Settings_Safety,Report a post,Report via post menu,Profile,images/canonical_screens/S71_report_a_post.png
+S72,mobile,09_Settings_Safety,Delete U_luv account,In-app permanent account deletion,Profile,images/canonical_screens/S72_delete_u_luv_account.png
+S73,mobile,10_States_Support,Help & support,Help center entry,Profile,images/canonical_screens/S73_help_&_support.png
+S74,mobile,10_States_Support,Loading discovery,Skeleton and loading UI,Dating,images/canonical_screens/S74_loading_discovery.png
+S75,mobile,10_States_Support,Offline / retry,Network unavailable state,Profile,images/canonical_screens/S75_offline___retry.png
+S76,mobile,10_States_Support,Age ineligible,Eligibility failure; do not admit minor,,images/canonical_screens/S76_age_ineligible.png
+S77,mobile,10_States_Support,Photo upload failed,Photo upload recovery,Profile,images/canonical_screens/S77_photo_upload_failed.png
+S78,mobile,10_States_Support,Local post expired,Seven-day expired content,Friendship,images/canonical_screens/S78_local_post_expired.png
+S79,mobile,10_States_Support,Change your locality,Changing locality closes old posts,Profile,images/canonical_screens/S79_change_your_locality.png
+S80,mobile,10_States_Support,Pending request limit,Maximum 5 pending friendship requests,Connects,images/canonical_screens/S80_pending_request_limit.png
+A01,admin,11_Admin,Moderation Overview,Reports requiring review,admin,images/admin/A01_moderation_overview.png
+A02,admin,11_Admin,Find a Post,Look up a single post without scanning tables,admin,images/admin/A02_find_a_post.png
+A03,admin,11_Admin,Reports Queue,Review reports and record audited decisions,admin,images/admin/A03_reports_queue.png
+A04,admin,11_Admin,User Restriction,Restrict modes or suspend account with audit trail,admin,images/admin/A04_user_restriction.png

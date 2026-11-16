@@ -1,0 +1,750 @@
+{
+  "mobile": [
+    {
+      "group": "01_Onboarding",
+      "code": "S01",
+      "title": "Welcome",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>U_luv</h2><p>Algorithm-Free Connections</p></div><p class=\"muted\">Real People. Real Choices. Real Connections.</p><div class=\"btn \">Get Started</div><div class=\"btn outline\">I already have an account</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Brand splash and start"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S02",
+      "title": "Discover U_luv",
+      "content": "<div class=\"photobox\" style=\"height:275px;background-image:url(../assets/hiking.jpg);\"></div><h2>Meet people your way</h2><p class=\"muted\">Choose meaningful dating, friendship and local discoveries. No hidden popularity ranking.</p><div class=\"chips\"><span class=\"chip \">Dating</span><span class=\"chip \">Friendship</span><span class=\"chip \">Local</span></div><div class=\"btn \">Continue</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Product value and intro"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S03",
+      "title": "Sign in / Sign up",
+      "content": "<h2>Welcome back</h2><p class=\"muted\">Use Google or email. A phone number is not required.</p><div class=\"btn outline\">Continue with Google</div><div class=\"subhead\">OR</div><div class=\"field\"><span>Email address</span><strong>you@example.com</strong></div><div class=\"btn \">Send email code</div><p class=\"muted\">By continuing you agree to the Terms and Privacy Policy.</p>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Google Sign-In and email OTP"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S04",
+      "title": "Email verification",
+      "content": "<h2>Verify your email</h2><p class=\"muted\">We sent a one-time code to your email address.</p><div class=\"otp\"><span>3</span><span>6</span><span>4</span><span>2</span><span>8</span><span>1</span></div><div class=\"btn \">Verify code</div><div class=\"btn outline\">Resend code</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Email OTP without phone auth"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S05",
+      "title": "18+ eligibility",
+      "content": "<h2>Your age matters</h2><p class=\"muted\">U_luv is for adults aged 18 or above.</p><div class=\"field\"><span>Date of birth</span><strong>Day / Month / Year</strong></div><div class=\"notice\">Your exact date of birth is never displayed on your public profile.</div><div class=\"btn \">Continue</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Adult eligibility, no age estimation as sole proof"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S06",
+      "title": "Choose your mode",
+      "content": "<h2>What brings you here?</h2><div class=\"panel pinkbox\"><div class=\"paneltitle\">♡ Dating</div>Meet people for romantic connections.</div><div class=\"panel tealbox\"><div class=\"paneltitle\">♧ Friendship</div>Find nearby platonic friends.</div><div class=\"panel \"><div class=\"paneltitle\">♡ + ♧ Both</div>Use independent profiles and preferences.</div><div class=\"btn \">Continue</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Dating, Friendship or Both"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S07",
+      "title": "Choose locality",
+      "content": "<h2>Your approximate area</h2><p class=\"muted\">Select an area yourself. Your street address is never shown.</p><div class=\"field\"><span>City</span><strong>Hyderabad</strong></div><div class=\"field\"><span>Locality</span><strong>Gachibowli</strong></div><div class=\"notice\">Discovery distance is measured from selected locality centers, not live GPS.</div><div class=\"btn \">Use selected locality</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Location area selection, no precise GPS publication"
+    },
+    {
+      "group": "01_Onboarding",
+      "code": "S08",
+      "title": "Interests",
+      "content": "<h2>What do you enjoy?</h2><div class=\"label\">Pick a few interests</div><div class=\"chips\"><span class=\"chip sel\">Hiking</span><span class=\"chip \">Coffee</span><span class=\"chip \">Photography</span><span class=\"chip \">Books</span><span class=\"chip \">Music</span><span class=\"chip \">Fitness</span><span class=\"chip \">Art</span><span class=\"chip \">Travel</span></div><p class=\"muted\">You can edit these later in your profile.</p><div class=\"btn \">Finish setup</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Editable interests"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S09",
+      "title": "Add profile photos",
+      "content": "<h2>Show the real you</h2><p class=\"muted\">At least 2 photos, up to 6 for each enabled profile.</p><div class=\"photogrid\"><div style=\"background-image:url(../assets/ava.jpg)\"></div><div style=\"background-image:url(../assets/maya.jpg)\"></div><div>+ Add</div><div>+ Add</div><div>+ Add</div><div>+ Add</div></div><div class=\"notice\">2 of 6 added • You may reuse images in both profiles.</div><div class=\"btn \">Continue</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "2-6 photos per mode"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S10",
+      "title": "Edit Dating profile",
+      "content": "<div class=\"photobox\" style=\"height:164px;background-image:url(../assets/ava.jpg);\"></div><div class=\"field\"><span>Bio</span><strong>Coffee, hiking, and good conversation.</strong></div><div class=\"label\">Dating intention</div><div class=\"chips\"><span class=\"chip sel\">Serious</span><span class=\"chip \">Long term</span><span class=\"chip \">Casual</span><span class=\"chip \">Not sure</span></div><div class=\"label\">Interested in</div><div class=\"chips\"><span class=\"chip \">Women</span><span class=\"chip \">Men</span><span class=\"chip \">Non-binary</span><span class=\"chip sel\">Everyone</span></div><div class=\"btn \">Save Dating profile</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Dating profile bio, intention, preferences"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S11",
+      "title": "Edit Friendship profile",
+      "content": "<div class=\"photobox\" style=\"height:170px;background-image:url(../assets/ron.jpg);\"></div><div class=\"field\"><span>About me</span><strong>Exploring local cafes and trails.</strong></div><div class=\"label\">Friendship goals</div><div class=\"chips\"><span class=\"chip sel\">Local friends</span><span class=\"chip \">Activity buddies</span><span class=\"chip \">Shared interests</span></div><div class=\"chips\"><span class=\"chip \">Hiking</span><span class=\"chip \">Coffee</span><span class=\"chip \">Board games</span><span class=\"chip \">Music</span></div><div class=\"btn \">Save Friendship profile</div>",
+      "theme": "teal",
+      "tab": "",
+      "description": "Independent platonic profile"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S12",
+      "title": "Discovery settings",
+      "content": "<div class=\"label\">Apply separately in each mode</div><div class=\"label\">Distance band</div><div class=\"chips\"><span class=\"chip \">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip sel\">All 0–50 km</span></div><div class=\"label\">Sort by</div><div class=\"chips\"><span class=\"chip sel\">Closest first</span><span class=\"chip \">Newest first</span></div><div class=\"notice\">Distance-first order is transparent. No boosts or hidden ratings.</div><div class=\"btn \">Save preferences</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Four distance choices including All, nearest first"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S13",
+      "title": "Dating public preview",
+      "content": "<div class=\"photobox\" style=\"height:265px;background-image:url(../assets/ava.jpg);\"></div><h2>Ava, 26</h2><span class=\"badge\">Approx. 1.8 km</span><div class=\"chips\"><span class=\"chip \">Coffee</span><span class=\"chip \">Hiking</span><span class=\"chip \">Travel</span></div><p class=\"muted\">Looking for a meaningful connection and good conversation.</p><div class=\"btn \">Like — Free</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Public dating preview excludes exact DOB/contact"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S14",
+      "title": "Friendship public preview",
+      "content": "<div class=\"photobox\" style=\"height:265px;background-image:url(../assets/maya.jpg);\"></div><h2>Maya, 25</h2><span class=\"badge\">Approx. 2.3 km</span><div class=\"chips\"><span class=\"chip \">Books</span><span class=\"chip \">Hiking</span><span class=\"chip \">Photography</span></div><p class=\"muted\">Would love new platonic friends for weekend walks.</p><div class=\"btn \">Send Friendship Request — 1 credit</div>",
+      "theme": "teal",
+      "tab": "",
+      "description": "Friendship profile preview"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S15",
+      "title": "Manage photos",
+      "content": "<h2>Photos in your profiles</h2><div class=\"photobox\" style=\"height:190px;background-image:url(../assets/nina.jpg);\"></div><div class=\"item\"><div><strong>Dating photos</strong><small>3 of 6 uploaded</small></div><b class=\"\">Edit</b></div><div class=\"item\"><div><strong>Friendship photos</strong><small>2 of 6 uploaded</small></div><b class=\"\">Edit</b></div><div class=\"item\"><div><strong>Reuse an existing photo</strong><small>No additional upload needed</small></div><b class=\"\">›</b></div><div class=\"btn \">Add photo</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Separate mode photo sets"
+    },
+    {
+      "group": "02_Profiles",
+      "code": "S16",
+      "title": "Profile visibility",
+      "content": "<h2>Pause your visibility</h2><div class=\"item\"><div><strong>Dating discovery</strong><small>Visible to eligible users</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Friendship discovery</strong><small>Visible to eligible users</small></div><b class=\"\">ON</b></div><div class=\"notice\">Pausing hides your profile from new discovery; existing legitimate chat entitlements remain subject to safety rules.</div><div class=\"btn \">Save visibility</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Independent mode enable/disable"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S17",
+      "title": "Dating discover",
+      "content": "<div class=\"photobox\" style=\"height:405px;background-image:url(../assets/ava.jpg);\"></div><div class=\"overlay-name\">Ava, 26　♡</div><div class=\"chips\"><span class=\"chip \">Coffee</span><span class=\"chip \">Art</span><span class=\"chip \">Hiking</span></div><div class=\"actionrow\"><div>✕<small>Pass</small></div><div class=\"heartbutton\">♡<small>Like • Free</small></div></div>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "Ordinary dating Like is free, Pass is free"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S18",
+      "title": "Dating profile",
+      "content": "<div class=\"photobox\" style=\"height:240px;background-image:url(../assets/ava.jpg);\"></div><h2>Ava, 26</h2><span class=\"badge\">Approx. 1.8 km</span><div class=\"chips\"><span class=\"chip \">Coffee</span><span class=\"chip \">Photography</span><span class=\"chip \">Travel</span></div><div class=\"panel \"><div class=\"paneltitle\">About me</div><p class=\"muted\">Weekend hikes, novels and spontaneous coffee plans.</p></div><div class=\"panel \"><div class=\"paneltitle\">My ideal Sunday</div><p class=\"muted\">Sunrise, good food, and a long walk.</p></div><div class=\"btn \">Like — Free</div>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "Full preview before ordinary Like"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S19",
+      "title": "Dating filters",
+      "content": "<h2>Make discovery yours</h2><div class=\"label\">Distance</div><div class=\"chips\"><span class=\"chip sel\">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip \">All 0–50 km</span></div><div class=\"field\"><span>Age preference</span><strong>24–35</strong></div><div class=\"label\">Gender</div><div class=\"chips\"><span class=\"chip \">Women</span><span class=\"chip \">Men</span><span class=\"chip sel\">Everyone</span></div><div class=\"notice\">Nearby people receive priority. No pay-to-appear ranking.</div><div class=\"btn \">Apply filters</div>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "Transparent user-chosen filter"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S20",
+      "title": "Liked You",
+      "content": "<h2>People who liked you</h2><div class=\"notice\">See incoming Likes for free. No blurred profiles.</div><div class=\"mini-grid\"><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/ron.jpg);\"></div><div class=\"personline\"><strong>Ron, 23</strong><span>0.9 km</span></div><small>Travel · Photography</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/maya.jpg);\"></div><div class=\"personline\"><strong>Maya, 25</strong><span>1.2 km</span></div><small>Coffee · Art</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/leo.jpg);\"></div><div class=\"personline\"><strong>Leo, 27</strong><span>2.1 km</span></div><small>Music · Sports</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/nina.jpg);\"></div><div class=\"personline\"><strong>Nina, 24</strong><span>2.4 km</span></div><small>Yoga · Movies</small></div></div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "All incoming Likes displayed free"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S21",
+      "title": "Incoming Like detail",
+      "content": "<div class=\"photobox\" style=\"height:285px;background-image:url(../assets/maya.jpg);\"></div><h2>Maya, 25</h2><span class=\"badge\">Liked your dating profile</span><div class=\"chips\"><span class=\"chip \">Coffee</span><span class=\"chip \">Books</span><span class=\"chip \">Art</span></div><p class=\"muted\">I love a walk, a bookstore and a good discussion.</p><div class=\"notice\">Viewing this profile is free. Like Back is a separate paid action.</div><div class=\"btn \">Like Back — 1 credit</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Safe preview; no forced chat unlock"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S22",
+      "title": "Confirm Like Back",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>Like Back?</h2><p>Maya liked you first. This action creates a mutual Dating match.</p></div><div class=\"panel \"><div class=\"paneltitle\">Cost: 1 credit</div><p class=\"muted\">Chat is NOT unlocked by this action. Connect is separate.</p></div><div class=\"btn \">Confirm Like Back — 1 credit</div><div class=\"btn outline\">Not now</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Like Back charges 1, match only"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S23",
+      "title": "Mutual matches",
+      "content": "<h2>Your matches</h2><p class=\"muted\">You liked each other! Chat begins after one Connect unlock.</p><div class=\"item\"><div><strong>Ava, 26</strong><small>Mutual match · Chat locked</small></div><b class=\"\">Connect</b></div><div class=\"item\"><div><strong>Ron, 23</strong><small>Mutual match · Chat locked</small></div><b class=\"\">Connect</b></div><div class=\"item\"><div><strong>Maya, 25</strong><small>Already connected</small></div><b class=\"\">Chat</b></div><div class=\"btn outline\">View Likes Sent</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Match list split by chat entitlement"
+    },
+    {
+      "group": "03_Dating",
+      "code": "S24",
+      "title": "Confirm Connect",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>Unlock the conversation</h2><p>Either matched person can pay once. Both can chat afterward.</p></div><div class=\"panel \"><div class=\"paneltitle\">Connect • 1 credit</div><p class=\"muted\">A one-time charge per eligible pair; no recurring message charge.</p></div><div class=\"btn \">Connect — 1 credit</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Independent Connect charge once per pair"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S25",
+      "title": "Free mutual match",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>It&#x27;s a match!</h2><p>You both Liked each other through Dating discovery. Matching cost: 0 credits.</p></div><div class=\"btn \">Connect to chat — 1 credit</div><div class=\"btn outline\">Keep discovering</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Free mutual discovery match"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S26",
+      "title": "Likes Sent",
+      "content": "<h2>People you Liked</h2><div class=\"item\"><div><strong>Ava, 26</strong><small>Liked • awaiting response</small></div><b class=\"\">Pending</b></div><div class=\"item\"><div><strong>Maya, 25</strong><small>Mutual match</small></div><b class=\"\">Matched</b></div><div class=\"item\"><div><strong>Leo, 27</strong><small>Liked yesterday</small></div><b class=\"\">Pending</b></div><div class=\"notice\">Ordinary Likes are free, within the daily limit.</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Outgoing Dating Likes states"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S27",
+      "title": "Connection unlocked",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">✓</div><h2>Chat unlocked!</h2><p>Either person can now message. No additional chat credits are needed.</p></div><div class=\"panel \"><div class=\"paneltitle\">Lifetime entitlement</div><p class=\"muted\">A prior valid paid Connect is not billed twice on consensual reconnection.</p></div><div class=\"btn \">Open chat</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Chat access after one Connect"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S28",
+      "title": "Matched · chat locked",
+      "content": "<div class=\"photobox\" style=\"height:230px;background-image:url(../assets/ron.jpg);\"></div><h2>Ron, 23</h2><span class=\"badge\">Mutual Dating match</span><div class=\"notice\">You can view this match for free. Send messages after either person uses Connect.</div><div class=\"btn \">Connect — 1 credit</div><div class=\"btn outline\">Back to matches</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "No chat before one Connect payment"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S29",
+      "title": "Daily Like balance",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>Your Likes today</h2><p>82 of 100 ordinary Dating Likes used.</p></div><div class=\"progress\"><i style=\"width:82%\"></i></div><p class=\"muted\">Passes are free and unlimited. The daily limit is configurable.</p><div class=\"btn \">Keep discovering</div>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "100 daily free Likes initially"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S30",
+      "title": "Unmatch person",
+      "content": "<h2>Unmatch Ava?</h2><p class=\"muted\">The current romantic connection will end. Reconnecting requires new mutual interest.</p><div class=\"notice\">If you had a valid past paid chat entitlement, it does not require another Connect charge upon consensual reconnection.</div><div class=\"btn \">Unmatch</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Unmatch respects existing paid entitlement"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S31",
+      "title": "Blocked connection",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⊘</div><h2>This interaction is unavailable</h2><p>Blocking or safety restrictions override any previous chat entitlement.</p></div><div class=\"btn \">Back to Connects</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Blocks override paid chat permissions"
+    },
+    {
+      "group": "04_Dating_States",
+      "code": "S32",
+      "title": "No nearby Dating profiles",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>You’re all caught up</h2><p>No eligible profiles in the selected band right now.</p></div><div class=\"label\">Explore another range</div><div class=\"chips\"><span class=\"chip \">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip sel\">All 0–50 km</span></div><div class=\"btn \">Apply range</div>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "Empty discovery; no automatic radius expansion"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S33",
+      "title": "Friendship People",
+      "content": "<h2>Nearby people</h2><div class=\"label\">Within selected range</div><div class=\"chips\"><span class=\"chip sel\">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip \">All 0–50 km</span></div><div class=\"mini-grid\"><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/ron.jpg);\"></div><div class=\"personline\"><strong>Ron, 23</strong><span>0.9 km</span></div><small>Hiking · Travel</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/maya.jpg);\"></div><div class=\"personline\"><strong>Maya, 25</strong><span>1.2 km</span></div><small>Coffee · Books</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/leo.jpg);\"></div><div class=\"personline\"><strong>Leo, 27</strong><span>2.1 km</span></div><small>Music · Tech</small></div><div class=\"miniperson\"><div class=\"photobox\" style=\"height:126px;background-image:url(../assets/nina.jpg);\"></div><div class=\"personline\"><strong>Nina, 24</strong><span>2.4 km</span></div><small>Fitness · Art</small></div></div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "All-gender platonic discovery, nearest first"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S34",
+      "title": "Friendship person",
+      "content": "<div class=\"photobox\" style=\"height:264px;background-image:url(../assets/ron.jpg);\"></div><h2>Ron, 23</h2><span class=\"badge\">Approx. 0.9 km</span><div class=\"chips\"><span class=\"chip \">Hiking</span><span class=\"chip \">Photography</span><span class=\"chip \">Coffee</span></div><div class=\"panel \"><div class=\"paneltitle\">Looking for</div><p class=\"muted\">Weekend hikes and local cafe buddies.</p></div><div class=\"btn \">Request friendship — 1 credit</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Profile detail, one credit invitation"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S35",
+      "title": "Confirm friendship request",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♧</div><h2>Send a request?</h2><p>Use one Connect credit when the request is successfully sent.</p></div><div class=\"panel \"><div class=\"paneltitle\">1 credit • charged on successful send</div><p class=\"muted\">Not refunded if later rejected, canceled or expired after 7 days. Failed submission is not charged.</p></div><div class=\"btn \">Send Request — 1 credit</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Nonrefundable after successful send"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S36",
+      "title": "Friendship request sent",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">✓</div><h2>Request sent!</h2><p>We’ll notify you if Ron accepts.</p></div><div class=\"notice\">Your credit was used for the successfully sent request. It is not automatically refunded if the request expires.</div><div class=\"btn \">View sent requests</div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Sent state, no refund except failed action"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S37",
+      "title": "Received requests",
+      "content": "<h2>Friendship requests</h2><div class=\"item\"><div><strong>Maya, 25</strong><small>Coffee and walking • received today</small></div><b class=\"\">Review</b></div><div class=\"item\"><div><strong>Arjun, 27</strong><small>Art and photography • yesterday</small></div><b class=\"\">Review</b></div><div class=\"panel \"><div class=\"paneltitle\">Accepting is free</div><p class=\"muted\">You can accept or decline without a credit charge.</p></div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Incoming invite list"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S38",
+      "title": "Friendship accepted",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">✓</div><h2>Friendship connected!</h2><p>The accepted request unlocks private chat for both people. No extra credit charge.</p></div><div class=\"btn \">Start chatting</div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Acceptance unlocks lifetime friendship conversation"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S39",
+      "title": "Pending requests",
+      "content": "<h2>Invitations you sent</h2><div class=\"item\"><div><strong>Ron</strong><small>Awaiting reply</small></div><b class=\"\">Pending</b></div><div class=\"item\"><div><strong>Nina</strong><small>Awaiting reply</small></div><b class=\"\">Pending</b></div><div class=\"item\"><div><strong>Maya</strong><small>Expires in 3 days</small></div><b class=\"\">Pending</b></div><div class=\"notice\">Maximum 5 pending requests. Each standard request expires after 7 days.</div><div class=\"btn \">Find more people</div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Pending limit, expiry"
+    },
+    {
+      "group": "05_Friendship",
+      "code": "S40",
+      "title": "No Friendship results",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♧</div><h2>No people in this range</h2><p>Try another distance band when you’re ready.</p></div><div class=\"chips\"><span class=\"chip \">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip \">All 0–50 km</span></div><div class=\"btn \">Change range</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Friendship empty state"
+    },
+    {
+      "group": "06_Local",
+      "code": "S41",
+      "title": "Local Feed",
+      "content": "<h2>Around your selected area</h2><span class=\"badge\">Gachibowli · 0–10 km</span><div class=\"chips\"><span class=\"chip \">All</span><span class=\"chip \">Activities</span><span class=\"chip \">Questions</span><span class=\"chip \">Recommendations</span></div><div class=\"photobox\" style=\"height:180px;background-image:url(../assets/hiking.jpg);\"></div><div class=\"item\"><div><strong>Sunday trail walk</strong><small>New local post · 2 km</small></div><b class=\"\">♡</b></div><div class=\"photobox\" style=\"height:110px;background-image:url(../assets/flowers.jpg);\"></div><div class=\"item\"><div><strong>Best quiet cafes nearby?</strong><small>Local question · 3 km</small></div><b class=\"\">♡</b></div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Local posts with nearest-band priority"
+    },
+    {
+      "group": "06_Local",
+      "code": "S42",
+      "title": "Local post detail",
+      "content": "<h2>Weekend hiking ideas</h2><p class=\"plain\">A relaxed walk near our locality. Anyone have a good beginner-friendly trail?</p><div class=\"photobox\" style=\"height:215px;background-image:url(../assets/hiking.jpg);\"></div><div class=\"chips\"><span class=\"chip \">Hiking</span><span class=\"chip \">Local Discussion</span></div><div class=\"item\"><div><strong>8 reactions</strong><small>3 comments</small></div><b class=\"\">♡</b></div><div class=\"notice\">This post and its regular reactions/comments expire within 7 days.</div><div class=\"btn \">View comments</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Canonical post detail"
+    },
+    {
+      "group": "06_Local",
+      "code": "S43",
+      "title": "Create Local post",
+      "content": "<h2>Share locally</h2><div class=\"field\"><span>Post text</span><strong>What would you like to share?</strong></div><div class=\"label\">Category</div><div class=\"chips\"><span class=\"chip sel\">Local Question</span><span class=\"chip \">Recommendation</span><span class=\"chip \">Discussion</span><span class=\"chip \">Shared Interest</span></div><div class=\"panel \"><div class=\"paneltitle\">Photos</div><p class=\"muted\">Up to 5 images. No video at launch.</p></div><div class=\"chips\"><span class=\"chip \">+ Add image</span><span class=\"chip \">0 / 5</span></div><div class=\"notice\">3 posts/day • 5 active posts • expires after 7 days.</div><div class=\"btn \">Publish post</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Posting limits and max 5 photos"
+    },
+    {
+      "group": "06_Local",
+      "code": "S44",
+      "title": "Local comments",
+      "content": "<h2>Comments</h2><div class=\"item\"><div><strong>Maya</strong><small>Looks great! Thanks for sharing.</small></div><b class=\"\">♡</b></div><div class=\"item\"><div><strong>Ron</strong><small>Could we try a beginner route?</small></div><b class=\"\">♡</b></div><div class=\"item\"><div><strong>Arjun</strong><small>Thanks, I’ll check this out.</small></div><b class=\"\">♡</b></div><div class=\"field\"><span>Your comment</span><strong>Write a respectful comment…</strong></div><div class=\"notice\">10 comments/day; expired posts cannot accept comments.</div><div class=\"btn \">Post comment</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Comments, reactions and rate limit"
+    },
+    {
+      "group": "06_Local",
+      "code": "S45",
+      "title": "Local Feed settings",
+      "content": "<h2>Choose what to see</h2><div class=\"label\">Distance band</div><div class=\"chips\"><span class=\"chip \">0–10 km</span><span class=\"chip \">10–35 km</span><span class=\"chip \">35–50 km</span><span class=\"chip sel\">All 0–50 km</span></div><div class=\"label\">Content types</div><div class=\"chips\"><span class=\"chip sel\">All posts</span><span class=\"chip \">Activities</span><span class=\"chip \">Questions</span><span class=\"chip \">Recommendations</span></div><div class=\"notice\">Results prioritize closer localities. Changing your own selected locality closes your earlier local posts.</div><div class=\"btn \">Apply filters</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Local radius and category, no nationwide feed"
+    },
+    {
+      "group": "06_Local",
+      "code": "S46",
+      "title": "Nearby Activities",
+      "content": "<h2>Activities in your area</h2><div class=\"photobox\" style=\"height:176px;background-image:url(../assets/hiking.jpg);\"></div><div class=\"panel \"><div class=\"paneltitle\">Sunset hiking idea</div><p class=\"muted\">Saturday · selected locality · 2.3 km</p></div><div class=\"photobox\" style=\"height:94px;background-image:url(../assets/flowers.jpg);\"></div><div class=\"panel \"><div class=\"paneltitle\">Riverside photo walk</div><p class=\"muted\">Sunday afternoon · 3.2 km</p></div><div class=\"notice\">Activities are public posts; no group chat, RSVP, paid ticketing or public attendance roster.</div><div class=\"btn \">Create an Activity</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Activity cards, no group/event tools"
+    },
+    {
+      "group": "06_Local",
+      "code": "S47",
+      "title": "Create Activity",
+      "content": "<h2>New local Activity post</h2><div class=\"field\"><span>Title</span><strong>Weekend photo walk</strong></div><div class=\"field\"><span>Date and time</span><strong>Saturday · 4:00 PM</strong></div><div class=\"field\"><span>Selected locality</span><strong>Gachibowli</strong></div><div class=\"field\"><span>Description</span><strong>Bring your camera and curiosity.</strong></div><div class=\"chips\"><span class=\"chip \">Photography</span><span class=\"chip \">Outdoors</span></div><div class=\"notice\">Activity expires at event end or within 7 days, whichever is earlier.</div><div class=\"btn \">Post Activity</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Activity fields, no roster or group chat"
+    },
+    {
+      "group": "06_Local",
+      "code": "S48",
+      "title": "Activity details",
+      "content": "<div class=\"photobox\" style=\"height:218px;background-image:url(../assets/hiking.jpg);\"></div><h2>Sunset trail walk</h2><span class=\"badge\">Saturday · 4:00 PM</span><span class=\"badge\">Approx. 2.3 km</span><p class=\"muted\">An informal local activity post. Reach out to the author if you want to connect.</p><div class=\"notice\">Private contact requires a valid Friendship connection request. No Join/RSVP system at launch.</div><div class=\"btn \">Request friendship — 1 credit</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Activity detail leads to Friendship request"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S49",
+      "title": "Connects hub",
+      "content": "<h2>Your connections</h2><div class=\"item\"><div><strong>Liked You</strong><small>See incoming Dating Likes free</small></div><b class=\"\">12</b></div><div class=\"item\"><div><strong>Matches</strong><small>Dating mutual matches</small></div><b class=\"\">5</b></div><div class=\"item\"><div><strong>Likes Sent</strong><small>Your outgoing Dating Likes</small></div><b class=\"\">18</b></div><div class=\"item\"><div><strong>Friendship requests</strong><small>Incoming and pending requests</small></div><b class=\"\">3</b></div><div class=\"item\"><div><strong>Chats</strong><small>Unlocked one-to-one conversations</small></div><b class=\"\">›</b></div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Connects tab hub"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S50",
+      "title": "Chat inbox",
+      "content": "<h2>Conversations</h2><div class=\"chips\"><span class=\"chip \">All</span><span class=\"chip \">Dating</span><span class=\"chip \">Friendship</span></div><div class=\"item\"><div><strong>Ava</strong><small>Coffee on Saturday sounds great!</small></div><b class=\"\">2m</b></div><div class=\"item\"><div><strong>Ron</strong><small>See you at the walking trail.</small></div><b class=\"\">1h</b></div><div class=\"item\"><div><strong>Maya</strong><small>I loved those photos!</small></div><b class=\"\">3h</b></div><div class=\"notice\">Only real paid-unlocked Dating or accepted Friendship conversations appear.</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "One-to-one unlocked chat list"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S51",
+      "title": "Conversation",
+      "content": "<div class=\"notice\">Each message and attached photo disappears 7 days after sending.</div><div class=\"msgrow \"><div class=\"bubble\">Hey! Want to grab coffee this weekend?</div></div><div class=\"msgrow me\"><div class=\"bubble\">Saturday works for me ☕</div></div><div class=\"msgrow \"><div class=\"bubble\">There is a great place by the park.</div></div><div class=\"msgrow me\"><div class=\"bubble\">Sounds perfect!</div></div><div class=\"field\"><span>Write a message</span><strong>Type your message…</strong></div><div class=\"btn \">Send</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Text chat; no calls, voice, group-chat"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S52",
+      "title": "Attach a photo",
+      "content": "<h2>Share a photo in chat</h2><div class=\"photobox\" style=\"height:215px;background-image:url(../assets/flowers.jpg);\"></div><div class=\"panel \"><div class=\"paneltitle\">Image preview</div><p class=\"muted\">This image disappears 7 days after you send it.</p></div><div class=\"btn \">Send photo</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Private image attachment"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S53",
+      "title": "View chat photo",
+      "content": "<div class=\"photobox\" style=\"height:370px;background-image:url(../assets/hiking.jpg);\"></div><div class=\"notice\">Private image • access only for authorized connected participants • expires with the message.</div><div class=\"btn \">Close</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Authenticated short-lived image access"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S54",
+      "title": "Clear chat for both",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⊘</div><h2>Delete history for both?</h2><p>This removes normal visible conversation history for both participants.</p></div><div class=\"notice\">It does not revoke the lifetime connection entitlement or erase screenshots and necessary safety records.</div><div class=\"btn \">Delete history for both</div><div class=\"btn outline\">Keep history</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Both-side history deletion, entitlement retained"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S55",
+      "title": "Message expired",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⌛</div><h2>Message has expired</h2><p>Messages are no longer available seven days after sending.</p></div><div class=\"btn \">Back to chat</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "7-day content expiry visible state"
+    },
+    {
+      "group": "07_Chat",
+      "code": "S56",
+      "title": "No chats yet",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">♡</div><h2>No conversations yet</h2><p>Connect after a mutual Dating match or an accepted Friendship request.</p></div><div class=\"btn \">Go to Connects</div>",
+      "theme": "pink",
+      "tab": "Connects",
+      "description": "Empty inbox"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S57",
+      "title": "Wallet",
+      "content": "<div class=\"panel pinkbox\"><div class=\"paneltitle\">Available Connect credits</div><div class=\"bigmoney\">14</div><p class=\"muted\">4 free • 10 purchased</p><div class=\"progress\"><i style=\"width:29%\"></i></div></div><div class=\"item\"><div><strong>Free credits</strong><small>Renew monthly • do not roll over</small></div><b class=\"\">4</b></div><div class=\"item\"><div><strong>Purchased credits</strong><small>No arbitrary expiration</small></div><b class=\"\">10</b></div><div class=\"item\"><div><strong>Transaction history</strong><small>View charges and grants</small></div><b class=\"\">›</b></div><div class=\"btn \">Buy Connect credits</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Separate free and purchased balances"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S58",
+      "title": "Buy credits",
+      "content": "<h2>Credit packs</h2><div class=\"panel \"><div class=\"paneltitle\">3 credits</div><p class=\"muted\">₹49 · one-time purchase</p><div class=\"btn \">Choose ₹49</div></div><div class=\"panel \"><div class=\"paneltitle\">10 credits</div><p class=\"muted\">₹149 · one-time purchase</p><div class=\"btn \">Choose ₹149</div></div><div class=\"panel \"><div class=\"paneltitle\">30 credits</div><p class=\"muted\">₹399 · one-time purchase</p><div class=\"btn \">Choose ₹399</div></div><div class=\"notice\">Store-displayed prices must be authoritative. No subscription or profile boosts.</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Approved INR price targets"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S59",
+      "title": "Purchase confirmation",
+      "content": "<h2>Confirm credit purchase</h2><div class=\"panel \"><div class=\"paneltitle\">3 Connect credits</div><p class=\"muted\">Price target ₹49; actual store price may vary.</p></div><div class=\"notice\">Android uses Google Play Billing or an explicitly eligible alternative; iOS future StoreKit. No provider keys in Flutter.</div><div class=\"btn \">Continue to provider checkout</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "External billing provider UI separate from internal wallet"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S60",
+      "title": "Purchase receipt",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">✓</div><h2>Credits added</h2><p>3 purchased Connect credits were added exactly once.</p></div><div class=\"item\"><div><strong>Purchased balance</strong><small>Updated after validated payment</small></div><b class=\"\">13</b></div><div class=\"item\"><div><strong>Receipt</strong><small>Available in transaction history</small></div><b class=\"\">›</b></div><div class=\"btn \">Return to wallet</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Verified purchase reconciliation, no double grant"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S61",
+      "title": "Credit activity",
+      "content": "<h2>Recent transactions</h2><div class=\"item\"><div><strong>Monthly free allocation</strong><small>Renewal cycle</small></div><b class=\"good\">+4</b></div><div class=\"item\"><div><strong>Dating Like Back</strong><small>Creates a match only</small></div><b class=\"\">−1</b></div><div class=\"item\"><div><strong>Dating Connect</strong><small>One-time unlock</small></div><b class=\"\">−1</b></div><div class=\"item\"><div><strong>Friendship request</strong><small>Successfully sent</small></div><b class=\"\">−1</b></div><div class=\"item\"><div><strong>Credit purchase</strong><small>Pack of 10</small></div><b class=\"good\">+10</b></div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Ledger shows separate paid actions"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S62",
+      "title": "Monthly grants",
+      "content": "<h2>Monthly free credits</h2><div class=\"panel \"><div class=\"paneltitle\">Women (including trans women)</div><p class=\"muted\">4 free credits per renewal cycle.</p></div><div class=\"panel \"><div class=\"paneltitle\">All other users</div><p class=\"muted\">2 free credits per renewal cycle.</p></div><div class=\"notice\">Self-identified gender; no mandatory gender document verification. Free grants do not roll over.</div><div class=\"btn \">Done</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Approved monthly free grant policy"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S63",
+      "title": "Not enough credits",
+      "content": "<div class=\"feedback\"><div class=\"giant \">◇</div><h2>More credits needed</h2><p>You need 1 Connect credit for this action.</p></div><div class=\"panel \"><div class=\"paneltitle\">Your balance</div><p class=\"muted\">Free: 0 • Purchased: 0</p></div><div class=\"btn \">View credit packs</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Zero-balance guard prevents paid action"
+    },
+    {
+      "group": "08_Wallet",
+      "code": "S64",
+      "title": "Charge could not complete",
+      "content": "<div class=\"feedback\"><div class=\"giant \">!</div><h2>Action not completed</h2><p>Your credits were not deducted. Please try again.</p></div><div class=\"notice\">Server must deduplicate retries and reconcile partial failures before the UI claims a charge.</div><div class=\"btn \">Retry</div><div class=\"btn outline\">Back</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Failed transaction never drains wallet"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S65",
+      "title": "Your Profile",
+      "content": "<div class=\"photobox\" style=\"height:180px;background-image:url(../assets/ron.jpg);\"></div><h2>Rohan, 27</h2><span class=\"badge\">Approx. Hyderabad area</span><div class=\"item\"><div><strong>Dating profile</strong><small>Edit photos and intentions</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Friendship profile</strong><small>Edit hobbies and goals</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Wallet</strong><small>Credits and purchases</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Privacy &amp; settings</strong><small>Visibility and safety</small></div><b class=\"\">›</b></div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Main Profile tab"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S66",
+      "title": "Privacy & visibility",
+      "content": "<h2>Your privacy</h2><div class=\"item\"><div><strong>Show Dating profile</strong><small>Visibility can be paused</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Show Friendship profile</strong><small>Independent mode visibility</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Read receipts</strong><small>Off by default</small></div><b class=\"\">OFF</b></div><div class=\"item\"><div><strong>Last seen/online</strong><small>Hidden by default</small></div><b class=\"\">OFF</b></div><div class=\"item\"><div><strong>Blocked accounts</strong><small>Manage blocked users</small></div><b class=\"\">›</b></div><div class=\"btn \">Save privacy preferences</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Private by default, independent modes"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S67",
+      "title": "Notification preferences",
+      "content": "<h2>Push notifications</h2><div class=\"item\"><div><strong>Incoming Likes</strong><small>Real Likes only</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Matches</strong><small>Mutual Dating matches</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Friendship requests</strong><small>Received and accepted</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>New messages</strong><small>Unlocked conversations</small></div><b class=\"\">ON</b></div><div class=\"item\"><div><strong>Post engagement</strong><small>Local comments and reactions</small></div><b class=\"\">OFF</b></div><div class=\"item\"><div><strong>Quiet hours</strong><small>Schedule do-not-disturb</small></div><b class=\"\">›</b></div><div class=\"btn \">Save preferences</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Genuine notifications only, quiet hours"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S68",
+      "title": "Notifications",
+      "content": "<h2>Recent activity</h2><div class=\"item\"><div><strong>Maya liked you</strong><small>See the profile for free</small></div><b class=\"\">3m</b></div><div class=\"item\"><div><strong>Ava matched with you</strong><small>Connect to message</small></div><b class=\"\">1h</b></div><div class=\"item\"><div><strong>Ron accepted your request</strong><small>Friendship chat unlocked</small></div><b class=\"\">2h</b></div><div class=\"item\"><div><strong>Local post reaction</strong><small>Someone reacted to your post</small></div><b class=\"\">1d</b></div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "No fabricated likes or countdowns"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S69",
+      "title": "Block account",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⊘</div><h2>Block this person?</h2><p>They will not be able to view or contact you through normal app features.</p></div><div class=\"notice\">Blocking overrides matches, friendship connections and previously paid chat access.</div><div class=\"btn \">Block account</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Block safeguards all modes"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S70",
+      "title": "Report a user",
+      "content": "<h2>Tell us what happened</h2><div class=\"label\">Reason</div><div class=\"chips\"><span class=\"chip sel\">Harassment</span><span class=\"chip \">Fake profile</span><span class=\"chip \">Inappropriate photos</span><span class=\"chip \">Underage concern</span></div><div class=\"field\"><span>Additional details</span><strong>Describe the concern…</strong></div><div class=\"notice\">A report goes to moderation review. It does not automatically permanently ban a user.</div><div class=\"btn \">Submit report</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Simplified user report"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S71",
+      "title": "Report a post",
+      "content": "<h2>Report local content</h2><div class=\"label\">What is wrong?</div><div class=\"chips\"><span class=\"chip sel\">Spam</span><span class=\"chip \">Abuse</span><span class=\"chip \">Personal information</span><span class=\"chip \">Other</span></div><div class=\"field\"><span>Details</span><strong>Add optional context</strong></div><div class=\"notice\">Moderators can hide content while investigating, with an audit trail.</div><div class=\"btn \">Submit report</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Report via post menu"
+    },
+    {
+      "group": "09_Settings_Safety",
+      "code": "S72",
+      "title": "Delete U_luv account",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⊘</div><h2>Delete your account?</h2><p>Your profile and ordinary discoverable content will be removed.</p></div><div class=\"notice\">Narrowly required billing, support or safety records may have separate retention policies.</div><div class=\"btn \">Request permanent deletion</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "In-app permanent account deletion"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S73",
+      "title": "Help & support",
+      "content": "<h2>How can we help?</h2><div class=\"item\"><div><strong>Credit charges</strong><small>Understand Like Back and Connect</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Local content</strong><small>Seven-day post and media expiry</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Safety &amp; reporting</strong><small>Block and report guidance</small></div><b class=\"\">›</b></div><div class=\"item\"><div><strong>Privacy &amp; deletion</strong><small>Your controls and data</small></div><b class=\"\">›</b></div><div class=\"btn \">Contact support</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Help center entry"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S74",
+      "title": "Loading discovery",
+      "content": "<div class=\"feedback\"><div class=\"giant teal\">◌</div><h2>Finding eligible profiles</h2><p>Checking your chosen locality and distance band.</p></div><div class=\"skeleton\"></div><div class=\"skeleton short\"></div><p class=\"muted\">No hidden popularity ranking.</p>",
+      "theme": "pink",
+      "tab": "Dating",
+      "description": "Skeleton and loading UI"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S75",
+      "title": "Offline / retry",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⌁</div><h2>You appear to be offline</h2><p>Check your connection and try again.</p></div><div class=\"btn \">Retry</div><div class=\"btn outline\">Go to Profile</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Network unavailable state"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S76",
+      "title": "Age ineligible",
+      "content": "<div class=\"feedback\"><div class=\"giant \">18+</div><h2>U_luv is 18+</h2><p>You must be at least 18 years old to access the service.</p></div><div class=\"btn \">Close</div>",
+      "theme": "pink",
+      "tab": "",
+      "description": "Eligibility failure; do not admit minor"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S77",
+      "title": "Photo upload failed",
+      "content": "<div class=\"feedback\"><div class=\"giant \">!</div><h2>Upload did not finish</h2><p>The photo was not added to your profile.</p></div><div class=\"notice\">No false success; retry or choose a different image. Local/AWS implementation must honor permission guards.</div><div class=\"btn \">Try again</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Photo upload recovery"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S78",
+      "title": "Local post expired",
+      "content": "<div class=\"feedback\"><div class=\"giant \">⌛</div><h2>Post no longer available</h2><p>This local post has expired or was removed.</p></div><div class=\"btn \">Return to Local Feed</div>",
+      "theme": "teal",
+      "tab": "Friendship",
+      "description": "Seven-day expired content"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S79",
+      "title": "Change your locality",
+      "content": "<h2>Switch selected area?</h2><div class=\"field\"><span>New locality</span><strong>Kondapur, Hyderabad</strong></div><div class=\"notice\">Changing your selected locality closes previous Local posts. Dating/Friendship discovery will use the new selected area.</div><div class=\"btn \">Confirm new locality</div><div class=\"btn outline\">Cancel</div>",
+      "theme": "pink",
+      "tab": "Profile",
+      "description": "Changing locality closes old posts"
+    },
+    {
+      "group": "10_States_Support",
+      "code": "S80",
+      "title": "Pending request limit",
+      "content": "<div class=\"feedback\"><div class=\"giant \">♧</div><h2>Five requests pending</h2><p>Wait for a reply, cancellation or expiry before sending another friendship request.</p></div><div class=\"notice\">No extra credits are charged when a request is blocked by this limit.</div><div class=\"btn \">View pending requests</div>",
+      "theme": "teal",
+      "tab": "Connects",
+      "description": "Maximum 5 pending friendship requests"
+    }
+  ],
+  "admin": [
+    {
+      "code": "A01",
+      "title": "Moderation Overview",
+      "description": "Reports requiring review",
+      "group": "11_Admin"
+    },
+    {
+      "code": "A02",
+      "title": "Find a Post",
+      "description": "Look up a single post without scanning tables",
+      "group": "11_Admin"
+    },
+    {
+      "code": "A03",
+      "title": "Reports Queue",
+      "description": "Review reports and record audited decisions",
+      "group": "11_Admin"
+    },
+    {
+      "code": "A04",
+      "title": "User Restriction",
+      "description": "Restrict modes or suspend account with audit trail",
+      "group": "11_Admin"
+    }
+  ]
+}

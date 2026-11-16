@@ -327,6 +327,69 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     }
   }
 
+  Future<void> changeActivation(String selected, bool value) async {
+    final original = dashboard?.profiles[selected];
+    if (busy || original == null) return;
+    setState(() { busy = true; notice = 'Updating private activation intent...'; });
+    try {
+      final reply = await widget.repository.setModeActivation(selected, original.version, value);
+      if (!mounted) return;
+      if (!reply.ok) {
+        setState(() => notice = describe(reply.error, reply.status));
+        return;
+      }
+      setState(() {
+        dashboard = reply.value;
+        notice = value ? 'Activation requested. Profile remains private pending trusted locality.'
+            : 'Mode deactivated and private.';
+      });
+    } catch (_) {
+      if (mounted) setState(() => notice =
+          'Activation status could not be confirmed. Reload the saved profile before retrying.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  Future<void> showOwnerPreview(String selected) async {
+    if (busy) return;
+    setState(() => busy = true);
+    try {
+      final response = await widget.repository.ownerPreview(selected);
+      if (!mounted) return;
+      if (!response.ok) {
+        setState(() => notice = describe(response.error, response.status));
+        return;
+      }
+      final preview = response.value!;
+      final photoIds = (preview['photoIds'] is List ? preview['photoIds'] as List : const [])
+          .whereType<String>().take(2).toList(growable: false);
+      await showDialog<void>(context: context, builder: (context) => AlertDialog(
+        title: Text('Private ${selected == 'dating' ? 'Dating' : 'Friendship'} preview'),
+        content: SingleChildScrollView(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(preview['displayName']?.toString() ?? ''),
+            Text('Age: ${preview['age']} · ${preview['broadArea']}'),
+            Text(preview['intention']?.toString() ?? ''),
+            Text(preview['bio']?.toString() ?? ''),
+            Text((preview['interests'] as List? ?? const []).join(', ')),
+            Wrap(key: const Key('p02-private-preview-photos'),
+              spacing: 8, runSpacing: 8,
+              children: [for (final id in photoIds) reviewPhoto(id)]),
+            const Text('Private preview — not publicly discoverable.'),
+          ],
+        )),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
+      ));
+    } catch (_) {
+      if (mounted) setState(() => notice =
+          'Private preview could not be loaded. Check your connection and try again.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   String describe(String? error, int status) {
     switch (error) {
       case 'handle_taken': return 'That handle is already in use. Choose another.';
@@ -496,6 +559,47 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     });
   }
 
+  /// One deliberate action: validate, persist the current step, await the
+  /// authoritative server projection, then navigate. Never skip a failed save.
+  Future<void> saveAndNext() async {
+    if (busy || dashboard == null || activeStep == 'review') return;
+    final current = activeStep;
+    if (current == 'common') {
+      if (handle.text.trim().isEmpty || commonName.text.trim().isEmpty ||
+          locality.text.trim().isEmpty || gender.isEmpty ||
+          (!datingEnabled && !friendshipEnabled)) {
+        setState(() => notice = 'Complete username, name, city, gender and enable at least one mode.');
+        return;
+      }
+      if (hasPendingHandle) {
+        await saveHandle();
+        if (!mounted || dashboard == null || hasPendingHandle || handleDirty) return;
+      }
+      if (commonDirty) {
+        await saveCommon();
+        if (!mounted || dashboard == null || commonDirty) return;
+      }
+    } else if (current.endsWith('.details')) {
+      final selected = current.split('.').first;
+      final previous = dashboard!.profiles[selected];
+      // Avoid a redundant write if the saved mode is complete and unchanged.
+      if (dirty || previous?.exists != true || !stepSaved(current)) {
+        await saveDraft();
+        if (!mounted || dashboard == null || dirty) return;
+      }
+    } else if (current.endsWith('.photos')) {
+      // Upload and assignment are persisted separately by the media panel.
+      // A fresh server read is required before crossing the photo gate.
+      await refreshAfterDraftSave(preserveEditors: true);
+    }
+    if (!mounted) return;
+    if (!stepSaved(current)) {
+      setState(() => notice = 'The saved step is incomplete. Review the red requirements and try again.');
+      return;
+    }
+    stepTo(setupSteps.indexOf(current) + 1);
+  }
+
   void swipeStep(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
     if (velocity.abs() < 250) return;
@@ -531,9 +635,6 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
           labelText: 'Public username / @handle *', prefixText: '@',
           border: OutlineInputBorder(), helperText: 'One unique handle for both modes.'),
       ),
-      OutlinedButton(key: const Key('p02-save-handle'),
-        onPressed: busy || !hasPendingHandle ? null : saveHandle,
-        child: const Text('Save handle')),
       if (handleError.isNotEmpty) warning(handleError,
         key: const Key('p02-handle-error')),
       Padding(padding: const EdgeInsets.only(top: 12), child: TextField(
@@ -581,9 +682,6 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         title: const Text('Enable Friendship'), value: friendshipEnabled,
         onChanged: busy ? null : (value) => setModeEnabled('friendship', value)),
       const SizedBox(height: 10),
-      FilledButton.tonal(key: const Key('p02-save-common'),
-        onPressed: busy || !commonDirty ? null : saveCommon,
-        child: const Text('Save common details and mode choices')),
       if (commonDirty || handleDirty || hasPendingHandle)
         warning('Unsaved common details do not unlock the next step.',
           key: const Key('p02-common-unsaved')),
@@ -607,9 +705,6 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         length: 80),
       editField('p02-interests', 'Interests, comma-separated (up to 10)', interests),
       const SizedBox(height: 12),
-      FilledButton(key: const Key('p02-save-draft'),
-        onPressed: busy ? null : saveDraft,
-        child: const Text('Save mode details')),
       if (dirty) warning('Save these changes to move to photos.'),
       const SizedBox(height: 8),
       const Text('Required mode details are validated by the server.',
@@ -666,8 +761,8 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     } else if (step.endsWith('.details') && dirty) {
       selected.insert(0, 'Save the current mode draft');
     }
-    if (selected.isEmpty) return 'Complete and save this step to unlock Next.';
-    return 'Required before Next: ${selected.join('; ')}';
+    if (selected.isEmpty) return 'Complete and save this step before proceeding.';
+    return 'Required before Save & Next: ${selected.join('; ')}';
   }
 
   Widget reviewPhoto(String mediaId) {
@@ -752,7 +847,31 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         const Text('Your common profile and every enabled mode meet the '
           'onboarding requirements.'),
         const Text('Your profile remains private until you explicitly '
-          'activate discovery in a later milestone.'),
+          'enable discovery after trusted locality and visibility checks are implemented.'),
+        const SizedBox(height: 16),
+        for (final selected in ['dating', 'friendship'])
+          if (selected == 'dating' ? dashboard!.shared.dating : dashboard!.shared.friendship)
+            Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('${selected == 'dating' ? 'Dating' : 'Friendship'} activation',
+                style: Theme.of(context).textTheme.titleMedium),
+              Text('Status: ${dashboard!.profiles[selected]!.visibility}'),
+              if (dashboard!.profiles[selected]!.visibility == 'paused_ineligible')
+                warning('Activation is paused after profile changes. Turn it off, '
+                  'review the saved requirements, then request activation again.'),
+              if (dashboard!.profiles[selected]!.activationMissing.isNotEmpty)
+                warning('Cannot activate: ${dashboard!.profiles[selected]!.activationMissing.join(', ')}'),
+              SwitchListTile(
+                key: Key('p02-activate-$selected'),
+                title: const Text('Request activation'),
+                subtitle: const Text('Remains private until verified locality and P03 discovery are available.'),
+                value: dashboard!.profiles[selected]!.requestedActive,
+                onChanged: busy ? null : (value) => changeActivation(selected, value),
+              ),
+              FilledButton.tonal(key: Key('p02-owner-preview-$selected'),
+                onPressed: busy ? null : () => showOwnerPreview(selected),
+                child: const Text('Preview safe profile')),
+            ]))),
         const SizedBox(height: 16),
         FilledButton.tonal(key: const Key('p02-edit-setup'),
           onPressed: () => setState(() {
@@ -852,9 +971,9 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
             child: const Text('Back'))),
           if (current > 0) const SizedBox(width: 10),
           if (step != 'review') Expanded(child: FilledButton(
-            key: const Key('p02-next'),
-            onPressed: currentComplete ? () => stepTo(current + 1) : null,
-            child: const Text('Next'))),
+            key: const Key('p02-save-next'),
+            onPressed: busy ? null : saveAndNext,
+            child: const Text('Save & Next'))),
         ]),
         const SizedBox(height: 8),
         TextButton(key: const Key('p02-reload'),

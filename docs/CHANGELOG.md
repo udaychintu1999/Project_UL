@@ -1,3 +1,16 @@
+## 2026-11-16 — P02-3 guided Save & Next Android tap-safety repair
+
+- Owner physical Android test reached P02-3 checkpoint 03, then a `Save & Next` tap missed its target because the scrolling form's button was not clear of the fixed bottom navigation.
+- Replaced generic Save & Next / Back test taps with real pointer taps preceded by immediate viewport positioning, measured AppBar/bottom-navigation clearance and bounded drag fallback. No production API, Flutter app widget or database change.
+- Added executable negative source guards. Portable P02-3 chain PASS; real device Flutter E2E after repair remains UNVERIFIED. See `docs/qa/P02_3_GUIDED_SAVE_NEXT_HIT_TEST_REPAIR_2026_11_16.md`.
+
+## 2026-11-16 — P02-3 activation/privacy + unified Save & Next
+
+- Marked P02-2 owner-accepted for the local-development profile/photo onboarding workflow on owner's explicit report; native system picker manual result remains separately unconfirmed.
+- Implemented independent mode activation requests with version/identity/setup/media conditions, owner-only preview with at most two photos, and fail-closed public discovery eligibility.
+- Replaced separate onboarding Save/Next controls with one `Save & Next`, retained Back and step gating; expanded Flutter widget, local API and isolated Android E2E tests.
+- Added P02-3 regression guards, Windows acceptance guide, privacy architecture record and source evidence. No new table, external service, AWS calls or P03 discovery endpoint.
+
 ## 2026-11-16 — P02-2 guided onboarding Flutter compile fix
 
 - Resolved reported `ProfileRepository.photoBytes` undefined-method build failure in final profile review by typing the media read through the existing `ProfileMediaRepository` capability; added an actual Flutter preview widget assertion and negative source guard.

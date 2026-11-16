@@ -15,8 +15,8 @@ test('P02 UI suite mounts the real app and taps required production controls', (
   assert.match(ui, /tester\.pumpWidget\(makeApp\(\)\)/);
   assert.match(ui, /UluvApp\(/);
   for (const key of [
-    'auth-password-login', 'p02-save-handle', 'p02-save-common',
-    'p02-enable-dating', 'p02-enable-friendship', 'p02-save-draft',
+    'auth-password-login', 'p02-save-next',
+    'p02-enable-dating', 'p02-enable-friendship',
     'p02-pick-photo', 'p02-confirm-photo-upload', 'p02-photo-remove-0',
     'p02-tab-settings', 'p02-continue',
   ]) assert.ok(ui.includes(key), `missing real UI interaction: ${key}`);
@@ -99,4 +99,60 @@ test('Continue viewport positioning never awaits an animated Flutter scroll', ()
     'the final callback must remain a real pointer tap');
   assert.match(ui, /await _tapReadyContinue\(tester\);[\s\S]*?_checkpoint\(13,/,
     'checkpoint 13 must still require real completion navigation');
+});
+
+// P02-3 regression: on a real phone, an enabled Save & Next can be located
+// inside the scrollable Home form but still be covered by fixed bottom tabs.
+// The old generic _tap() only used tester.ensureVisible; its pointer hit was
+// reported as missed after PASS 03 and the next-step wait subsequently stalled.
+test('P02-3 guided Save & Next and Back are unobstructed real pointer taps', () => {
+  const helper = ui.split('Future<void> _tapGuidedAction(')[1]
+    ?.split('Future<void> _next(')[0] ?? '';
+  assert.ok(helper, 'a dedicated guided-step pointer helper is required');
+  for (const invariant of [
+    'p02-save-next', 'p02-back',
+    'FocusManager.instance.primaryFocus?.unfocus()',
+    'Scrollable.ensureVisible(',
+    'alignment: 0.35',
+    'duration: Duration.zero',
+    'await tester.pump()',
+    "_key('p02-bottom-navigation')",
+    'rect.bottom <= navTop - 8',
+    'rect.top >= appBarBottom + 8',
+    'attempt < 8',
+    'expect(isClearOfBars(), isTrue',
+    'await tester.tap(action)',
+  ]) assert.ok(helper.includes(invariant), `guided step tap missing: ${invariant}`);
+  assert.doesNotMatch(helper, /warnIfMissed:\s*false|\.onPressed\s*\?*\(/,
+    'never bypass the tap or silence failed hit tests');
+  const next = ui.split('Future<void> _next(')[1]
+    ?.split('Future<void> _back(')[0] ?? '';
+  const back = ui.split('Future<void> _back(')[1]
+    ?.split('String _text(')[0] ?? '';
+  assert.match(next, /_tapGuidedAction\(tester, 'p02-save-next'\)/);
+  assert.match(back, /_tapGuidedAction\(tester, 'p02-back'\)/);
+  assert.match(next, /_until\(tester, 'guided onboarding step:/,
+    'a real changed step is the only evidence of Save & Next success');
+  // Negative mutations: reverting to generic tap or removing the viewport
+  // guard must cause this regression check to fail.
+  const protectedNext = str => str.includes("_tapGuidedAction(tester, 'p02-save-next')");
+  const protectedViewport = str => str.includes('rect.bottom <= navTop - 8') &&
+    str.includes('await tester.tap(action)');
+  assert.equal(protectedNext(next.replace('_tapGuidedAction', '_tapKey')), false);
+  assert.equal(protectedViewport(helper.replace('rect.bottom <= navTop - 8', 'true')), false);
+  assert.equal(protectedViewport(helper.replace('await tester.tap(action)', '')), false);
+});
+
+test('P02-3 step pointer positioning never awaits an unpumped animation', () => {
+  const helper = ui.split('Future<void> _tapGuidedAction(')[1]
+    ?.split('Future<void> _next(')[0] ?? '';
+  const scroll = helper.match(/await Scrollable\.ensureVisible\([\s\S]*?\);/)?.[0] ?? '';
+  assert.ok(scroll, 'guided action requires scroll positioning');
+  const noHang = src => /duration:\s*Duration\.zero/.test(src) &&
+    !/duration:\s*(?:const\s+)?Duration\(\s*(?:milliseconds|seconds|minutes)/.test(src);
+  assert.equal(noHang(scroll), true);
+  assert.equal(noHang(scroll.replace('duration: Duration.zero',
+    'duration: const Duration(milliseconds: 250)')), false);
+  assert.doesNotMatch(helper, /await tester\.pumpAndSettle\(\)/,
+    'an unbounded animation settle after scroll can hang on a real device');
 });

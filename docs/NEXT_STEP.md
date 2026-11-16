@@ -1,3 +1,9 @@
+# NEXT ACTION — P02-3 Windows and real Android acceptance (2026-11-16)
+
+P02-2 is **OWNER_ACCEPTED for local development** following the owner's "Lovely working" confirmation. P02-3 implements independent activation requests, owner preview, fail-closed public visibility and **Save & Next** for guided onboarding, but **has not yet passed owner Windows/Android verification**. Apply the update-only ZIP and run `npm run verify:p02-3:portable`, `npm run typecheck`, `npm run lint`, `npm run test:p02-2:store`, `npm run test:flutter`; start Java DynamoDB Local manually and Fastify; run `npm run test:p02-1:integration`, `npm run test:p02-2:integration`, `npm run test:p02-3:integration`, `npm run test:flutter:p02-3:e2e`. Complete manual checks and report results before marking P02-3 accepted. Details: `docs/manual/P02_3_WINDOWS_ACCEPTANCE_2026_11_16.md`.
+
+---
+
 # Current action — verify P02-2 guided onboarding Flutter compile fix (2026-11-16)
 
 Apply `U_luv_P02_2_Guided_Flutter_Compile_Repair_2026_11_16.zip` over the already merged guided-onboarding source. Portable suite passed in authoring runtime. The owner's prior `npm run test:flutter` and Android build failed because final review invoked `photoBytes` through the wrong static repository interface; this has been repaired, but **Flutter/Android verification is not yet complete**. Run `npm run test:flutter` and then `npm run test:flutter:p02-2:ui:e2e` with local DynamoDB and Fastify running. Confirm all 13 UI checkpoints and manually check the native picker. See `docs/qa/P02_2_GUIDED_ONBOARDING_FLUTTER_COMPILE_REPAIR_2026_11_16.md`.

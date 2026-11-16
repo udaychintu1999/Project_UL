@@ -31,7 +31,8 @@ final Uint8List _secondPhoto = base64Decode(
 
 void _checkpoint(int index, String verified) {
   // Checkpoint messages must come AFTER the UI assertions, never at startup.
-  debugPrint('P02-2 UI PASS ${index.toString().padLeft(2, '0')}: $verified');
+  final phase = index > 13 ? 'P02-3' : 'P02-2';
+  debugPrint('$phase UI PASS ${index.toString().padLeft(2, '0')}: $verified');
 }
 
 Future<void> _until(
@@ -56,9 +57,7 @@ Future<void> _until(
 Finder _key(String value) => find.byKey(Key(value));
 
 bool _canNext(WidgetTester tester) {
-  final target = _key('p02-next');
-  return target.evaluate().isNotEmpty &&
-      tester.widget<FilledButton>(target).onPressed != null;
+  return find.text('Saved and verified. You can continue.').evaluate().isNotEmpty;
 }
 
 String _field(WidgetTester tester, String key) {
@@ -67,17 +66,74 @@ String _field(WidgetTester tester, String key) {
   return tester.widget<TextField>(target).controller?.text ?? '';
 }
 
+// Guided step actions live inside the scrolling Home page, ABOVE a fixed
+// bottom NavigationBar. A widget can be found and enabled yet its center can
+// be behind the navigation bar (tester.tap then warns and misses). Position
+// the ACTUAL pointer target within the unobstructed viewport before tapping.
+// All scrolls are instant + pumped: awaiting an animated scroll here can hang
+// integration_test because its fake clock is not advancing concurrently.
+Future<void> _tapGuidedAction(WidgetTester tester, String key) async {
+  expect(['p02-save-next', 'p02-back'], contains(key));
+  final action = _key(key);
+  final navigation = _key('p02-bottom-navigation');
+  await _until(tester, '$key is present', () => action.evaluate().isNotEmpty);
+
+  FocusManager.instance.primaryFocus?.unfocus();
+  // Finish a page-transition frame before measuring positions and scrolling.
+  await tester.pump(const Duration(milliseconds: 200));
+  await _until(tester, '$key is enabled', () {
+    if (action.evaluate().isEmpty) return false;
+    final widget = action.evaluate().first.widget;
+    return widget is ButtonStyleButton && widget.onPressed != null;
+  });
+
+  await Scrollable.ensureVisible(
+    tester.element(action),
+    alignment: 0.35,
+    duration: Duration.zero,
+    alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+  );
+  await tester.pump();
+
+  bool isClearOfBars() {
+    if (action.evaluate().isEmpty || navigation.evaluate().isEmpty ||
+        find.byType(AppBar).evaluate().isEmpty) return false;
+    final rect = tester.getRect(action);
+    final navTop = tester.getRect(navigation).top;
+    final appBarBottom = tester.getRect(find.byType(AppBar).first).bottom;
+    return rect.height > 0 && rect.width > 0 &&
+        rect.top >= appBarBottom + 8 && rect.bottom <= navTop - 8;
+  }
+
+  // A small phone or expanded keyboard can limit the initial alignment.
+  // Bounded physical drags, each followed by a frame, must resolve the
+  // obstruction or FAIL. Never ignore a missed pointer or invoke onPressed.
+  final homeScroll = find.ancestor(
+    of: action, matching: find.byType(Scrollable),
+  ).first;
+  for (var attempt = 0; attempt < 8 && !isClearOfBars(); attempt++) {
+    final actionTop = tester.getRect(action).top;
+    final appBarBottom = tester.getRect(find.byType(AppBar).first).bottom;
+    await tester.drag(homeScroll, actionTop < appBarBottom + 8
+        ? const Offset(0, 145) : const Offset(0, -145));
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  expect(isClearOfBars(), isTrue,
+    reason: '$key is off-screen or overlapped by fixed navigation; '
+        'the test must not report a successful Save & Next / Back.');
+  debugPrint('P02-3 UI ACTION: $key unobstructed; tapping real button');
+  await tester.tap(action);
+  await tester.pump();
+}
+
 Future<void> _next(WidgetTester tester, String expectedStep) async {
-  await _until(tester, 'saved current page unlocks Next', () => _canNext(tester));
-  await _tapKey(tester, 'p02-next');
-  await tester.pumpAndSettle();
+  await _tapGuidedAction(tester, 'p02-save-next');
   await _until(tester, 'guided onboarding step: $expectedStep', () =>
       _text(tester, 'p02-step-label').contains(expectedStep));
 }
 
 Future<void> _back(WidgetTester tester, String expectedStep) async {
-  await _tapKey(tester, 'p02-back');
-  await tester.pumpAndSettle();
+  await _tapGuidedAction(tester, 'p02-back');
   await _until(tester, 'guided onboarding back: $expectedStep', () =>
       _text(tester, 'p02-step-label').contains(expectedStep));
 }
@@ -274,35 +330,20 @@ void main() {
 
         final handle = 'ui${uid.replaceAll('-', '').substring(0, 18)}';
         await _enter(tester, 'p02-handle', handle);
-        await _tapKey(tester, 'p02-save-handle');
-        await _until(tester, 'account handle confirmed by UI after server save',
-            () => _field(tester, 'p02-handle') == handle &&
-                tester.widget<OutlinedButton>(_key('p02-save-handle')).onPressed == null);
-        _checkpoint(2, 'account handle saved through UI');
-
         await _enter(tester, 'p02-common-name', 'UI Test Profile');
         await _enter(tester, 'p02-locality', 'Hyderabad');
         await _tapKey(tester, 'p02-gender');
         await tester.pumpAndSettle();
         await _tap(tester, find.text('Prefer not to say').last);
         await _tapKey(tester, 'p02-enable-dating');
-        expect(tester.widget<SwitchListTile>(_key('p02-enable-dating')).value,
-            isTrue);
-        await _tapKey(tester, 'p02-save-common');
-        await _until(tester, 'saved common fields and mode unlock Next', () =>
-            _field(tester, 'p02-common-name') == 'UI Test Profile' &&
-            _field(tester, 'p02-locality') == 'Hyderabad' &&
-            tester.widget<DropdownButton<String>>(_key('p02-gender')).value ==
-                'prefer_not_to_say' && _canNext(tester));
-        _checkpoint(3, 'common details and Dating selection saved and reflected');
-
         await _next(tester, 'Dating details');
+        _checkpoint(2, 'handle persisted by combined Save & Next');
+        _checkpoint(3, 'Common Profile and Dating saved by single action');
         expect(_canNext(tester), isFalse,
             reason: 'Cannot skip an incomplete Dating details step.');
         await _enter(tester, 'p02-bio', 'Enjoys art and thoughtful conversations');
         await _enter(tester, 'p02-intention', 'Conversation');
         await _enter(tester, 'p02-interests', 'Art, Music');
-        await _tapKey(tester, 'p02-save-draft');
         await _next(tester, 'Dating photos');
         await _until(tester, 'Dating photo editor',
             () => _key('p02-pick-photo').evaluate().isNotEmpty);
@@ -334,10 +375,10 @@ void main() {
         await _back(tester, 'Dating details');
         await _back(tester, 'Common profile');
         await _tapKey(tester, 'p02-enable-friendship');
-        await _tapKey(tester, 'p02-save-common');
-        await _until(tester, 'both modes saved in shared profile',
-            () => tester.widget<SwitchListTile>(_key('p02-enable-friendship')).value &&
-                _canNext(tester));
+        await _next(tester, 'Dating details'); // Saves the changed mode choice.
+        await _back(tester, 'Common profile');
+        expect(tester.widget<SwitchListTile>(_key('p02-enable-friendship')).value, isTrue,
+            reason: 'Friendship selection must remain saved after Back.');
         await _next(tester, 'Dating details');
         await _next(tester, 'Dating photos');
         await _next(tester, 'Friendship details');
@@ -347,7 +388,6 @@ void main() {
         await _enter(tester, 'p02-bio', 'Looking for friends to explore the city');
         await _enter(tester, 'p02-intention', 'Friendship');
         await _enter(tester, 'p02-interests', 'Books, Hiking');
-        await _tapKey(tester, 'p02-save-draft');
         await _next(tester, 'Friendship photos');
         await _until(tester, 'Friendship photo library loaded',
             () => _reuseButtons.evaluate().length >= 2);
@@ -408,6 +448,23 @@ void main() {
             () => _key('p02-setup-ready').evaluate().isNotEmpty);
         expect(find.text('Profile setup complete'), findsOneWidget);
         _checkpoint(13, 'Review and Continue open private completion screen, not discovery');
+        // P02-3: exercise independent real backend activation intents through
+        // the visible completion UI. Neither mode becomes publicly discoverable.
+        await _tapKey(tester, 'p02-activate-dating');
+        await _until(tester, 'Dating activation recorded privately', () =>
+            tester.widget<SwitchListTile>(_key('p02-activate-dating')).value);
+        expect(find.textContaining('pending_trusted_locality'), findsWidgets);
+        expect(tester.widget<SwitchListTile>(_key('p02-activate-friendship')).value, isFalse);
+        _checkpoint(14, 'Dating activation is independent and pending trusted locality');
+        await _tapKey(tester, 'p02-activate-friendship');
+        await _until(tester, 'Friendship activation recorded privately', () =>
+            tester.widget<SwitchListTile>(_key('p02-activate-friendship')).value);
+        await _tapKey(tester, 'p02-owner-preview-dating');
+        await _until(tester, 'private Dating preview', () =>
+            find.text('Private Dating preview').evaluate().isNotEmpty);
+        expect(find.textContaining('not publicly discoverable'), findsWidgets);
+        await _tap(tester, find.text('Close'));
+        _checkpoint(15, 'Friendship independently enabled, owner preview safe, no public discovery');
       } finally {
         messenger.setMockMethodCallHandler(_picker, null);
       }

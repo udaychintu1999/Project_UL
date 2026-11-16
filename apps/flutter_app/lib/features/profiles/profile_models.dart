@@ -2,13 +2,17 @@
 class ProfileDraft {
   const ProfileDraft({required this.mode, required this.exists, required this.version,
     required this.displayName, required this.bio, required this.interests,
-    required this.intention, required this.missing, this.photoIds = const []});
+    required this.intention, required this.missing, this.photoIds = const [],
+    this.requestedActive = false, this.visibility = 'inactive',
+    this.activationMissing = const [], this.discoveryEligible = false});
 
   final String mode;
   final bool exists;
   final int version;
   final String displayName, bio, intention;
-  final List<String> interests, missing, photoIds;
+  final List<String> interests, missing, photoIds, activationMissing;
+  final bool requestedActive, discoveryEligible;
+  final String visibility;
 
   factory ProfileDraft.fromJson(Map<String, dynamic> json) {
     final completeness = json['completeness'];
@@ -22,6 +26,11 @@ class ProfileDraft {
         .whereType<String>().toList(growable: false),
       intention: json['intention'] is String ? json['intention'] as String : '',
       photoIds: (json['photoIds'] is List ? json['photoIds'] as List : const []).whereType<String>().toList(growable: false),
+      requestedActive: json['requestedActive'] == true,
+      discoveryEligible: json['discoveryEligible'] == true,
+      visibility: json['visibility'] is String ? json['visibility'] as String : 'inactive',
+      activationMissing: (json['activationMissing'] is List ? json['activationMissing'] as List : const [])
+        .whereType<String>().toList(growable: false),
       missing: (completeness is Map && completeness['missing'] is List
         ? completeness['missing'] as List : const [])
         .whereType<String>().toList(growable: false),

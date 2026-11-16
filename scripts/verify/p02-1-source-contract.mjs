@@ -33,7 +33,8 @@ assert.doesNotMatch(policy.match(/const allowed = new Set\([^;]+/s)?.[0] ?? '', 
 assert.ok(renewedAccess(gate), 'profile must request a freshly valid device token');
 assert.match(gate, /ProfileWorkspace/);
 assert.match(client, /client\.putUrl/);
-assert.match(workspace, /p02-save-draft/);
+assert.match(workspace, /p02-save-next/);
+assert.doesNotMatch(workspace, /key:\s*const Key\('p02-save-(?:draft|handle|common)'\)/);
 assert.match(workspace, /confirmDiscard/);
 
 // P02-1 Common Profile regression repairs (2026-11-15): keep meaningful
@@ -79,6 +80,8 @@ assert.equal(handleSavePreservesForms(workspace.replace(/preserveEditors\s*:\s*t
 // Mutation checks: removing essential security behavior must break the guard.
 assert.equal(guarded(auth.replace(/registerProfileRoutes\s*\(\s*app\s*,\s*db\s*,\s*requireSession\s*\)/, 'void 0')), false);
 assert.equal(guardedCreate(api.replace(/requestedActive\s*:\s*false/, 'requestedActive: true')), false);
-assert.equal(guardedUpdate(api.replace('#version = :expected AND attribute_exists(PK)', '#version > :expected')), false);
+const modeEditor = api.split("app.put('/v1/profiles/me/:mode'")[1]?.split("app.get('/v1/profiles/me/:mode/preview'")[0] ?? '';
+assert.ok(guardedUpdate(modeEditor), 'draft write must check exact version');
+assert.equal(guardedUpdate(modeEditor.replace('#version = :expected AND attribute_exists(PK)', '#version > :expected')), false);
 assert.equal(renewedAccess(gate.replace(/access\s*:\s*sessions\.access/, 'access: () => Future.value("stale")')), false);
 console.log('PASS P02-1 static contracts: shared session, private create, CAS, fresh access, privacy fixture, isolated Android, readiness race, mutation negatives');

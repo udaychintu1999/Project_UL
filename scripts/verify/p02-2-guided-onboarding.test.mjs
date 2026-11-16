@@ -18,11 +18,13 @@ test('guidance is dynamic: only saved enabled modes add their detail/photo steps
 });
 
 test('next and forward swipe require saved current step and cannot skip', () => {
-  const guard = workspace.match(/void stepTo\(int index\)\s*\{([\s\S]*?)\n  \}\n\n  void swipeStep/)?.[1] ?? '';
+  const guard = workspace.match(/void stepTo\(int index\)\s*\{([\s\S]*?)\n  \}\n\n  \/\//)?.[1] ?? '';
   assert.ok(guard, 'navigation gate must exist');
   assert.match(guard, /index\s*!=\s*current\s*\+\s*1\s*\|\|\s*!stepSaved\(activeStep\)/);
   assert.match(workspace, /onHorizontalDragEnd:\s*swipeStep/);
-  assert.match(workspace, /onPressed:\s*currentComplete\s*\?/);
+  assert.match(workspace, /onPressed:\s*busy\s*\?\s*null\s*:\s*saveAndNext/);
+  assert.match(workspace, /key:\s*const Key\('p02-save-next'\)/);
+  assert.doesNotMatch(workspace, /key:\s*const Key\('p02-next'\)/);
   assert.ok(!guard.replace(/index\s*!=\s*current\s*\+\s*1\s*\|\|\s*!stepSaved\(activeStep\)/, '').includes('index != current + 1 || !stepSaved(activeStep)'),
     'forward validation must remain central');
 });

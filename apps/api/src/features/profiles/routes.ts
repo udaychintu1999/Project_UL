@@ -4,6 +4,7 @@ import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk
 import { ageFromBirthDate, draftMissing, onboardingMissing, parseDraft, parseHandleInput, parseMode, parseSetup } from './validation.js';
 import type { DraftFields, ProfileMode, SharedSetup } from './validation.js';
 import { validMediaId } from './media-policy.js';
+import { activationMissing, modeVisibility, parseActivation, privatePreview } from './activation-policy.js';
 
 const usersTable = 'uluv_users';
 const profilesTable = 'uluv_profiles';
@@ -33,7 +34,7 @@ function normalizedFields(raw?: Item): DraftFields {
 function revisionOf(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : fallback;
 }
-function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, commonName = '', verifiedPhotos: readonly string[] = []) {
+function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, commonName = '', verifiedPhotos: readonly string[] = [], visibility: 'inactive' | 'paused_ineligible' | 'pending_trusted_locality' = 'inactive', activationMissingFields: readonly string[] = []) {
   const fields = normalizedFields(raw);
   const photoIds = Array.isArray(raw?.photoIds) ? raw.photoIds.filter((x): x is string => typeof x === 'string').slice(0, 6) : [];
   // A typed city label may complete onboarding but is NOT a trusted locality
@@ -42,9 +43,9 @@ function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | nul
   return {
     mode, exists: Boolean(raw), ...fields, effectiveDisplayName: fields.displayName || commonName, photoIds,
     requestedActive: raw?.requestedActive === true,
-    // No P02-1 draft becomes visible; activation and photo access are P02-3/P02-2.
     completeness: { ready: missing.length === 0, missing },
-    visibility: 'inactive',
+    visibility, activationMissing: activationMissingFields,
+    discoveryEligible: false, // P03 trusted locality + atomic H3 pointer not yet present.
     version: revisionOf(raw?.version)
   };
 }
@@ -107,6 +108,12 @@ async function ownerDashboard(db: DynamoDBDocumentClient, uid: string) {
   const missing = onboardingMissing(handle, shared, drafts);
   const age = ageFromBirthDate(account.birthDate);
   if (age === null) missing.push('ageEligibility');
+  const activation = (mode: ProfileMode, row?: Item) => activationMissing(mode, handle, shared,
+    row ? { ...normalizedFields(row), photoIds: photosFor(row) } : undefined, age);
+  const activationState = (mode: ProfileMode, row?: Item) => modeVisibility(
+    row?.requestedActive === true, shared.selectedModes[mode], activation(mode, row),
+    revisionOf(row?.activationSetupRevision, -1), revisionOf(settings?.setupRevision),
+    revisionOf(row?.activationIdentityRevision, -1), revisionOf(account.identityRevision, 1));
   return {
     handle, identityRevision: revisionOf(account.identityRevision, 1),
     locality: shared.locality || null, localityRevision: revisionOf(settings?.localityRevision),
@@ -118,8 +125,10 @@ async function ownerDashboard(db: DynamoDBDocumentClient, uid: string) {
     },
     onboarding: { ready: missing.length === 0, missing },
     profiles: {
-      dating: ownerDto('dating', dating, handle, shared.commonName, photosFor(dating)),
-      friendship: ownerDto('friendship', friendship, handle, shared.commonName, photosFor(friendship))
+      dating: ownerDto('dating', dating, handle, shared.commonName, photosFor(dating),
+        activationState('dating', dating), activation('dating', dating)),
+      friendship: ownerDto('friendship', friendship, handle, shared.commonName, photosFor(friendship),
+        activationState('friendship', friendship), activation('friendship', friendship))
     }
   };
 }
@@ -243,12 +252,10 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
     const mode = parseMode((request.params as Record<string, unknown>)?.mode);
     if (!mode) return failure(reply, 400, 'invalid_profile_mode');
     try {
-      const [account, settings, profile] = await Promise.all([
-        ownerAccount(db, auth.uid), getItem(db, settingsTable, settingsKey(auth.uid)),
-        getItem(db, profilesTable, modeKey(auth.uid, mode))
-      ]);
-      if (!account) return failure(reply, 403, 'account_unavailable');
-      return ownerDto(mode, profile, typeof account.handle === 'string' ? account.handle : null, sharedSetup(settings).commonName);
+      // Use the same READY-photo/activation projection as /me. A separate
+      // ownerDto call here could incorrectly claim an active mode is inactive.
+      const dashboard = await ownerDashboard(db, auth.uid);
+      return dashboard?.profiles[mode] ?? failure(reply, 403, 'account_unavailable');
     } catch { return failure(reply, 503, 'profile_store_unavailable'); }
   });
 
@@ -272,12 +279,12 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         } }
         : { Update: {
           TableName: profilesTable, Key: key,
-          UpdateExpression: 'SET displayName = :name, bio = :bio, interests = :interests, intention = :intent, #version = :next, updatedAt = :now',
+          UpdateExpression: 'SET displayName = :name, bio = :bio, interests = :interests, intention = :intent, requestedActive = :inactive, #version = :next, updatedAt = :now',
           ConditionExpression: '#version = :expected AND attribute_exists(PK)',
           ExpressionAttributeNames: { '#version': 'version' },
           ExpressionAttributeValues: {
             ':name': fields.displayName, ':bio': fields.bio, ':interests': fields.interests,
-            ':intent': fields.intention, ':next': next, ':now': now, ':expected': expectedVersion
+            ':intent': fields.intention, ':next': next, ':now': now, ':expected': expectedVersion, ':inactive': false
           }
         } };
       await db.send(new TransactWriteCommand({ TransactItems: [
@@ -289,12 +296,9 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         } },
         profileWrite
       ] }));
-      // Re-read authoritative versions and shared state after the transaction.
-      const [account, settings, record] = await Promise.all([
-        ownerAccount(db, auth.uid), getItem(db, settingsTable, settingsKey(auth.uid)), getItem(db, profilesTable, key)
-      ]);
-      if (!account) return failure(reply, 403, 'account_unavailable');
-      return ownerDto(mode, record, typeof account.handle === 'string' ? account.handle : null, sharedSetup(settings).commonName);
+      // Re-read authoritative readiness, photo ownership and activation state.
+      const dashboard = await ownerDashboard(db, auth.uid);
+      return dashboard?.profiles[mode] ?? failure(reply, 403, 'account_unavailable');
     } catch (error) {
       if (conditionalFailure(error)) {
         try {
@@ -308,4 +312,95 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
       return failure(reply, 503, 'profile_store_unavailable');
     }
   });
+
+  // An authenticated owner can review the privacy-safe public *shape* now.
+  // This is NOT the future P03 public endpoint and never returns a raw DB item.
+  app.get('/v1/profiles/me/:mode/preview', async (request, reply) => {
+    noStore(reply);
+    const auth = await requireSession(request, reply);
+    if (!auth) return reply;
+    const mode = parseMode((request.params as Record<string, unknown>)?.mode);
+    if (!mode) return failure(reply, 400, 'invalid_profile_mode');
+    try {
+      const [dashboard, account] = await Promise.all([
+        ownerDashboard(db, auth.uid), ownerAccount(db, auth.uid)
+      ]);
+      if (!dashboard || !account) return failure(reply, 403, 'account_unavailable');
+      const profile = dashboard.profiles[mode];
+      if (!dashboard.shared.selectedModes[mode] || !profile.exists ||
+          dashboard.shared.age === null || !dashboard.handle) {
+        return failure(reply, 409, 'profile_preview_unavailable');
+      }
+      const shared = sharedSetup(await getItem(db, settingsTable, settingsKey(auth.uid)));
+      return privatePreview(mode, dashboard.handle, shared,
+        { ...normalizedFields(profile), photoIds: profile.photoIds }, dashboard.shared.age);
+    } catch { return failure(reply, 503, 'profile_store_unavailable'); }
+  });
+
+  // All third-party preview requests remain private until trusted locality,
+  // block/match authorization and atomic pointer publication exist in P03.
+  app.get('/v1/profiles/:mode/:handle/preview', async (_request, reply) => {
+    noStore(reply);
+    return failure(reply, 404, 'profile_not_found');
+  });
+
+  // P02-3 activation records a deliberate, independent owner intent; it does
+  // NOT create discovery pointers, publish photos or claim public visibility.
+  const updateActivation = (active: boolean) => async (request: FastifyRequest, reply: FastifyReply) => {
+    noStore(reply);
+    const auth = await requireSession(request, reply);
+    if (!auth) return reply;
+    const mode = parseMode((request.params as Record<string, unknown>)?.mode);
+    if (!mode) return failure(reply, 400, 'invalid_profile_mode');
+    const parsed = parseActivation(request.body, active);
+    if ('error' in parsed) return failure(reply, 400, parsed.error);
+    const { expectedVersion } = parsed.value;
+    try {
+      const [account, settings, profile, dashboard] = await Promise.all([
+        ownerAccount(db, auth.uid), getItem(db, settingsTable, settingsKey(auth.uid)),
+        getItem(db, profilesTable, modeKey(auth.uid, mode)), ownerDashboard(db, auth.uid)
+      ]);
+      if (!account || !dashboard) return failure(reply, 403, 'account_unavailable');
+      if (!profile || profile.version !== expectedVersion) return failure(reply, 409, 'profile_version_conflict');
+      const shared = sharedSetup(settings);
+      const verifiedPhotos = dashboard.profiles[mode].photoIds;
+      const missing = activationMissing(mode, dashboard.handle, shared,
+        { ...normalizedFields(profile), photoIds: verifiedPhotos }, ageFromBirthDate(account.birthDate));
+      if (active && missing.length > 0) return reply.code(409).send({ error: 'profile_ineligible', missing });
+      const expectedSetup = revisionOf(settings?.setupRevision);
+      const items: NonNullable<TransactWriteCommandInput['TransactItems']> = [
+        { ConditionCheck: { TableName: usersTable, Key: accountKey(auth.uid),
+          ConditionExpression: '#state = :active AND ageEligibility = :adult AND birthDate = :dob AND identityRevision = :identity',
+          ExpressionAttributeNames: { '#state': 'status' },
+          ExpressionAttributeValues: { ':active': 'active', ':adult': 'self_declared_adult', ':dob': account.birthDate,
+            ':identity': revisionOf(account.identityRevision, 1) } } },
+        { ConditionCheck: { TableName: settingsTable, Key: settingsKey(auth.uid),
+          ConditionExpression: 'setupRevision = :rev AND selectedModes.#mode = :selected',
+          ExpressionAttributeNames: { '#mode': mode },
+          ExpressionAttributeValues: { ':rev': expectedSetup, ':selected': shared.selectedModes[mode] } } },
+        { Update: { TableName: profilesTable, Key: modeKey(auth.uid, mode),
+          UpdateExpression: 'SET requestedActive = :requested, activationSetupRevision = :setup, activationIdentityRevision = :identity, #version = :next, updatedAt = :now',
+          ConditionExpression: '#version = :expected AND attribute_exists(PK)',
+          ExpressionAttributeNames: { '#version': 'version' },
+          ExpressionAttributeValues: { ':requested': active, ':setup': expectedSetup, ':identity': revisionOf(account.identityRevision, 1),
+            ':next': expectedVersion + 1, ':expected': expectedVersion,
+            ':now': new Date().toISOString() } } }
+      ];
+      if (active) for (const mediaId of verifiedPhotos) items.push({ ConditionCheck: {
+        TableName: profilesTable, Key: mediaKey(auth.uid, mediaId),
+        ConditionExpression: '#state = :ready AND refCount >= :one',
+        ExpressionAttributeNames: { '#state': 'state' },
+        ExpressionAttributeValues: { ':ready': 'READY', ':one': 1 }
+      } });
+      await db.send(new TransactWriteCommand({ TransactItems: items }));
+      const updated = await ownerDashboard(db, auth.uid);
+      return updated ?? failure(reply, 403, 'account_unavailable');
+    } catch (error) {
+      return failure(reply, conditionalFailure(error) ? 409 : 503,
+        conditionalFailure(error) ? 'activation_revision_conflict' : 'profile_store_unavailable');
+    }
+  };
+  app.post('/v1/profiles/me/:mode/activate', updateActivation(true));
+  app.post('/v1/profiles/me/:mode/deactivate', updateActivation(false));
+
 }

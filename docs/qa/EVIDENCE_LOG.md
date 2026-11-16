@@ -1,3 +1,17 @@
+## 2026-11-16 — P02-3 owner-reported Save & Next physical Android missed tap
+
+Owner reports physical Android P02-3 UI E2E passed checkpoints 01–03 but could not hit a scrollable `p02-save-next` button; the runner warned that the pointer position was obstructed. Added viewport-safe real-pointer Save & Next / Back helper and fail-closed regression checks. `npm run verify:p02-3:portable` and 8/8 UI source guards pass. **Flutter widgets, physical Android after repair, manual UX and owner acceptance UNVERIFIED**; run `npm run test:flutter:p02-3:e2e` on Windows. Full record: `docs/qa/P02_3_GUIDED_SAVE_NEXT_HIT_TEST_REPAIR_2026_11_16.md`.
+
+---
+
+## 2026-11-16 — P02-2 owner acceptance and P02-3 authoring evidence
+
+Owner reports guided P02-2 onboarding and the prior Flutter compile repair **working**; P02-2 owner-accepted for local development. Previous Windows logs showed portable/typecheck/lint and live P02-2 database integration passing; owner later stated all UI/device checks passed. Preserve the unconfirmed *manual native photo picker* evidence gap.
+
+P02-3 authored activation/preview API and unified Save & Next. `npm run verify:p02-3:portable` results are documented in `docs/qa/P02_3_ACTIVATION_IMPLEMENTATION_EVIDENCE_2026_11_16.md`; semantic TS, live local DB, Flutter widgets and physical Android post-P02-3 are **UNVERIFIED until owner runs them**. P01-1 Android OTP exception remains a documented historical failure, not a pass.
+
+---
+
 > **LATEST P02-2 gate repair (2026-11-15):** Owner confirmed the original Dating/gender-preference contract and mandated **two valid saved photos for EACH enabled Dating/Friendship mode before Continue**. Source now checks owner READY media records via bounded batch read, requires photo assignments per selected mode and refreshes Flutter readiness after photo writes. Draft saves (including incomplete photos) remain allowed; public discovery is still inactive. Authoring unit/portable checks PASS; Windows semantic/Flutter/live DB/Android/manual verification remains UNVERIFIED for this patch. Read `docs/qa/P02_2_TWO_PHOTO_CONTINUE_GATE_REPAIR_2026_11_15.md` and `docs/manual/P02_2_TWO_PHOTO_CONTINUE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical status below is not superseding this latest contract.
 
 # 2026-11-15 — P02-1 shared onboarding gate: authoring verification

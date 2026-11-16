@@ -11,6 +11,8 @@ abstract class ProfileRepository {
     {required String displayName, required String bio,
       required List<String> interests, required String intention});
   Future<ProfileResult<String>> saveHandle(String handle, int revision);
+  Future<ProfileResult<ProfileDashboard>> setModeActivation(String mode, int version, bool active);
+  Future<ProfileResult<Map<String, dynamic>>> ownerPreview(String mode);
   Future<ProfileResult<ProfileDashboard>> saveSetup(int revision, {
     required String commonName, required String locality, required String gender,
     required bool dating, required bool friendship,
@@ -124,6 +126,28 @@ class HttpProfileRepository implements ProfileRepository, ProfileMediaRepository
     if (!response.ok) return ProfileResult.failure(response.error, response.status);
     try { return ProfileResult.success(ProfileDashboard.fromJson(response.value!)); }
     catch (_) { return const ProfileResult.failure('invalid_response', 502); }
+  }
+
+  @override
+  Future<ProfileResult<ProfileDashboard>> setModeActivation(String mode, int version, bool active) async {
+    if (mode != 'dating' && mode != 'friendship') {
+      return const ProfileResult.failure('invalid_profile_mode', 400);
+    }
+    final action = active ? 'activate' : 'deactivate';
+    final reply = await _request('POST', '/v1/profiles/me/$mode/$action', {
+      'expectedVersion': version,
+    });
+    if (!reply.ok) return ProfileResult.failure(reply.error, reply.status);
+    try { return ProfileResult.success(ProfileDashboard.fromJson(reply.value!)); }
+    catch (_) { return const ProfileResult.failure('invalid_response', 502); }
+  }
+
+  @override
+  Future<ProfileResult<Map<String, dynamic>>> ownerPreview(String mode) async {
+    if (mode != 'dating' && mode != 'friendship') {
+      return const ProfileResult.failure('invalid_profile_mode', 400);
+    }
+    return _request('GET', '/v1/profiles/me/$mode/preview', null);
   }
 
   @override

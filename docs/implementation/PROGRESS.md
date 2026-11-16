@@ -1,3 +1,11 @@
+# 2026-11-16 — P02-2 OWNER_ACCEPTED; P02-3 implementation checkpoint
+
+**P02-2 OWNER_ACCEPTED (local development):** Owner explicitly confirmed guided onboarding working after prior Windows/backend/Android test rounds, and requested closing P02-2 in docs. Distinguish owner report from independently captured CLI log; native Android gallery/files chooser manual gate remains without explicit evidence.
+
+**P02-3 SOURCE_IMPLEMENTED / PORTABLE_VERIFIED / OWNER_RETEST_PENDING:** Separate Dating/Friendship activation intent, stale-revision invalidation, owner-safe profile preview, public fail-closed behavior and unified Save & Next. No P03 discovery or AWS. See `docs/qa/P02_3_ACTIVATION_IMPLEMENTATION_EVIDENCE_2026_11_16.md`. Do not treat a completed ZIP as release verification.
+
+---
+
 > **P02-2 UI test repair (2026-11-15):** The owner observed PASS 01–12 followed by an apparent hang. Repaired an awaited nonzero-duration scroll before frame pumping in `p02_2_ui_integration_test.dart`; portable regressions PASS. Re-run `npm run test:flutter:p02-2:ui:e2e` on Windows before claiming complete P02-2 UI verification. No backend or product code changed.
 
 > **P02-2 UI-DRIVEN ANDROID TEST ADDENDUM (2026-11-15):** The owner observed that the existing media Android suite displayed only the Flutter test harness, not the real profile screens. Inspection confirmed it exercised real HTTP/database operations through `HttpProfileRepository` but bypassed UI taps. The P02-2 **UI-driven Android suite** now mounts the actual persistent UluvApp, completes login and account/mode forms, taps upload/assign/reuse/remove, checks the two-photo Continue gate and reopens the widget tree for session/profile restoration. Test images are supplied ONLY through a deterministic picker-channel intercept; the native Android picker still needs separate owner manual verification. Both API-driven and UI-driven suites are mandatory in `verify:p02-2`. Authoring portable checks PASS; physical Android suite remains UNVERIFIED until run on Windows. No production profile/auth/backend logic changed. See `docs/qa/P02_2_REAL_UI_ANDROID_AUTOMATION_2026_11_15.md` and `docs/manual/P02_2_UI_E2E_AND_NATIVE_PICKER_ACCEPTANCE_2026_11_15.md`. P02-3 remains on hold.

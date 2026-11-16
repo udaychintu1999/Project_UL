@@ -1,3 +1,9 @@
+# 2026-11-16 — P02-4 final verification source delivered; FULL OWNER ACCEPTANCE PENDING
+
+**Owner-confirmed local development baseline:** P02-1, P02-2 and P02-3. The owner stated "all passed" after P02-3 Save & Next physical Android repair; this is an owner report, not a new P02-4 full-verifier transcript. **P02-4 PARTIALLY_VERIFIED until full `npm run verify:p02-4` + real native Android picker + owner signoff.** New 12-stage verifier fails at the first unsuccessful portable/TypeScript/lint/media-store/Flutter/live-DB/local-integration/isolated-Android gate. P03 public visibility stays off (`discoveryEligible=false`). Existing P01-1 Android OTP automated failure remains historical FAILED/local-development exception. See `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md` and `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
+
+---
+
 # 2026-11-16 — P02-2 OWNER_ACCEPTED; P02-3 implementation checkpoint
 
 **P02-2 OWNER_ACCEPTED (local development):** Owner explicitly confirmed guided onboarding working after prior Windows/backend/Android test rounds, and requested closing P02-2 in docs. Distinguish owner report from independently captured CLI log; native Android gallery/files chooser manual gate remains without explicit evidence.

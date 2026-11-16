@@ -1,3 +1,7 @@
+## Latest project checkpoint — P02-4 final local verification (2026-11-16)
+
+P02-1 through P02-3 are **owner-reported accepted for local development**, including combined **Save & Next**, owner-only activation intents and private previews. P02-4 adds the 12-stage fail-closed full regression verifier: `npm run verify:p02-4:plan` (list gates), `npm run verify:p02-4:portable` (offline only), and `npm run verify:p02-4` (real Windows/DynamoDB/Flutter/Android). **P02-4 is not yet owner-verified; native Android gallery picker manual acceptance is outstanding**. P03 public discovery and cloud/production integration remain out of scope. See `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
+
 ## Current milestone — 2026-11-16
 
 **P02-2 owner-accepted for local development.** P02-3 activation intent, private owner previews and unified **Save & Next** onboarding are source-implemented. P02-3 Windows/Android tests and owner acceptance remain pending. No public discovery exists yet; verified locality/authorization and pointer indexing are reserved for P03. See `docs/manual/P02_3_WINDOWS_ACCEPTANCE_2026_11_16.md`.

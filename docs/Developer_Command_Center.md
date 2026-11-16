@@ -1,3 +1,15 @@
+## P02-4 full profile phase verification (2026-11-16)
+
+```powershell
+npm run verify:p02-4:plan       # read-only 12-stage overview; no .env required
+npm run verify:p02-4:portable   # offline source/unit/security regressions only
+npm run verify:p02-4            # FULL local API/DB + Flutter + real USB Android (manual services required)
+```
+
+Before full verification start Java DynamoDB Local manually, then `npm run dev:api` in a persistent separate terminal and connect the phone. The full verifier fails at first real error and never runs AWS/payment calls. Record separate manual native picker acceptance. Details: `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
+
+---
+
 > **P02-2 screen-driven Android verification addition (2026-11-15):** `npm run test:flutter:p02-2:ui:e2e` now opens the actual authenticated U_luv screens and taps profile/photo UI using two deterministic test-picker images with real local API/DB. `npm run test:flutter:p02-2:e2e` remains the direct API device test. Both are required in `npm run verify:p02-2`; native Android Documents picker needs a separate manual check. See `docs/manual/P02_2_UI_E2E_AND_NATIVE_PICKER_ACCEPTANCE_2026_11_15.md`. Historical P00-only heading below is archival.
 
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)

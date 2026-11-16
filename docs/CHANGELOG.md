@@ -1,3 +1,12 @@
+## 2026-11-16 — P02-4 full-phase verifier and acceptance handoff
+
+- Owner-reported P02-3 acceptance documented, including unified Save & Next Android test repair; no new P02 feature changes.
+- Added full 12-stage sequential fail-closed `verify:p02-4`, read-only `verify:p02-4:plan`, offline `verify:p02-4:portable`, and negative runner/security tests.
+- Added P02-4 real-device and native-picker acceptance runbook, actual-evidence matrix and P02-to-P03 privacy/discovery boundary handoff.
+- P02-4 full live Windows/physical Android and native-picker owner signoff remain pending; do not promote to production or make profiles discoverable.
+
+---
+
 ## 2026-11-16 — P02-3 guided Save & Next Android tap-safety repair
 
 - Owner physical Android test reached P02-3 checkpoint 03, then a `Save & Next` tap missed its target because the scrolling form's button was not clear of the fixed bottom navigation.

@@ -78,7 +78,11 @@
     "verify:p02-3:portable": "npm run verify:p02-2:portable && npm run test:p02-3:contracts",
     "test:p02-3:integration": "node --env-file=apps/api/.env scripts/verify/p02-3-activation-integration.mjs",
     "test:flutter:p02-3:e2e": "node --env-file=apps/api/.env scripts/verify/p02-2-android-e2e.mjs --ui",
-    "verify:p02-3": "npm run verify:p02-3:portable && npm run typecheck && npm run lint && npm run test:p02-2:store && npm run test:flutter && npm run test:p02-1:integration && npm run test:p02-2:integration && npm run test:p02-3:integration && npm run test:flutter:p02-3:e2e"
+    "verify:p02-3": "npm run verify:p02-3:portable && npm run typecheck && npm run lint && npm run test:p02-2:store && npm run test:flutter && npm run test:p02-1:integration && npm run test:p02-2:integration && npm run test:p02-3:integration && npm run test:flutter:p02-3:e2e",
+    "test:p02-4:contracts": "node --test scripts/verify/p02-4-verifier.test.mjs",
+    "verify:p02-4:portable": "npm run verify:p02-3:portable && npm run test:p02-4:contracts",
+    "verify:p02-4:plan": "node scripts/verify/p02-4-verifier.mjs --list",
+    "verify:p02-4": "node --env-file=apps/api/.env scripts/verify/p02-4-verifier.mjs"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

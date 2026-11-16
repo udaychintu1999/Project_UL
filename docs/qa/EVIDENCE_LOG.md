@@ -1,3 +1,11 @@
+## 2026-11-16 — P02-4 phase verification evidence and owner acceptance gate
+
+Owner-reported P02-3 Android Save & Next repair **all passed**; P02-1 and P02-2 previously owner-accepted local development. New P02-4 full regression includes portable, TS/lint, Sharp store, Flutter, real local Fastify/Java DB, three distinct integration scripts and three isolated Android E2E suites. **Full P02-4 verifier has not yet run on owner's Windows PC; native Android picker manual check remains outstanding.** Preserve the prior automated P01-1 OTP failure as historical failed/local-only waiver. Authoring portable results: see `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md`.
+
+Owner proof after execution: **date / commit / full `npm run verify:p02-4` exit code / 12 gate lines / Android checkpoint 15 / native system-picker manual result / explicit P02 acceptance**, all redacted. Never claim this evidence exists before it is supplied.
+
+---
+
 ## 2026-11-16 — P02-3 owner-reported Save & Next physical Android missed tap
 
 Owner reports physical Android P02-3 UI E2E passed checkpoints 01–03 but could not hit a scrollable `p02-save-next` button; the runner warned that the pointer position was obstructed. Added viewport-safe real-pointer Save & Next / Back helper and fail-closed regression checks. `npm run verify:p02-3:portable` and 8/8 UI source guards pass. **Flutter widgets, physical Android after repair, manual UX and owner acceptance UNVERIFIED**; run `npm run test:flutter:p02-3:e2e` on Windows. Full record: `docs/qa/P02_3_GUIDED_SAVE_NEXT_HIT_TEST_REPAIR_2026_11_16.md`.

@@ -1,3 +1,9 @@
+# Next owner action — verify P02-4 before opening P03 (2026-11-16)
+
+P02-1 through P02-3 are owner-reported accepted for **local development** after latest P02-3 Android E2E fix. P02-4 is now implemented as a **12-stage local verification wrapper** with no new runtime features. Start Java DynamoDB Local manually; start `npm run dev:api` in another terminal and connect USB Android. From project root run `npm run verify:p02-4` (or `npm run verify:p02-4:plan` to see stages). Run and report the *real native Android Gallery/Files picker* manual acceptance separately; the UI test fakes only the picker response. Attach redacted logs and explicit owner closeout decision. Until then status `P02 PARTIALLY_VERIFIED / P02-4 OWNER_ACCEPTANCE_PENDING`, with P03 H3/public discovery explicitly **not started**. See `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
+
+---
+
 # NEXT ACTION — P02-3 Windows and real Android acceptance (2026-11-16)
 
 P02-2 is **OWNER_ACCEPTED for local development** following the owner's "Lovely working" confirmation. P02-3 implements independent activation requests, owner preview, fail-closed public visibility and **Save & Next** for guided onboarding, but **has not yet passed owner Windows/Android verification**. Apply the update-only ZIP and run `npm run verify:p02-3:portable`, `npm run typecheck`, `npm run lint`, `npm run test:p02-2:store`, `npm run test:flutter`; start Java DynamoDB Local manually and Fastify; run `npm run test:p02-1:integration`, `npm run test:p02-2:integration`, `npm run test:p02-3:integration`, `npm run test:flutter:p02-3:e2e`. Complete manual checks and report results before marking P02-3 accepted. Details: `docs/manual/P02_3_WINDOWS_ACCEPTANCE_2026_11_16.md`.

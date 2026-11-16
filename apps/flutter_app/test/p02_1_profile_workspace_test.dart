@@ -165,12 +165,64 @@ Widget testApp(MemoryProfiles repo) => MaterialApp(home: Scaffold(
   )),
 ));
 
+/// Real, viewport-safe widget taps. The default ensureVisible alignment can
+/// leave a long-form control at the very top of a clipped/overlaid scrollable.
+/// Explicitly center it in every enclosing scrollable, WITHOUT awaiting a
+/// nonzero-duration animation (test frames would not advance and could hang).
 Future<void> tapKey(WidgetTester tester, String key) async {
   final finder = find.byKey(Key(key));
-  await tester.ensureVisible(finder);
+  expect(finder, findsOneWidget, reason: 'Required UI control $key must exist.');
+  await Scrollable.ensureVisible(
+    tester.element(finder),
+    alignment: 0.5,
+    duration: Duration.zero,
+    alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+  );
   await tester.pump();
-  await tester.tap(finder);
+  final rect = tester.getRect(finder);
+  final viewHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+  expect(rect.top, greaterThanOrEqualTo(0),
+    reason: 'UI control $key must not be clipped above the viewport.');
+  expect(rect.bottom, lessThanOrEqualTo(viewHeight),
+    reason: 'UI control $key must not be clipped below the viewport.');
+  // A missed tap is a real test failure, never a warning followed by false PASS.
+  final previousPolicy = WidgetController.hitTestWarningShouldBeFatal;
+  WidgetController.hitTestWarningShouldBeFatal = true;
+  try {
+    await tester.tap(finder);
+  } finally {
+    WidgetController.hitTestWarningShouldBeFatal = previousPolicy;
+  }
   await tester.pumpAndSettle();
+}
+
+/// A missed dropdown tap previously produced a misleading `.last` StateError.
+/// Require the native Flutter dropdown to OPEN and verify its saved selection.
+Future<void> chooseGender(WidgetTester tester, String label) async {
+  const values = <String, String>{
+    'Woman': 'woman',
+    'Man': 'man',
+    'Non-binary': 'non_binary',
+    'Another identity': 'another_identity',
+    'Prefer not to say': 'prefer_not_to_say',
+  };
+  final expected = values[label];
+  expect(expected, isNotNull, reason: 'Test must use an approved gender option.');
+  await tapKey(tester, 'p02-gender');
+  final choice = find.text(label);
+  expect(choice, findsWidgets,
+    reason: 'Gender dropdown did not open. Check real pointer hit and viewport positioning.');
+  final previousPolicy = WidgetController.hitTestWarningShouldBeFatal;
+  WidgetController.hitTestWarningShouldBeFatal = true;
+  try {
+    await tester.tap(choice.last);
+  } finally {
+    WidgetController.hitTestWarningShouldBeFatal = previousPolicy;
+  }
+  await tester.pumpAndSettle();
+  expect(tester.widget<DropdownButton<String>>(
+      find.byKey(const Key('p02-gender'))).value, expected,
+    reason: 'Gender selection must update the actual profile form.');
 }
 
 bool canAdvance(WidgetTester tester) =>
@@ -183,9 +235,7 @@ Future<void> saveCommon(WidgetTester tester, {
   await tester.enterText(find.byKey(const Key('p02-handle')), 'person_handle');
   await tester.enterText(find.byKey(const Key('p02-common-name')), name);
   await tester.enterText(find.byKey(const Key('p02-locality')), city);
-  await tapKey(tester, 'p02-gender');
-  await tester.tap(find.text(gender).last);
-  await tester.pumpAndSettle();
+  await chooseGender(tester, gender);
   if (dating) await tapKey(tester, 'p02-enable-dating');
   if (friendship) await tapKey(tester, 'p02-enable-friendship');
   await tapKey(tester, 'p02-save-next');
@@ -313,9 +363,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('p02-handle')), 'person_handle');
     await tester.enterText(find.byKey(const Key('p02-common-name')), 'Alex');
     await tester.enterText(find.byKey(const Key('p02-locality')), 'Hyderabad');
-    await tapKey(tester, 'p02-gender');
-    await tester.tap(find.text('Woman').last);
-    await tester.pumpAndSettle();
+    await chooseGender(tester, 'Woman');
     await tapKey(tester, 'p02-enable-dating');
     await tapKey(tester, 'p02-save-next');
     expect(repo.handleSaves, 1);

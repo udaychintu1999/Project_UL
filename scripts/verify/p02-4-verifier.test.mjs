@@ -61,3 +61,47 @@ test('P02-4 phase remains fail-closed: no public discovery, no native-picker fic
   assert.match(ui, /MethodChannel/);
   assert.match(file('scripts/verify/p02-4-verifier.mjs'), /OWNER MANUAL GATE STILL REQUIRED/);
 });
+
+
+test('P02-4 Flutter photo fixture uses const where the analyzer requires it', () => {
+  const source = file('apps/flutter_app/test/p02_2_photo_panel_test.dart');
+  assert.match(source, /return const ProfileResult<ProfileMedia>\.success\(m\);/);
+  assert.doesNotMatch(source, /return ProfileResult\.success\(m\);/);
+});
+
+
+test('P02-4 Flutter widget tests safely center long-form controls and fail on missed taps', () => {
+  const source = file('apps/flutter_app/test/p02_1_profile_workspace_test.dart');
+  const helper = source.match(/Future<void> tapKey\([\s\S]*?\n}\n/);
+  assert.ok(helper, 'missing shared widget tap helper');
+  assert.match(helper[0], /Scrollable\.ensureVisible\(/);
+  assert.match(helper[0], /alignment:\s*0\.5/);
+  assert.match(helper[0], /duration:\s*Duration\.zero/);
+  assert.match(helper[0], /WidgetController\.hitTestWarningShouldBeFatal\s*=\s*true/);
+  assert.match(helper[0], /await tester\.tap\(finder\)/);
+  assert.doesNotMatch(helper[0], /await tester\.ensureVisible\(finder\)/);
+  assert.match(source, /await chooseGender\(tester, gender\)/);
+  assert.match(source, /await chooseGender\(tester, 'Woman'\)/);
+  assert.match(source, /Gender dropdown did not open/);
+  assert.match(source, /Gender selection must update the actual profile form/);
+  assert.doesNotMatch(source, /await tester\.tap\(find\.text\(gender\)\.last\)/);
+});
+
+test('P02-4 Flutter scroll tests must never await unpumped animations', () => {
+  for (const path of [
+    'apps/flutter_app/test/p02_1_account_navigation_test.dart',
+    'apps/flutter_app/test/p02_1_profile_workspace_test.dart',
+    'apps/flutter_app/integration_test/p02_2_ui_integration_test.dart',
+  ]) {
+    const source = file(path);
+    const blocks = [...source.matchAll(/await Scrollable\.ensureVisible\([\s\S]*?\);/g)];
+    assert.ok(blocks.length, `missing scrolling coverage: ${path}`);
+    for (const [block] of blocks) {
+      assert.match(block, /duration:\s*Duration\.zero/,
+        `never await a 250ms Flutter animation without pumping test frames: ${path}`);
+      assert.doesNotMatch(block, /duration:\s*const Duration\(milliseconds:/);
+    }
+  }
+  const page = file('apps/flutter_app/test/p02_1_account_navigation_test.dart');
+  assert.match(page, /A genuine on-screen pointer tap must reach Continue/);
+});

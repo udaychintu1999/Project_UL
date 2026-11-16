@@ -26,7 +26,7 @@ class FakeMedia implements ProfileMediaRepository {
     if (uploadShouldFail) return const ProfileResult.failure('invalid_image', 415);
     const m = ProfileMedia(mediaId: '11111111-1111-4111-8111-111111111111', refCount: 0);
     media = [m, ...media];
-    return ProfileResult.success(m);
+    return const ProfileResult<ProfileMedia>.success(m);
   }
   @override
   Future<ProfileResult<ProfileDraft>> assignPhotos(String mode, int expectedVersion, List<String> ids) async {

@@ -173,10 +173,10 @@ void main() {
     await Scrollable.ensureVisible(
       tester.element(button),
       alignment: 0.4,
-      duration: const Duration(milliseconds: 250),
+      duration: Duration.zero,
       alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     expect(tester.getRect(button).bottom,
         lessThan(tester.getRect(navigation).top - 8),
         reason: 'A long profile form must not leave Continue behind bottom navigation');

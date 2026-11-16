@@ -1,3 +1,7 @@
+> **Owner Gate 5 update (2026-11-16):** After the earlier `const` lint fix, Flutter analyzer reported **No issues found**, but the widget stage exposed five `p02-gender` missed-tap failures in one shared test helper and a risk of hanging during the long-form Continue scroll fixture. A focused **test-only** root-cause patch and portable checks were prepared; actual Flutter/USB retest remains pending. See `docs/qa/P02_4_GATE5_WIDGET_HIT_TEST_AND_SCROLL_REPAIR_2026_11_16.md`. Do not label Gates 6–12 passed based on this failed Gate 5 attempt.
+
+> **2026-11-16 Owner Windows gate-5 retest:** A full `verify:p02-4` attempt stopped at Gate 5 (`test:flutter`) because of a `prefer_const_constructors` info in the fake photo repository widget test. Gate 4 passed; Gates 6–12 were **not run**. A test-only `const` fix and portable regression check were prepared; **Windows/USB rerun still required**. See `docs/qa/P02_4_GATE5_FLUTTER_CONST_LINT_REPAIR_2026_11_16.md`.
+
 # P02-4 — Full P02 regression, release-boundary audit and closeout evidence
 
 **Date:** 2026-11-16  

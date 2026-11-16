@@ -9,5 +9,5 @@
  * no normal-app credentials or package files may be deleted here.
  */
 export function integrationTestCleanupFlags(action) {
-  return action === 'p02-1-e2e' ? ['--no-uninstall'] : [];
+  return ['p02-1-e2e', 'p02-2-e2e', 'p02-2-ui-e2e'].includes(action) ? ['--no-uninstall'] : [];
 }

@@ -144,4 +144,45 @@ void main() {
     expect(find.text('Profile editor'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('long profile Continue can be scrolled clear of the fixed navigation bar', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var proceeded = false;
+    await tester.pumpWidget(MaterialApp(home: AccountNavigation(
+      selectedIndex: 0,
+      onSelect: (_) {},
+      onBack: () {},
+      home: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (var i = 0; i < 22; i++)
+          SizedBox(height: 72, child: Text('Profile field $i')),
+        FilledButton(
+          key: const Key('p02-scroll-continue'),
+          onPressed: () => proceeded = true,
+          child: const Text('Continue'),
+        ),
+        const SizedBox(height: 100),
+      ]),
+      settings: const Text('Settings'),
+    )));
+
+    final button = find.byKey(const Key('p02-scroll-continue'));
+    final navigation = find.byKey(const Key('p02-bottom-navigation'));
+    await Scrollable.ensureVisible(
+      tester.element(button),
+      alignment: 0.4,
+      duration: const Duration(milliseconds: 250),
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getRect(button).bottom,
+        lessThan(tester.getRect(navigation).top - 8),
+        reason: 'A long profile form must not leave Continue behind bottom navigation');
+    await tester.tap(button);
+    await tester.pump();
+    expect(proceeded, isTrue, reason: 'A genuine on-screen pointer tap must reach Continue');
+  });
+
 }

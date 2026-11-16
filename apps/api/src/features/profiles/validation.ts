@@ -136,17 +136,22 @@ export function parseSetup(raw: unknown): { value: SetupInput } | { error: strin
   } };
 }
 
-/** The onboarding gate is distinct from the P02-3 discovery/photo gate.
- *  Only persisted, authenticated owner records count toward setup completion.
+/** Entering the main app requires two READY, owner-verified, mode-assigned
+ * photos for EVERY enabled mode. Drafts may still be saved with zero photos.
+ * This is NOT public discovery activation (P02-3 remains separate).
+ * Caller must supply only photo IDs verified against the owner's READY records.
  */
 export function onboardingMissing(
   handle: string | null, shared: SharedSetup,
-  profiles: Partial<Record<ProfileMode, DraftFields | undefined>>
+  profiles: Partial<Record<ProfileMode, (DraftFields & { photoIds: readonly string[] }) | undefined>>
 ): string[] {
   const missing: string[] = [];
   if (!handle) missing.push('handle');
   if (!shared.commonName) missing.push('commonName');
   if (!shared.locality) missing.push('locality');
+  // An explicit selection is required; 'prefer_not_to_say' remains a valid
+  // privacy-preserving answer. Empty is allowed in saved drafts, not onboarding.
+  if (!shared.gender) missing.push('gender');
   if (!shared.selectedModes.dating && !shared.selectedModes.friendship) missing.push('selectMode');
   for (const mode of ['dating', 'friendship'] as const) {
     if (!shared.selectedModes[mode]) continue;
@@ -156,6 +161,7 @@ export function onboardingMissing(
     if (!profile.bio) missing.push(`${mode}.bio`);
     if (!profile.intention) missing.push(`${mode}.intention`);
     if (profile.interests.length === 0) missing.push(`${mode}.interests`);
+    if (new Set(profile.photoIds).size < 2) missing.push(`${mode}.photos`);
   }
   return missing;
 }

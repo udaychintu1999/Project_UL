@@ -68,12 +68,31 @@ test('P02-1 onboarding: shared setup enforces broad locality, private enums and 
   assert.deepEqual(parseSetup({ ...input, gender: 'unknown' }), { error: 'invalid_gender' });
 });
 
-test('P02-1 onboarding: one selected complete mode is enough; selected incomplete modes block', () => {
-  const shared = { commonName: 'Common Name', locality: 'Hyderabad', gender: '' as const,
+test('P02-2 onboarding: every selected mode requires two photos as well as saved text', () => {
+  const shared = { commonName: 'Common Name', locality: 'Hyderabad', gender: 'prefer_not_to_say' as const,
     selectedModes: { dating: true, friendship: false } };
+  const photo1 = '11111111-1111-4111-8111-111111111111';
+  const photo2 = '22222222-2222-4222-8222-222222222222';
+  const photo3 = '33333333-3333-4333-8333-333333333333';
   const filled = { displayName: '', bio: 'My hobbies include art and hiking.',
-    interests: ['Art'], intention: 'A meaningful relationship' };
+    interests: ['Art'], intention: 'A meaningful relationship', photoIds: [photo1, photo2] };
   assert.deepEqual(onboardingMissing('validhandle', shared, { dating: filled }), []);
+  assert.deepEqual(onboardingMissing('validhandle', shared, { dating: { ...filled, photoIds: [] } }), ['dating.photos']);
+  assert.deepEqual(onboardingMissing('validhandle', shared, { dating: { ...filled, photoIds: [photo1] } }), ['dating.photos']);
+  assert.deepEqual(onboardingMissing('validhandle', shared, { dating: { ...filled, photoIds: [photo1, photo1] } }), ['dating.photos'],
+    'Duplicate media IDs cannot count as two distinct photos.');
+  assert.deepEqual(onboardingMissing('validhandle', shared, { dating: { ...filled, photoIds: [photo1, photo2, photo3] } }), []);
+  assert.deepEqual(onboardingMissing('validhandle', {
+    ...shared, selectedModes: { dating: true, friendship: true }
+  }, { dating: filled, friendship: { ...filled, photoIds: [photo2] } }), ['friendship.photos']);
+  assert.deepEqual(onboardingMissing('validhandle', {
+    ...shared, selectedModes: { dating: false, friendship: true }
+  }, { dating: { ...filled, photoIds: [] }, friendship: filled }), [],
+    'An unselected mode must not block entry.');
+  assert.deepEqual(onboardingMissing('validhandle', { ...shared, gender: '' }, { dating: filled }), ['gender'],
+    'A blank gender is a saved draft but may not unlock onboarding.');
+  assert.deepEqual(onboardingMissing('validhandle', { ...shared, gender: 'woman' }, { dating: filled }), [],
+    'An explicit gender selection may unlock onboarding.');
   assert.deepEqual(onboardingMissing('validhandle', {
     ...shared, selectedModes: { dating: true, friendship: true }
   }, { dating: filled }), ['friendship.draft']);

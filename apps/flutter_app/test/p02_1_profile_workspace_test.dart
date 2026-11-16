@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:uluv/features/profiles/profile_media.dart';
 import 'package:uluv/features/profiles/profile_models.dart';
 import 'package:uluv/features/profiles/profile_service.dart';
 import 'package:uluv/features/profiles/profile_workspace.dart';
@@ -9,6 +12,9 @@ ProfileDraft draft(String mode, {int version = 0, String name = ''}) => ProfileD
   displayName: name, bio: '', interests: const [], intention: '',
   missing: const ['handle', 'displayName', 'intention', 'photos', 'locality'],
 );
+
+const sampleOne = '11111111-1111-4111-8111-111111111111';
+const sampleTwo = '22222222-2222-4222-8222-222222222222';
 
 class MemoryProfiles implements ProfileRepository {
   String? handle;
@@ -27,6 +33,7 @@ class MemoryProfiles implements ProfileRepository {
     if (handle == null) missing.add('handle');
     if (shared.commonName.isEmpty) missing.add('commonName');
     if (shared.locality.isEmpty) missing.add('locality');
+    if (shared.gender.isEmpty) missing.add('gender');
     if (!shared.dating && !shared.friendship) missing.add('selectMode');
     for (final mode in ['dating', 'friendship']) {
       if (!(mode == 'dating' ? shared.dating : shared.friendship)) continue;
@@ -35,6 +42,7 @@ class MemoryProfiles implements ProfileRepository {
       if (current.bio.isEmpty) missing.add('$mode.bio');
       if (current.intention.isEmpty) missing.add('$mode.intention');
       if (current.interests.isEmpty) missing.add('$mode.interests');
+      if (current.photoIds.toSet().length < 2) missing.add('$mode.photos');
     }
     return ProfileResult.success(ProfileDashboard(handle: handle, identityRevision: revision,
       locality: shared.locality, profiles: Map.of(profiles), shared: shared,
@@ -72,217 +80,322 @@ class MemoryProfiles implements ProfileRepository {
     draftsSaved++;
     final saved = ProfileDraft(mode: mode, exists: true, version: version + 1,
       displayName: displayName.trim(), bio: bio.trim(), interests: interests,
-      intention: intention.trim(), missing: const ['photos', 'locality']);
+      intention: intention.trim(), missing: const ['photos', 'locality'],
+      photoIds: profiles[mode]!.photoIds);
     profiles[mode] = saved;
     return ProfileResult.success(saved);
   }
 }
 
-Widget testApp(MemoryProfiles repo) => MaterialApp(
-  home: Scaffold(body: SingleChildScrollView(
-    child: Padding(padding: const EdgeInsets.all(12), child: ProfileWorkspace(repository: repo)),
+
+/// Test fixture mirrors the real API's authoritative post-assignment dashboard.
+/// A photo is only counted when its mode photoIds are persisted in this store.
+class PhotoReadyProfiles extends MemoryProfiles implements ProfileMediaRepository {
+  final library = <ProfileMedia>[
+    const ProfileMedia(mediaId: sampleOne, refCount: 0),
+    const ProfileMedia(mediaId: sampleTwo, refCount: 0),
+  ];
+  int photoPreviewReads = 0;
+
+  @override
+  Future<ProfileResult<List<ProfileMedia>>> mediaLibrary() async =>
+    ProfileResult.success(library.map((photo) => ProfileMedia(
+      mediaId: photo.mediaId,
+      refCount: profiles.values.where((mode) => mode.photoIds.contains(photo.mediaId)).length,
+    )).toList());
+
+  @override
+  Future<ProfileResult<Uint8List>> photoBytes(String id) async {
+    photoPreviewReads++;
+    // A complete PNG (not just a file signature) proves Image.memory receives
+    // valid bytes through the media repository used by the final review.
+    return ProfileResult.success(base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAF0lEQVR4nGOskNvCQAgwEVQxqmgAFAEAUDIBYrTJMWAAAAAASUVORK5CYII='));
+  }
+
+  @override
+  Future<ProfileResult<ProfileMedia>> upload(Uint8List bytes) async =>
+    const ProfileResult<ProfileMedia>.failure('not_used_in_this_test', 400);
+
+  @override
+  Future<ProfileResult<ProfileDraft>> assignPhotos(String mode, int expectedVersion, List<String> ids) async {
+    final previous = profiles[mode]!;
+    if (previous.version != expectedVersion || ids.length > 6 ||
+        ids.toSet().length != ids.length || ids.any((id) => !library.any((m) => m.mediaId == id))) {
+      return const ProfileResult.failure('photo_assignment_conflict', 409);
+    }
+    final next = ProfileDraft(mode: mode, exists: true, version: expectedVersion + 1,
+      displayName: previous.displayName, bio: previous.bio,
+      interests: previous.interests, intention: previous.intention,
+      missing: ids.length < 2 ? const ['photos'] : const [], photoIds: List.of(ids));
+    profiles[mode] = next;
+    return ProfileResult.success(next);
+  }
+
+  @override
+  Future<ProfileResult<bool>> deletePhoto(String id) async =>
+    const ProfileResult<bool>.failure('media_in_use', 409);
+}
+
+
+Widget testApp(MemoryProfiles repo) => MaterialApp(home: Scaffold(
+  body: SingleChildScrollView(child: Padding(
+    padding: const EdgeInsets.all(12),
+    child: ProfileWorkspace(repository: repo, initiallyExpanded: true),
   )),
-);
+));
+
+Future<void> tapKey(WidgetTester tester, String key) async {
+  final finder = find.byKey(Key(key));
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
+bool canNext(WidgetTester tester) {
+  final target = find.byKey(const Key('p02-next'));
+  return target.evaluate().isNotEmpty &&
+      tester.widget<FilledButton>(target).onPressed != null;
+}
+
+Future<void> saveCommon(WidgetTester tester, {
+  bool dating = true, bool friendship = false, String name = 'Profile Name',
+  String city = 'Hyderabad', String gender = 'Woman',
+}) async {
+  await tester.enterText(find.byKey(const Key('p02-handle')), 'person_handle');
+  await tester.pumpAndSettle();
+  await tapKey(tester, 'p02-save-handle');
+  await tester.enterText(find.byKey(const Key('p02-common-name')), name);
+  await tester.enterText(find.byKey(const Key('p02-locality')), city);
+  await tapKey(tester, 'p02-gender');
+  await tester.tap(find.text(gender).last);
+  await tester.pumpAndSettle();
+  if (dating) await tapKey(tester, 'p02-enable-dating');
+  if (friendship) await tapKey(tester, 'p02-enable-friendship');
+  await tapKey(tester, 'p02-save-common');
+}
+
+Future<void> saveMode(WidgetTester tester, {
+  String bio = 'I like thoughtful conversation and art',
+  String intention = 'Conversation',
+  String interests = 'Art, Books',
+}) async {
+  await tester.enterText(find.byKey(const Key('p02-bio')), bio);
+  await tester.enterText(find.byKey(const Key('p02-intention')), intention);
+  await tester.enterText(find.byKey(const Key('p02-interests')), interests);
+  await tester.pumpAndSettle();
+  await tapKey(tester, 'p02-save-draft');
+}
+
+Future<void> reusePhoto(WidgetTester tester, String id) async {
+  await tapKey(tester, 'p02-reuse-$id');
+}
 
 void main() {
-  testWidgets('P02-1 saves independent mode drafts and reloads versions', (tester) async {
+  testWidgets('guided onboarding cannot skip incomplete Common Profile', (tester) async {
     final repo = MemoryProfiles();
     await tester.pumpWidget(testApp(repo));
-    await tester.tap(find.byKey(const Key('p02-open-profiles')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('p02-save-draft')), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('p02-name')), 'Dating nickname');
-    await tester.enterText(find.byKey(const Key('p02-intention')), 'Dating');
-    await tester.ensureVisible(find.byKey(const Key('p02-save-draft')));
-    await tester.tap(find.byKey(const Key('p02-save-draft')));
+    expect(find.textContaining('Step 1 of'), findsOneWidget);
+    expect(find.byKey(const Key('p02-common-name')), findsOneWidget);
+    expect(find.byKey(const Key('p02-bio')), findsNothing);
+    expect(find.text('Saved account details'), findsNothing);
+    expect(canNext(tester), isFalse);
+    final warningFinder = find.byKey(const Key('p02-step-warning'));
+    final warning = tester.widget<Text>(warningFinder);
+    expect(warning.style?.fontWeight, FontWeight.w700);
+    expect(warning.style?.color, Theme.of(tester.element(warningFinder)).colorScheme.error);
+    await tester.drag(find.byKey(const Key('p02-swipe-region')),
+      const Offset(-320, 0));
     await tester.pumpAndSettle();
-    expect(repo.profiles['dating']!.version, 1);
-    await tester.ensureVisible(find.byKey(const Key('p02-mode-friendship')));
-    await tester.tap(find.byKey(const Key('p02-mode-friendship')));
+    expect(find.byKey(const Key('p02-common-name')), findsOneWidget,
+      reason: 'Swipe forward cannot bypass unsaved Common Profile.');
+    await tester.enterText(find.byKey(const Key('p02-common-name')), 'Incomplete');
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('p02-name')), 'Friendship nickname');
-    await tester.ensureVisible(find.byKey(const Key('p02-save-draft')));
-    await tester.tap(find.byKey(const Key('p02-save-draft')));
+    expect(canNext(tester), isFalse,
+      reason: 'Typing does not count as an authoritative save.');
+  });
+
+  testWidgets('Friendship-only journey is sequential, saved, and reviewable', (tester) async {
+    final repo = PhotoReadyProfiles();
+    await tester.pumpWidget(testApp(repo));
     await tester.pumpAndSettle();
-    expect(repo.profiles['dating']!.displayName, 'Dating nickname');
-    expect(repo.profiles['friendship']!.displayName, 'Friendship nickname');
+    await saveCommon(tester, dating: false, friendship: true);
+    expect(repo.shared.friendship, isTrue);
+    expect(repo.shared.dating, isFalse);
+    expect(canNext(tester), isTrue);
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Friendship details'), findsWidgets);
+    expect(find.byKey(const Key('p02-bio')), findsOneWidget);
+    expect(canNext(tester), isFalse);
+    await saveMode(tester, intention: 'Friendship');
     expect(repo.profiles['friendship']!.version, 1);
-    await tester.pumpWidget(const SizedBox()); // dispose all transient editor state
-    await tester.pumpWidget(testApp(repo)); // re-fetch persisted source
-    await tester.tap(find.byKey(const Key('p02-open-profiles')));
+    expect(canNext(tester), isTrue);
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Friendship photos'), findsWidgets);
+    expect(canNext(tester), isFalse);
+    await reusePhoto(tester, sampleOne);
+    expect(repo.profiles['friendship']!.photoIds, [sampleOne]);
+    expect(canNext(tester), isFalse);
+    await reusePhoto(tester, sampleTwo);
+    expect(canNext(tester), isTrue);
+    await tapKey(tester, 'p02-next');
+    expect(find.byKey(const Key('p02-page-review')), findsOneWidget);
+    expect(find.text('City: Hyderabad'), findsOneWidget);
+    expect(find.text('Gender: Woman'), findsOneWidget);
+    expect(find.text('Enabled modes: Friendship'), findsOneWidget);
+    expect(find.text('Photos: 2/6'), findsOneWidget);
     await tester.pumpAndSettle();
-    expect(find.text('Draft version 1'), findsOneWidget);
-  });
-
-  testWidgets('P02 home opens the real draft form immediately, without a setup button', (tester) async {
-    final repo = MemoryProfiles();
-    await tester.pumpWidget(MaterialApp(home: Scaffold(
-      body: SingleChildScrollView(
-        child: ProfileWorkspace(repository: repo, initiallyExpanded: true),
-      ),
-    )));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('p02-open-profiles')), findsNothing);
-    expect(find.byKey(const Key('p02-name')), findsOneWidget);
-    expect(find.byKey(const Key('p02-save-draft')), findsOneWidget);
-  });
-
-  testWidgets('P02-1 handle collision is surfaced; success retains canonical handle', (tester) async {
-    final repo = MemoryProfiles()..failNext = true;
-    await tester.pumpWidget(testApp(repo));
-    await tester.tap(find.byKey(const Key('p02-open-profiles')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('p02-handle')), 'Chosen123');
-    // TextField.onChanged schedules a frame: assert the rendered button after it.
-    await tester.pumpAndSettle();
-    final saveHandleButton = find.byKey(const Key('p02-save-handle'));
-    await tester.ensureVisible(saveHandleButton);
-    expect(tester.widget<OutlinedButton>(saveHandleButton).onPressed, isNotNull,
-      reason: 'A typed handle must enable the Save handle action.');
-    await tester.tap(saveHandleButton);
-    await tester.pumpAndSettle();
-    expect(repo.handleSaves, 1, reason: 'Handle save must reach the repository.');
-    expect(find.byKey(const Key('p02-handle-error')), findsOneWidget);
-    expect(tester.widget<Text>(find.byKey(const Key('p02-handle-error'))).data,
-      contains('already in use'));
-    await tester.tap(saveHandleButton);
-    await tester.pumpAndSettle();
-    expect(repo.handle, 'chosen123');
-    expect(repo.revision, 2);
-    expect(repo.handleSaves, 2);
-    expect(find.byKey(const Key('p02-handle-error')), findsNothing);
-  });
-
-  testWidgets('P02-1 handle saving preserves unsaved common and mode fields', (tester) async {
-    final repo = MemoryProfiles();
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: ProfileWorkspace(repository: repo, initiallyExpanded: true),
-    ))));
-    await tester.pumpAndSettle();
-    final commonField = find.byKey(const Key('p02-common-name'));
-    final bioField = find.byKey(const Key('p02-bio'));
-    String textIn(Finder finder) => tester.widget<TextField>(finder).controller!.text;
-
-    await tester.ensureVisible(commonField);
-    await tester.enterText(commonField, 'Unsaved Common Name');
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(bioField);
-    await tester.enterText(bioField, 'Unsaved Dating Biography');
-    await tester.pumpAndSettle();
-    final handleField = find.byKey(const Key('p02-handle'));
-    await tester.ensureVisible(handleField);
-    await tester.enterText(handleField, 'AnotherHandle');
-    await tester.pumpAndSettle();
-    // First establish that the fields really received text. Reading the keyed
-    // TextFields' controllers tests the form data even when a field is scrolled
-    // out of the visible viewport or its editing surface is not matched by
-    // the general find.text finder.
-    expect(textIn(commonField), 'Unsaved Common Name');
-    expect(textIn(bioField), 'Unsaved Dating Biography');
-    final saveHandleButton = find.byKey(const Key('p02-save-handle'));
-    await tester.ensureVisible(saveHandleButton);
-    expect(tester.widget<OutlinedButton>(saveHandleButton).onPressed, isNotNull,
-      reason: 'Account handle saving must not depend on unrelated unsaved fields.');
-    await tester.tap(saveHandleButton);
-    await tester.pumpAndSettle();
-    expect(repo.handle, 'anotherhandle');
-    expect(repo.handleSaves, 1);
-    // The independent handle update may refresh server readiness, but must
-    // preserve the *editable values*, not merely paint their labels.
-    expect(textIn(commonField), 'Unsaved Common Name',
-      reason: 'A handle-only save must not erase an unsaved common name.');
-    expect(textIn(bioField), 'Unsaved Dating Biography',
-      reason: 'A handle-only save must not erase an unsaved Dating bio.');
-    expect(repo.shared.commonName, isEmpty,
-      reason: 'Saving a handle must not implicitly persist the common form.');
-    expect(repo.draftsSaved, 0,
-      reason: 'Saving a handle must not implicitly persist the Dating draft.');
-    expect(tester.widget<FilledButton>(find.byKey(const Key('p02-save-common'))).onPressed,
-      isNotNull, reason: 'The unsaved common form must remain saveable.');
-    expect(tester.widget<OutlinedButton>(saveHandleButton).onPressed, isNull,
-      reason: 'Saved canonical handle must not offer a redundant write.');
-  });
-
-  testWidgets('P02-1 setup requires common info, selected mode and saved details', (tester) async {
-    final repo = MemoryProfiles();
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: ProfileWorkspace(repository: repo, initiallyExpanded: true),
-    ))));
-    await tester.pumpAndSettle();
-    final continueButton = find.byKey(const Key('p02-continue'));
-    expect(tester.widget<FilledButton>(continueButton).onPressed, isNull);
-    await tester.enterText(find.byKey(const Key('p02-handle')), 'unique_handle');
-    await tester.pumpAndSettle();
-    final setupHandleButton = find.byKey(const Key('p02-save-handle'));
-    await tester.ensureVisible(setupHandleButton);
-    expect(tester.widget<OutlinedButton>(setupHandleButton).onPressed, isNotNull);
-    await tester.tap(setupHandleButton);
-    await tester.pumpAndSettle();
-    expect(repo.handle, 'unique_handle', reason: 'Saving the handle is a prerequisite to onboarding.');
-    await tester.enterText(find.byKey(const Key('p02-common-name')), 'Common Name');
-    await tester.enterText(find.byKey(const Key('p02-locality')), 'Hyderabad');
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('p02-enable-dating')));
-    await tester.tap(find.byKey(const Key('p02-enable-dating')));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('p02-save-common')));
-    await tester.tap(find.byKey(const Key('p02-save-common')));
-    await tester.pumpAndSettle();
-    expect(repo.shared.dating, isTrue);
-    expect(repo.shared.friendship, isFalse);
-    expect(repo.shared.commonName, 'Common Name');
-    expect(repo.shared.locality, 'Hyderabad');
-    expect(tester.widget<FilledButton>(continueButton).onPressed, isNull);
-    await tester.enterText(find.byKey(const Key('p02-bio')), 'I enjoy books and arts.');
-    await tester.enterText(find.byKey(const Key('p02-intention')), 'Meaningful relationship');
-    await tester.enterText(find.byKey(const Key('p02-interests')), 'Reading, Art');
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('p02-save-draft')));
-    await tester.tap(find.byKey(const Key('p02-save-draft')));
-    await tester.pumpAndSettle();
-    expect(repo.draftsSaved, 1, reason: 'Mode draft must actually be persisted.');
-    await tester.ensureVisible(continueButton);
-    final saved = await repo.dashboard();
-    expect(saved.value!.onboarding.ready, isTrue,
-      reason: 'The fixture must report complete saved setup after the draft write.');
-    // The button may only unlock after the authenticated post-save refresh;
-    // a transient unsaved form must not bypass that server-derived result.
-    await tester.pumpAndSettle();
-    expect(tester.widget<FilledButton>(continueButton).onPressed, isNotNull,
-      reason: 'Saved setup is complete, and the post-save refresh must unlock Continue.');
-    await tester.tap(continueButton);
-    await tester.pumpAndSettle();
+    expect(repo.photoPreviewReads, greaterThanOrEqualTo(2),
+      reason: 'Review must load saved photos through the media repository.');
+    expect(find.byType(Image), findsNWidgets(2),
+      reason: 'Both saved Friendship photos should render in final review.');
+    expect(find.byKey(const Key('p02-continue')), findsOneWidget);
+    await tapKey(tester, 'p02-continue');
     expect(find.byKey(const Key('p02-setup-ready')), findsOneWidget);
   });
 
-  testWidgets('P02-1 incomplete second enabled mode blocks continuation after restart', (tester) async {
-    final repo = MemoryProfiles()
-      ..handle = 'testhandle'
-      ..shared = const SharedProfile(commonName: 'Shared', locality: 'Hyderabad',
-        dating: true, friendship: true, setupRevision: 1, age: 26);
-    repo.profiles['dating'] = const ProfileDraft(mode: 'dating', exists: true, version: 1,
-      displayName: '', bio: 'Reading and hiking', interests: ['Reading'],
-      intention: 'A relationship', missing: ['photos']);
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: ProfileWorkspace(repository: repo, initiallyExpanded: true),
-    ))));
+  testWidgets('both enabled modes must finish in order, and removing a photo relocks Next', (tester) async {
+    final repo = PhotoReadyProfiles();
+    await tester.pumpWidget(testApp(repo));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('p02-setup-ready')), findsNothing);
-    expect(tester.widget<FilledButton>(find.byKey(const Key('p02-continue'))).onPressed, isNull);
-    expect(find.textContaining('Save your Friendship details'), findsOneWidget);
+    await saveCommon(tester, dating: true, friendship: true);
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Dating details'), findsWidgets);
+    await saveMode(tester);
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Dating photos'), findsWidgets);
+    await reusePhoto(tester, sampleOne);
+    await reusePhoto(tester, sampleTwo);
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Friendship details'), findsWidgets);
+    expect(canNext(tester), isFalse);
+    await saveMode(tester, intention: 'Friendship');
+    await tapKey(tester, 'p02-next');
+    expect(find.textContaining('Friendship photos'), findsWidgets);
+    expect(canNext(tester), isFalse);
+    await reusePhoto(tester, sampleOne);
+    await reusePhoto(tester, sampleTwo);
+    expect(canNext(tester), isTrue);
+    await tapKey(tester, 'p02-photo-remove-0');
+    expect(canNext(tester), isFalse,
+      reason: 'The server-confirmed photo gate must close after a removal.');
+    await reusePhoto(tester, sampleOne);
+    expect(canNext(tester), isTrue);
+    await tapKey(tester, 'p02-next');
+    expect(find.text('Enabled modes: Dating and Friendship'), findsOneWidget);
+    expect(find.text('Photos: 2/6'), findsNWidgets(2));
   });
 
-  testWidgets('P02-1 conflict keeps typed unsaved data for review', (tester) async {
+  testWidgets('Back preserves unsaved mode fields and locks forward navigation', (tester) async {
+    final repo = MemoryProfiles();
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    await saveCommon(tester);
+    await tapKey(tester, 'p02-next');
+    await tester.enterText(find.byKey(const Key('p02-bio')),
+      'Unsaved Dating Biography');
+    await tester.pumpAndSettle();
+    expect(canNext(tester), isFalse);
+    await tapKey(tester, 'p02-back');
+    expect(find.byKey(const Key('p02-locality')), findsOneWidget);
+    expect(repo.profiles['dating']!.exists, isFalse);
+    await tapKey(tester, 'p02-next');
+    expect(tester.widget<TextField>(find.byKey(const Key('p02-bio'))).controller!.text,
+      'Unsaved Dating Biography');
+    expect(canNext(tester), isFalse);
+  });
+
+  testWidgets('handle conflict remains visible, red and requires a successful save', (tester) async {
     final repo = MemoryProfiles()..failNext = true;
     await tester.pumpWidget(testApp(repo));
-    await tester.tap(find.byKey(const Key('p02-open-profiles')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('p02-name')), 'Unsaved edits');
-    await tester.ensureVisible(find.byKey(const Key('p02-save-draft')));
-    await tester.tap(find.byKey(const Key('p02-save-draft')));
+    await tester.enterText(find.byKey(const Key('p02-handle')), 'chosen123');
     await tester.pumpAndSettle();
-    expect(find.textContaining('Another edit was saved first'), findsOneWidget);
-    expect(find.text('Unsaved edits'), findsOneWidget);
-    expect(repo.draftsSaved, 0);
+    await tapKey(tester, 'p02-save-handle');
+    expect(repo.handleSaves, 1);
+    final message = tester.widget<Text>(find.byKey(const Key('p02-handle-error')));
+    expect(message.data, contains('already in use'));
+    expect(message.style?.fontWeight, FontWeight.w700);
+    expect(canNext(tester), isFalse);
+    await tapKey(tester, 'p02-save-handle');
+    expect(repo.handle, 'chosen123');
   });
+
+  testWidgets('reopening restores saved data, but never silently skips onboarding', (tester) async {
+    final repo = PhotoReadyProfiles();
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    await saveCommon(tester);
+    await tapKey(tester, 'p02-next');
+    await saveMode(tester);
+    await tapKey(tester, 'p02-next');
+    await reusePhoto(tester, sampleOne);
+    await reusePhoto(tester, sampleTwo);
+    await tapKey(tester, 'p02-next');
+    expect(find.byKey(const Key('p02-continue')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Step 1 of'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byKey(const Key('p02-locality'))).controller!.text,
+      'Hyderabad');
+    expect(tester.widget<DropdownButton<String>>(find.byKey(const Key('p02-gender'))).value,
+      'woman');
+    expect(repo.profiles['dating']!.photoIds.length, 2);
+    expect(canNext(tester), isTrue);
+  });
+
+  testWidgets('blank gender cannot unlock Next until saved', (tester) async {
+    final repo = MemoryProfiles()..handle = 'owner_handle'
+      ..shared = const SharedProfile(commonName: 'Shared', locality: 'Hyderabad',
+        gender: '', dating: true, setupRevision: 1, age: 26);
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    expect(canNext(tester), isFalse);
+    await tapKey(tester, 'p02-gender');
+    await tester.tap(find.text('Prefer not to say').last);
+    await tester.pumpAndSettle();
+    expect(canNext(tester), isFalse);
+    await tapKey(tester, 'p02-save-common');
+    expect(repo.shared.gender, 'prefer_not_to_say');
+    expect(canNext(tester), isTrue);
+  });
+  testWidgets('saving handle never overwrites unsaved shared details', (tester) async {
+    final repo = MemoryProfiles();
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('p02-common-name')),
+      'Unsaved Shared Name');
+    await tester.enterText(find.byKey(const Key('p02-handle')),
+      'new_owner_handle');
+    await tester.pumpAndSettle();
+    await tapKey(tester, 'p02-save-handle');
+    expect(repo.handle, 'new_owner_handle');
+    expect(repo.shared.commonName, isEmpty,
+      reason: 'Account handle and Common Profile must be separate saves.');
+    expect(tester.widget<TextField>(find.byKey(const Key('p02-common-name')))
+      .controller!.text, 'Unsaved Shared Name');
+    expect(tester.widget<FilledButton>(find.byKey(const Key('p02-save-common')))
+      .onPressed, isNotNull);
+    expect(canNext(tester), isFalse);
+  });
+
+  testWidgets('future step chips are locked; previous steps remain reachable', (tester) async {
+    final repo = MemoryProfiles();
+    await tester.pumpWidget(testApp(repo));
+    await tester.pumpAndSettle();
+    final nextTab = find.byKey(const Key('p02-step-tab-1'));
+    expect(tester.widget<ChoiceChip>(nextTab).onSelected, isNull);
+    await saveCommon(tester);
+    expect(tester.widget<ChoiceChip>(nextTab).onSelected, isNotNull);
+    await tapKey(tester, 'p02-step-tab-1');
+    expect(find.byKey(const Key('p02-bio')), findsOneWidget);
+    expect(tester.widget<ChoiceChip>(find.byKey(const Key('p02-step-tab-0')))
+      .onSelected, isNotNull);
+    await tapKey(tester, 'p02-step-tab-0');
+    expect(find.byKey(const Key('p02-common-name')), findsOneWidget);
+  });
+
 }

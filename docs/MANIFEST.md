@@ -1,3 +1,5 @@
+> **Added 2026-11-15:** `docs/qa/P02_2_ONBOARDING_PERSISTENCE_UI_REPAIR_2026_11_15.md` — owner-reported onboarding persistence/visible-restore repair and Windows acceptance checklist.
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

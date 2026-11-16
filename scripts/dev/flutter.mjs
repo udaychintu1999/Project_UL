@@ -16,7 +16,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const flutterRoot = path.join(root, 'apps/flutter_app');
 const flutterExe = process.platform === 'win32' ? 'flutter.bat' : 'flutter';
 const [action, ...userArgs] = process.argv.slice(2);
-const actions = new Set(['setup', 'run', 'test', 'e2e', 'p01-e2e', 'p01-2-e2e', 'p01-3-e2e', 'p02-1-e2e']);
+const actions = new Set(['setup', 'run', 'test', 'e2e', 'p01-e2e', 'p01-2-e2e', 'p01-3-e2e', 'p02-1-e2e', 'p02-2-e2e', 'p02-2-ui-e2e']);
 const permittedApiHosts = new Set(['localhost', '127.0.0.1', '[::1]', '10.0.2.2']);
 const usbApiHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -130,6 +130,8 @@ if (action === 'setup') {
       : action === 'p01-2-e2e' ? 'integration_test/password_integration_test.dart'
       : action === 'p01-3-e2e' ? 'integration_test/persistent_session_integration_test.dart'
       : action === 'p02-1-e2e' ? 'integration_test/p02_1_profile_integration_test.dart'
+      : action === 'p02-2-e2e' ? 'integration_test/p02_2_media_integration_test.dart'
+      : action === 'p02-2-ui-e2e' ? 'integration_test/p02_2_ui_integration_test.dart'
       : 'integration_test/diagnostics_integration_test.dart';
     if (action === 'p01-3-e2e') {
       const email=process.env.ULUV_P01_3_FIXTURE_EMAIL??'';
@@ -157,6 +159,21 @@ if (action === 'setup') {
         `--dart-define=ULUV_P02_1_FIXTURE_PASSWORD=${password}`,
         `--dart-define=ULUV_P02_1_FIXTURE_UID=${uid}`);
     }
+    if (action === 'p02-2-e2e' || action === 'p02-2-ui-e2e') {
+      if (process.env.ULUV_P02_1_ISOLATED_ANDROID_TEST !== '1') {
+        fail('P02-2 requires the isolated test package; use npm run test:flutter:p02-2:e2e.');
+      }
+      const email = process.env.ULUV_P02_2_FIXTURE_EMAIL ?? '';
+      const password = process.env.ULUV_P02_2_FIXTURE_PASSWORD ?? '';
+      const uid = process.env.ULUV_P02_2_FIXTURE_UID ?? '';
+      if (!/^p01-2-device-[a-f0-9-]{36}@example\.invalid$/.test(email) ||
+          !/^DeviceStart@[0-9a-f]{20}$/.test(password) ||
+          !/^[0-9a-f-]{36}$/i.test(uid)) fail('P02-2 fixture unavailable; use the P02-2 Android host runner.');
+      define.push('--dart-define=ULUV_P02_2_ISOLATED_ANDROID_TEST=true',
+        `--dart-define=ULUV_P02_2_FIXTURE_EMAIL=${email}`,
+        `--dart-define=ULUV_P02_2_FIXTURE_PASSWORD=${password}`,
+        `--dart-define=ULUV_P02_2_FIXTURE_UID=${uid}`);
+    }
     if (action === 'p01-2-e2e') {
       // Only the host-side setup runner sets these synthetic test credentials.
       // They are not real user passwords and never appear in source/logs.
@@ -177,6 +194,6 @@ if (action === 'setup') {
     // U_luv app while testing the disposable P02 package. The P02 host runner
     // performs exact-package cleanup itself after the Flutter test exits.
     runFlutter(['test', suite, ...device, ...define, ...integrationTestCleanupFlags(action)]);
-    console.log(`${action === 'p01-e2e' ? 'P01-1 auth' : action === 'p01-2-e2e' ? 'P01-2 password' : action === 'p01-3-e2e' ? 'P01-3 persistent sessions' : action === 'p02-1-e2e' ? 'P02-1 profiles' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
+    console.log(`${action === 'p01-e2e' ? 'P01-1 auth' : action === 'p01-2-e2e' ? 'P01-2 password' : action === 'p01-3-e2e' ? 'P01-3 persistent sessions' : action === 'p02-1-e2e' ? 'P02-1 profiles' : action === 'p02-2-ui-e2e' ? 'P02-2 real-screen UI' : action === 'p02-2-e2e' ? 'P02-2 local media' : 'P00 diagnostics'} Flutter real API/DB integration test PASSED (requires local Fastify + DynamoDB Local).`);
   }
 }

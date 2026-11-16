@@ -1,6 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'profile_models.dart';
 import 'profile_service.dart';
+import 'profile_media.dart';
+import 'profile_photos_panel.dart';
 
 /// An in-place authenticated panel. Unlike a pushed route, it is immediately
 /// destroyed when PersistentAuthGate hides the account after logout/revocation.
@@ -25,7 +28,10 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
   bool commonDirty = false, handleDirty = false, readySummary = false;
   ProfileDashboard? dashboard;
   String mode = 'dating';
+  final Map<String, ({String name, String bio, String interests,
+      String intention, bool unsaved})> modeEdits = {};
   bool expanded = false, busy = false, dirty = false;
+  String activeStep = 'common';
   String notice = '';
   String handleError = '';
 
@@ -55,13 +61,23 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
   }
 
   void loadMode(String next) {
+    if (mode != next) {
+      // Preserve an unsaved draft when stepping backwards through other modes.
+      modeEdits[mode] = (name: displayName.text, bio: bio.text,
+        interests: interests.text, intention: intention.text, unsaved: dirty);
+    }
     mode = next;
+    final pending = modeEdits[next];
     final profile = dashboard?.profiles[next];
-    displayName.text = profile?.displayName ?? '';
-    bio.text = profile?.bio ?? '';
-    interests.text = profile?.interests.join(', ') ?? '';
-    intention.text = profile?.intention ?? '';
-    dirty = false;
+    displayName.text = pending?.unsaved == true
+        ? pending!.name : (profile?.displayName ?? '');
+    bio.text = pending?.unsaved == true
+        ? pending!.bio : (profile?.bio ?? '');
+    interests.text = pending?.unsaved == true
+        ? pending!.interests : (profile?.interests.join(', ') ?? '');
+    intention.text = pending?.unsaved == true
+        ? pending!.intention : (profile?.intention ?? '');
+    dirty = pending?.unsaved == true;
   }
 
   void loadCommon() {
@@ -104,8 +120,21 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         });
         return;
       }
+      // A 2xx response is insufficient if the returned owner projection does
+      // not reflect the exact change. Never display a false 'saved' message.
+      // Backend trims user-entered fields before persistence.
+      final confirmed = result.value!.shared;
+      if (confirmed.commonName != commonName.text.trim() ||
+          confirmed.locality != locality.text.trim() ||
+          confirmed.gender != gender || confirmed.dating != datingEnabled ||
+          confirmed.friendship != friendshipEnabled) {
+        setState(() => notice =
+            'Saved values could not be confirmed. Reload your profile before retrying.');
+        return;
+      }
       setState(() {
         dashboard = result.value;
+        if (!setupSteps.contains(activeStep)) activeStep = 'common';
         loadCommon();
         // Preserve a mode draft being typed before common details were saved.
         if (!dirty) loadMode(mode);
@@ -173,9 +202,14 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         handle.text = dashboard?.handle ?? '';
         handleDirty = false;
         handleError = '';
+        modeEdits.clear();
         loadMode(mode);
         loadCommon();
-        if (first && dashboard!.onboarding.ready) readySummary = true;
+        // Always restore the editable profile on launch. Previously, completed
+        // onboarding silently switched to the completion screen and concealed
+        // persisted city/gender/mode selections from the owner.
+        readySummary = false;
+        activeStep = 'common';
         notice = 'Saved profile details loaded from your account.';
       });
     } catch (_) {
@@ -278,6 +312,7 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       final next = result.value!;
       setState(() {
         dashboard!.profiles[mode] = next;
+        modeEdits.remove(mode);
         loadMode(mode);
         notice = 'Draft saved. Checking which setup details are still required...';
       });
@@ -324,12 +359,39 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     ),
   );
 
+  String genderLabel(String code) => switch (code) {
+    'woman' => 'Woman', 'man' => 'Man', 'non_binary' => 'Non-binary',
+    'another_identity' => 'Another identity',
+    'prefer_not_to_say' => 'Prefer not to say',
+    _ => 'Not saved',
+  };
+
+  String selectedModeLabel(SharedProfile shared) {
+    if (shared.dating && shared.friendship) return 'Dating and Friendship';
+    if (shared.dating) return 'Dating';
+    if (shared.friendship) return 'Friendship';
+    return 'None';
+  }
+
+  /// Enablement is separate from which draft editor is open. Move to the newly
+  /// enabled mode if the current one is disabled and has no unsaved text.
+  void setModeEnabled(String target, bool enabled) {
+    setState(() {
+      if (target == 'dating') datingEnabled = enabled;
+      else friendshipEnabled = enabled;
+      commonDirty = true;
+      final currentEnabled = mode == 'dating' ? datingEnabled : friendshipEnabled;
+      if (enabled && !currentEnabled && !dirty) loadMode(target);
+    });
+  }
+
   String missingLabel(String item) {
     const labels = <String, String>{
       'handle': 'Choose and save your account @handle',
       'ageEligibility': 'Contact support: your saved adult eligibility needs review',
       'commonName': 'Enter your common profile name',
       'locality': 'Enter your broad city/locality (not your address)',
+      'gender': 'Choose your gender or explicitly select Prefer not to say',
       'selectMode': 'Enable Dating, Friendship or both',
       'dating.draft': 'Save your Dating details',
       'friendship.draft': 'Save your Friendship details',
@@ -341,8 +403,332 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       'friendship.interests': 'Add at least one Friendship interest',
       'dating.displayName': 'Add a Dating name or common name',
       'friendship.displayName': 'Add a Friendship name or common name',
+      'dating.photos': 'Assign at least two valid, saved photos to Dating',
+      'friendship.photos': 'Assign at least two valid, saved photos to Friendship',
+      'photoVerificationPending': 'Confirming saved photo assignments with the server',
     };
     return labels[item] ?? item;
+  }
+
+  /// Only saved connection-mode choices determine the available pages.
+  /// Unsaved toggles must never add a page or bypass its validation gate.
+  List<String> get setupSteps => [
+    'common',
+    if (dashboard?.shared.dating == true) ...['dating.details', 'dating.photos'],
+    if (dashboard?.shared.friendship == true) ...[
+      'friendship.details', 'friendship.photos',
+    ],
+    'review',
+  ];
+
+  String stepTitle(String step) => switch (step) {
+    'common' => 'Common profile',
+    'dating.details' => 'Dating details',
+    'dating.photos' => 'Dating photos',
+    'friendship.details' => 'Friendship details',
+    'friendship.photos' => 'Friendship photos',
+    'review' => 'Review your profile',
+    _ => 'Profile setup',
+  };
+
+  bool get commonSaved {
+    final state = dashboard;
+    if (state == null || commonDirty || handleDirty || hasPendingHandle) {
+      return false;
+    }
+    final shared = state.shared;
+    if (state.handle == null || state.handle!.isEmpty ||
+        shared.setupRevision < 1 || shared.commonName.trim().isEmpty ||
+        shared.locality.trim().isEmpty || shared.gender.isEmpty ||
+        (!shared.dating && !shared.friendship)) return false;
+    return !state.onboarding.missing.any((item) => const {
+      'handle', 'ageEligibility', 'commonName', 'locality',
+      'gender', 'selectMode',
+    }.contains(item));
+  }
+
+  bool stepSaved(String step) {
+    final state = dashboard;
+    if (state == null || busy) return false;
+    if (step == 'common') return commonSaved;
+    if (step == 'review') return state.onboarding.ready &&
+        !commonDirty && !handleDirty && !dirty;
+    final profileMode = step.split('.').first;
+    if (!commonSaved || (profileMode == 'dating'
+        ? !state.shared.dating : !state.shared.friendship)) return false;
+    final profile = state.profiles[profileMode];
+    if (profile == null || !profile.exists) return false;
+    final missing = state.onboarding.missing;
+    if (step.endsWith('.details')) {
+      if (mode == profileMode && dirty) return false;
+      return !missing.any((item) => item == '$profileMode.draft' ||
+          item == '$profileMode.bio' || item == '$profileMode.intention' ||
+          item == '$profileMode.interests' ||
+          item == '$profileMode.displayName');
+    }
+    // The backend, not the Flutter photo count, confirms READY/owned media.
+    // Never advance on a stale status while a media write is being verified.
+    return profile.photoIds.toSet().length >= 2 &&
+        !missing.contains('$profileMode.photos') &&
+        !missing.contains('photoVerificationPending');
+  }
+
+  void stepTo(int index) {
+    final steps = setupSteps;
+    final current = steps.indexOf(activeStep);
+    if (busy || current < 0 || index < 0 || index >= steps.length) return;
+    if (index > current && (index != current + 1 || !stepSaved(activeStep))) {
+      setState(() => notice = 'Complete and save this step before continuing.');
+      return;
+    }
+    if (index == current) return;
+    final next = steps[index];
+    setState(() {
+      activeStep = next;
+      readySummary = false;
+      notice = '';
+      if (next == 'dating.details' || next == 'dating.photos' ||
+          next == 'friendship.details' || next == 'friendship.photos') {
+        final nextMode = next.split('.').first;
+        // Mode controllers must not be reloaded while they contain edits.
+        if (mode != nextMode) loadMode(nextMode);
+      }
+    });
+  }
+
+  void swipeStep(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() < 250) return;
+    final current = setupSteps.indexOf(activeStep);
+    if (velocity < 0) stepTo(current + 1);
+    if (velocity > 0) stepTo(current - 1);
+  }
+
+  Widget warning(String message, {Key? key}) => Text(message, key: key,
+    style: TextStyle(color: Theme.of(context).colorScheme.error,
+      fontWeight: FontWeight.w700, height: 1.35),
+  );
+
+  bool get noticeIsWarning => RegExp(
+    r'failed|not |could not|cannot|check|error|unsaved|review|missing|complete and save|unavailable|denied|conflict|already in use',
+    caseSensitive: false,
+  ).hasMatch(notice);
+
+  Widget commonPage() => Column(
+    key: const ValueKey('p02-page-common'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text('Shared by Dating and Friendship. Complete and save your '
+        'public handle, name, broad city, gender selection and at least one mode.'),
+      const SizedBox(height: 12),
+      TextField(key: const Key('p02-handle'), controller: handle, enabled: !busy,
+        onChanged: (_) => setState(() {
+          handleDirty = handle.text.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase() !=
+              (dashboard?.handle ?? '');
+          handleError = '';
+        }),
+        maxLength: 24, decoration: const InputDecoration(
+          labelText: 'Public username / @handle *', prefixText: '@',
+          border: OutlineInputBorder(), helperText: 'One unique handle for both modes.'),
+      ),
+      OutlinedButton(key: const Key('p02-save-handle'),
+        onPressed: busy || !hasPendingHandle ? null : saveHandle,
+        child: const Text('Save handle')),
+      if (handleError.isNotEmpty) warning(handleError,
+        key: const Key('p02-handle-error')),
+      Padding(padding: const EdgeInsets.only(top: 12), child: TextField(
+        key: const Key('p02-common-name'), controller: commonName, maxLength: 60,
+        enabled: !busy, onChanged: (_) => setState(() => commonDirty = true),
+        decoration: const InputDecoration(labelText: 'Display name *',
+          border: OutlineInputBorder()),
+      )),
+      const SizedBox(height: 12),
+      TextField(key: const Key('p02-locality'), controller: locality, maxLength: 60,
+        enabled: !busy, onChanged: (_) => setState(() => commonDirty = true),
+        decoration: const InputDecoration(labelText: 'City or broad locality *',
+          helperText: 'Example: Hyderabad. No street address, GPS or postal code.',
+          border: OutlineInputBorder()),
+      ),
+      const SizedBox(height: 8),
+      Text('Age: ${dashboard!.shared.age?.toString() ?? 'unavailable'} '
+        '(calculated from the date of birth supplied at signup)'),
+      const SizedBox(height: 12),
+      InputDecorator(decoration: const InputDecoration(
+        labelText: 'Gender *', border: OutlineInputBorder()),
+        child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+          key: const Key('p02-gender'), value: gender, isExpanded: true,
+          items: const [
+            DropdownMenuItem(value: '', child: Text('Select an answer')),
+            DropdownMenuItem(value: 'woman', child: Text('Woman')),
+            DropdownMenuItem(value: 'man', child: Text('Man')),
+            DropdownMenuItem(value: 'non_binary', child: Text('Non-binary')),
+            DropdownMenuItem(value: 'another_identity', child: Text('Another identity')),
+            DropdownMenuItem(value: 'prefer_not_to_say', child: Text('Prefer not to say')),
+          ],
+          onChanged: busy ? null : (value) => setState(() {
+            gender = value ?? ''; commonDirty = true;
+          }),
+        )),
+      ),
+      const SizedBox(height: 18),
+      Text('Connection modes', style: Theme.of(context).textTheme.titleMedium),
+      const Text('Enable Dating, Friendship, or both. This does not activate '
+        'public discovery.'),
+      SwitchListTile(key: const Key('p02-enable-dating'),
+        title: const Text('Enable Dating'), value: datingEnabled,
+        onChanged: busy ? null : (value) => setModeEnabled('dating', value)),
+      SwitchListTile(key: const Key('p02-enable-friendship'),
+        title: const Text('Enable Friendship'), value: friendshipEnabled,
+        onChanged: busy ? null : (value) => setModeEnabled('friendship', value)),
+      const SizedBox(height: 10),
+      FilledButton.tonal(key: const Key('p02-save-common'),
+        onPressed: busy || !commonDirty ? null : saveCommon,
+        child: const Text('Save common details and mode choices')),
+      if (commonDirty || handleDirty || hasPendingHandle)
+        warning('Unsaved common details do not unlock the next step.',
+          key: const Key('p02-common-unsaved')),
+    ],
+  );
+
+  Widget modePage(String selected) => Column(
+    key: ValueKey('p02-page-$selected-details'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text('A separate nickname is optional; your common name is used if blank. '
+        'Bio, intention and at least one interest must be saved.'),
+      const SizedBox(height: 10),
+      Text('Draft version ${dashboard!.profiles[selected]!.version}'
+        '${dashboard!.profiles[selected]!.exists ? '' : ' (new)'}'),
+      editField('p02-name', 'Optional name just for this mode', displayName,
+        length: 60),
+      editField('p02-bio', 'Short bio (no contact links or numbers)', bio,
+        lines: 3, length: 500),
+      editField('p02-intention', 'What are you looking for?', intention,
+        length: 80),
+      editField('p02-interests', 'Interests, comma-separated (up to 10)', interests),
+      const SizedBox(height: 12),
+      FilledButton(key: const Key('p02-save-draft'),
+        onPressed: busy ? null : saveDraft,
+        child: const Text('Save mode details')),
+      if (dirty) warning('Save these changes to move to photos.'),
+      const SizedBox(height: 8),
+      const Text('Required mode details are validated by the server.',
+        key: const Key('p02-missing')),
+    ],
+  );
+
+  Widget photosPage(String selected) => Column(
+    key: ValueKey('p02-page-$selected-photos'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (widget.repository is ProfileMediaRepository &&
+          dashboard!.profiles[selected]!.exists)
+        ProfilePhotosPanel(key: ValueKey('p02-photos-$selected'),
+          repository: widget.repository as ProfileMediaRepository,
+          mode: selected, profile: dashboard!.profiles[selected]!,
+          onUpdated: (updated) {
+            if (!mounted || dashboard == null) return;
+            setState(() {
+              final previous = dashboard!;
+              previous.profiles[updated.mode] = updated;
+              dashboard = ProfileDashboard(
+                handle: previous.handle, identityRevision: previous.identityRevision,
+                locality: previous.locality, profiles: previous.profiles,
+                shared: previous.shared,
+                onboarding: const OnboardingStatus(
+                  ready: false, missing: ['photoVerificationPending']),
+              );
+              notice = 'Photo assignment saved. Verifying setup requirements...';
+            });
+            // Require a fresh backend verification before advancing.
+            refreshAfterDraftSave(preserveEditors: true);
+          },
+        )
+      else warning('Photo upload requires a saved draft and an available '
+        'private media service.'),
+    ],
+  );
+
+  String stepWarning(String step) {
+    final required = dashboard?.onboarding.missing ?? const <String>[];
+    final selected = required.where((item) {
+      if (step == 'common') return const {
+        'handle', 'ageEligibility', 'commonName', 'locality',
+        'gender', 'selectMode',
+      }.contains(item);
+      final prefix = step.split('.').first;
+      if (step.endsWith('.details')) return item.startsWith('$prefix.') &&
+          item != '$prefix.photos';
+      return item == '$prefix.photos' || item == 'photoVerificationPending';
+    }).map(missingLabel).toList();
+    if (step == 'common' && (commonDirty || handleDirty || hasPendingHandle)) {
+      selected.insert(0, 'Save all common-profile changes');
+    } else if (step.endsWith('.details') && dirty) {
+      selected.insert(0, 'Save the current mode draft');
+    }
+    if (selected.isEmpty) return 'Complete and save this step to unlock Next.';
+    return 'Required before Next: ${selected.join('; ')}';
+  }
+
+  Widget reviewPhoto(String mediaId) {
+    // The owner repository implements profile CRUD; media reads are a separate
+    // capability. Give the preview an explicitly typed media interface rather
+    // than invoking photoBytes on ProfileRepository (which has no such method).
+    final repository = widget.repository;
+    if (repository is! ProfileMediaRepository) return const SizedBox.shrink();
+    final ProfileMediaRepository mediaRepository = repository as ProfileMediaRepository;
+    return FutureBuilder<ProfileResult<Uint8List>>(
+      future: mediaRepository.photoBytes(mediaId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data?.ok != true) {
+          return const SizedBox(width: 68, height: 68,
+            child: Icon(Icons.image_outlined));
+        }
+        return Image.memory(snapshot.data!.value!, width: 68, height: 68,
+          fit: BoxFit.cover, errorBuilder: (_, __, ___) =>
+            const Icon(Icons.broken_image_outlined));
+      },
+    );
+  }
+
+  Widget reviewPage() {
+    final state = dashboard!;
+    return Column(key: const ValueKey('p02-page-review'),
+      crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text('Review your saved details',
+        style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      Text('Username: @${state.handle ?? ''}'),
+      Text('Display name: ${state.shared.commonName}'),
+      Text('Age: ${state.shared.age?.toString() ?? 'unavailable'}'),
+      Text('City: ${state.shared.locality}'),
+      Text('Gender: ${genderLabel(state.shared.gender)}'),
+      Text('Enabled modes: ${selectedModeLabel(state.shared)}'),
+      const Divider(height: 30),
+      for (final selected in ['dating', 'friendship'])
+        if (selected == 'dating' ? state.shared.dating : state.shared.friendship) ...[
+          Text(selected == 'dating' ? 'Dating' : 'Friendship',
+            style: Theme.of(context).textTheme.titleMedium),
+          Text('Name: ${state.profiles[selected]!.displayName.isEmpty
+              ? state.shared.commonName : state.profiles[selected]!.displayName}'),
+          Text('Bio: ${state.profiles[selected]!.bio}'),
+          Text('Intention: ${state.profiles[selected]!.intention}'),
+          Text('Interests: ${state.profiles[selected]!.interests.join(', ')}'),
+          Text('Photos: ${state.profiles[selected]!.photoIds.length}/6'),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            for (final id in state.profiles[selected]!.photoIds) reviewPhoto(id),
+          ]),
+          const Divider(height: 30),
+        ],
+      const Text('These details and photos are saved privately. Public '
+        'discovery activation is a separate P02-3 step.'),
+      const SizedBox(height: 12),
+      FilledButton(key: const Key('p02-continue'),
+        onPressed: busy || !stepSaved('review') ? null : () =>
+            setState(() => readySummary = true),
+        child: const Text('Continue')),
+    ]);
   }
 
   @override
@@ -360,143 +746,120 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Icon(Icons.check_circle_outline, size: 50, color: Colors.green),
         const SizedBox(height: 12),
-        Text('Profile setup complete', style: Theme.of(context).textTheme.titleLarge,
+        Text('Profile setup complete',
+          style: Theme.of(context).textTheme.titleLarge,
           key: const Key('p02-setup-ready')),
-        const Text('You have saved your common details and completed every enabled connection mode.'),
-        const SizedBox(height: 8),
-        const Text('Your profile is still private. Photo uploads, activation and the discovery home screen arrive in later phases.'),
+        const Text('Your common profile and every enabled mode meet the '
+          'onboarding requirements.'),
+        const Text('Your profile remains private until you explicitly '
+          'activate discovery in a later milestone.'),
         const SizedBox(height: 16),
         FilledButton.tonal(key: const Key('p02-edit-setup'),
-          onPressed: () => setState(() => readySummary = false),
-          child: const Text('Edit my profile details')),
-        TextButton(key: const Key('p02-ready-reload'), onPressed: busy ? null : () async {
-          setState(() => readySummary = false);
-          await load(first: true);
-        }, child: const Text('Refresh saved setup status')),
+          onPressed: () => setState(() {
+            readySummary = false;
+            activeStep = 'review';
+          }), child: const Text('Back to profile review')),
+        TextButton(key: const Key('p02-ready-reload'),
+          onPressed: busy ? null : () async {
+            setState(() => readySummary = false);
+            await load(first: true);
+          }, child: const Text('Refresh saved setup status')),
       ]);
     }
+    final steps = setupSteps;
+    final current = steps.contains(activeStep) ? steps.indexOf(activeStep) : 0;
+    final step = steps[current];
+    final currentComplete = dashboard != null && stepSaved(step);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Text('Set up your profile', style: Theme.of(context).textTheme.titleLarge),
-      const SizedBox(height: 5),
-      const Text('Complete your common details once, enable at least one mode, and fill in its details. Photos are not required for this setup step.'),
-      const SizedBox(height: 12),
-      if (busy) const LinearProgressIndicator(key: Key('p02-progress')),
-      Semantics(liveRegion: true, child: Text(notice, key: const Key('p02-notice'))),
-      const SizedBox(height: 12),
-      if (dashboard == null) ...[
-        if (!busy) OutlinedButton(key: const Key('p02-load-retry'), onPressed: () => load(first: true),
-          child: const Text('Retry loading profiles')),
-      ] else ...[
-        Text('1 · Common profile', style: Theme.of(context).textTheme.titleMedium),
-        const Text('Shared by Dating and Friendship. Never enter a street address.'),
-        const SizedBox(height: 10),
-        TextField(key: const Key('p02-handle'), controller: handle, enabled: !busy,
-          onChanged: (_) => setState(() {
-            handleDirty = handle.text.trim().replaceFirst(RegExp(r'^@'), '').toLowerCase() != (dashboard?.handle ?? '');
-            handleError = '';
-          }),
-          maxLength: 24, decoration: const InputDecoration(
-            labelText: 'Public account handle', prefixText: '@', border: OutlineInputBorder(),
-            helperText: 'One unique handle shared by both modes.')),
-        OutlinedButton(key: const Key('p02-save-handle'),
-          onPressed: busy || !hasPendingHandle ? null : saveHandle,
-          child: const Text('Save handle')),
-        if (handleError.isNotEmpty)
-          Text(handleError, key: const Key('p02-handle-error'),
-            style: TextStyle(color: Theme.of(context).colorScheme.error)),
-        Padding(padding: const EdgeInsets.only(top: 12), child: TextField(
-          key: const Key('p02-common-name'), controller: commonName, maxLength: 60,
-          enabled: !busy, onChanged: (_) => setState(() => commonDirty = true),
-          decoration: const InputDecoration(labelText: 'Common display name', border: OutlineInputBorder()),
+      const SizedBox(height: 6),
+      Text('Step ${current + 1} of ${steps.length} · ${stepTitle(step)}',
+        key: const Key('p02-step-label'),
+        style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      Row(children: [for (var i = 0; i < steps.length; i++)
+        Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Container(height: 5, decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            color: i <= current ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outlineVariant,
+          )),
         )),
-        const SizedBox(height: 12),
-        TextField(key: const Key('p02-locality'), controller: locality, maxLength: 60,
-          enabled: !busy, onChanged: (_) => setState(() => commonDirty = true),
-          decoration: const InputDecoration(labelText: 'City or broad locality',
-            helperText: 'Example: Hyderabad. No street, GPS or postal code.',
-            border: OutlineInputBorder())),
-        const SizedBox(height: 8),
-        Text('Age: ${dashboard!.shared.age?.toString() ?? 'unavailable'} (derived from the date of birth supplied at signup)'),
-        const SizedBox(height: 12),
-        InputDecorator(
-          decoration: const InputDecoration(labelText: 'Gender (optional)', border: OutlineInputBorder()),
-          child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-          key: const Key('p02-gender'), value: gender, isExpanded: true,
-          items: const [
-            DropdownMenuItem(value: '', child: Text('Prefer not to specify')),
-            DropdownMenuItem(value: 'woman', child: Text('Woman')),
-            DropdownMenuItem(value: 'man', child: Text('Man')),
-            DropdownMenuItem(value: 'non_binary', child: Text('Non-binary')),
-            DropdownMenuItem(value: 'another_identity', child: Text('Another identity')),
-            DropdownMenuItem(value: 'prefer_not_to_say', child: Text('Prefer not to say')),
-          ],
-          onChanged: busy ? null : (value) => setState(() {
-            gender = value ?? '';
-            commonDirty = true;
-          }),
-        ))),
-        const SizedBox(height: 20),
-        Text('2 · Choose your connection modes', style: Theme.of(context).textTheme.titleMedium),
-        const Text('Enable one or both. Only enabled modes count toward finishing setup.'),
-        SwitchListTile(key: const Key('p02-enable-dating'),
-          title: const Text('Enable Dating'), value: datingEnabled,
-          onChanged: busy ? null : (value) => setState(() {
-            datingEnabled = value; commonDirty = true;
-          })),
-        SwitchListTile(key: const Key('p02-enable-friendship'),
-          title: const Text('Enable Friendship'), value: friendshipEnabled,
-          onChanged: busy ? null : (value) => setState(() {
-            friendshipEnabled = value; commonDirty = true;
-          })),
-        const SizedBox(height: 8),
-        FilledButton.tonal(key: const Key('p02-save-common'),
-          onPressed: busy || !commonDirty ? null : saveCommon,
-          child: const Text('Save common details and mode choices')),
-        if (commonDirty) const Text('Unsaved common changes do not count toward setup completion.'),
-        const SizedBox(height: 20),
-        Text('3 · Mode-specific details', style: Theme.of(context).textTheme.titleMedium),
-        const Text('A nickname here is optional; if empty, your common name is used. Bio, intention and at least one interest are required for each enabled mode.'),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, children: [
-          ChoiceChip(key: const Key('p02-mode-dating'),
-            label: Text(datingEnabled ? 'Dating · enabled' : 'Dating'), selected: mode == 'dating',
-            onSelected: busy ? null : (_) => switchMode('dating')),
-          ChoiceChip(key: const Key('p02-mode-friendship'),
-            label: Text(friendshipEnabled ? 'Friendship · enabled' : 'Friendship'), selected: mode == 'friendship',
-            onSelected: busy ? null : (_) => switchMode('friendship')),
-        ]),
-        Text('Draft version ${dashboard!.profiles[mode]!.version}${dashboard!.profiles[mode]!.exists ? '' : ' (new)'}'),
-        if (!(mode == 'dating' ? datingEnabled : friendshipEnabled))
-          const Text('This mode is not enabled. You can still prepare and save its private draft.'),
-        editField('p02-name', 'Optional name just for this mode', displayName, length: 60),
-        editField('p02-bio', 'Short bio (no contact links or numbers)', bio, lines: 3, length: 500),
-        editField('p02-intention', 'What are you looking for?', intention, length: 80),
-        editField('p02-interests', 'Interests, comma-separated (up to 10)', interests),
-        const SizedBox(height: 12),
-        Text('Still needed for future discovery activation: ${dashboard!.profiles[mode]!.missing.join(', ')}',
-          key: const Key('p02-missing')),
-        const SizedBox(height: 10),
-        FilledButton(key: const Key('p02-save-draft'), onPressed: busy ? null : saveDraft,
-          child: const Text('Save mode details')),
-        const SizedBox(height: 20),
-        Text('4 · Continue', style: Theme.of(context).textTheme.titleMedium),
-        if (ready && !commonDirty && !dirty && !handleDirty)
-          const Text('Your saved profile setup meets the minimum requirements.'),
-        if (!ready || commonDirty || dirty || handleDirty) ...[
-          const Text('Complete and save the following before continuing:'),
-          for (final item in dashboard!.onboarding.missing)
-            Padding(padding: const EdgeInsets.only(top: 4), child: Text('• ${missingLabel(item)}')),
-          if (commonDirty || dirty || handleDirty)
-            const Text('• Save your current unsaved edits'),
+      ]),
+      const SizedBox(height: 10),
+      SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal,
+        children: [for (var i = 0; i < steps.length; i++)
+          Padding(padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              key: Key('p02-step-tab-$i'),
+              label: Text(stepTitle(steps[i])), selected: i == current,
+              onSelected: busy || (i > current &&
+                  (i != current + 1 || !currentComplete))
+                  ? null : (_) => stepTo(i),
+            ),
+          ),
         ],
-        const SizedBox(height: 12),
-        FilledButton(key: const Key('p02-continue'),
-          onPressed: busy || !ready || commonDirty || dirty || handleDirty ? null : () => setState(() => readySummary = true),
-          child: const Text('Continue')),
-        const SizedBox(height: 12),
-        TextButton(key: const Key('p02-reload'), onPressed: busy ? null : load,
+      )),
+      const SizedBox(height: 8),
+      if (busy) const LinearProgressIndicator(key: Key('p02-progress')),
+      if (notice.isNotEmpty) Semantics(liveRegion: true,
+        child: noticeIsWarning
+          ? warning(notice, key: const Key('p02-notice'))
+          : Text(notice, key: const Key('p02-notice'))),
+      const SizedBox(height: 10),
+      if (dashboard == null)
+        OutlinedButton(key: const Key('p02-load-retry'),
+          onPressed: busy ? null : () => load(first: true),
+          child: const Text('Retry loading profiles'))
+      else ...[
+        GestureDetector(
+          key: const Key('p02-swipe-region'),
+          behavior: HitTestBehavior.translucent,
+          onHorizontalDragEnd: swipeStep,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            // Do not keep outgoing editors mounted: both mode pages reuse
+            // controllers, so overlapping text fields could show wrong data.
+            layoutBuilder: (currentChild, previousChildren) =>
+                currentChild ?? const SizedBox.shrink(),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0.035, 0),
+                  end: Offset.zero).animate(animation), child: child)),
+            child: switch (step) {
+              'common' => commonPage(),
+              'dating.details' => modePage('dating'),
+              'dating.photos' => photosPage('dating'),
+              'friendship.details' => modePage('friendship'),
+              'friendship.photos' => photosPage('friendship'),
+              _ => reviewPage(),
+            },
+          ),
+        ),
+        if (step != 'review' && !currentComplete)
+          Padding(padding: const EdgeInsets.only(top: 12),
+            child: warning(stepWarning(step),
+              key: const Key('p02-step-warning'))),
+        if (step != 'review' && currentComplete)
+          const Padding(padding: EdgeInsets.only(top: 12),
+            child: Text('Saved and verified. You can continue.')),
+        const SizedBox(height: 14),
+        Row(children: [
+          if (current > 0) Expanded(child: OutlinedButton(
+            key: const Key('p02-back'),
+            onPressed: busy ? null : () => stepTo(current - 1),
+            child: const Text('Back'))),
+          if (current > 0) const SizedBox(width: 10),
+          if (step != 'review') Expanded(child: FilledButton(
+            key: const Key('p02-next'),
+            onPressed: currentComplete ? () => stepTo(current + 1) : null,
+            child: const Text('Next'))),
+        ]),
+        const SizedBox(height: 8),
+        TextButton(key: const Key('p02-reload'),
+          onPressed: busy ? null : load,
           child: const Text('Reload saved profiles')),
-        const Text('Profiles stay private until photo requirements and explicit activation are implemented.'),
       ],
     ]);
   }

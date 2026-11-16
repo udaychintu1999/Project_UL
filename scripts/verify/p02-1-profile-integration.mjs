@@ -150,22 +150,40 @@ try {
     { token: a.token, method: 'PUT' })).status, 400);
   assert.equal((await api('/v1/profiles/me/setup', { ...setup(0, true, false), locality: '1 Baker Street' },
     { token: a.token, method: 'PUT' })).status, 400);
-  const selected = await api('/v1/profiles/me/setup', setup(0, true, false), { token: a.token, method: 'PUT' });
+  // A blank gender may be saved as a draft, but must not unlock Continue.
+  const blankGender = await api('/v1/profiles/me/setup', { ...setup(0, true, false), gender: '' },
+    { token: a.token, method: 'PUT' });
+  assert.equal(blankGender.status, 200);
+  assert.equal(blankGender.data.onboarding.ready, false);
+  assert.ok(blankGender.data.onboarding.missing.includes('gender'));
+  assert.equal(blankGender.data.shared.gender, '');
+  const draftReload = await api('/v1/profiles/me', undefined, { token: a.token });
+  assert.equal(draftReload.data.shared.locality, 'Hyderabad');
+  assert.equal(draftReload.data.shared.selectedModes.dating, true);
+  assert.ok(draftReload.data.onboarding.missing.includes('gender'));
+  // The explicit gender selection is a CAS update to the already-created draft.
+  const selected = await api('/v1/profiles/me/setup', setup(1, true, false), { token: a.token, method: 'PUT' });
   assert.equal(selected.status, 200);
-  assert.equal(selected.data.shared.setupRevision, 1);
+  assert.equal(selected.data.shared.setupRevision, 2);
+  assert.equal(selected.data.shared.gender, 'prefer_not_to_say');
+  assert.equal(selected.data.shared.locality, 'Hyderabad');
+  assert.equal(selected.data.shared.selectedModes.dating, true);
+  assert.equal(selected.data.shared.selectedModes.friendship, false);
   assert.ok(Number.isInteger(selected.data.shared.age) && selected.data.shared.age >= 18);
   assert.equal(selected.data.shared.localitySource, 'self_declared');
-  assert.equal(selected.data.onboarding.ready, true);
+  assert.equal(selected.data.onboarding.ready, false);
+  assert.ok(selected.data.onboarding.missing.includes('dating.photos'), 'two photos now required for onboarding');
   assert.equal(selected.data.profiles.dating.visibility, 'inactive');
   assertPrivate(selected.data);
   const staleSetup = await api('/v1/profiles/me/setup', setup(0, false, false), { token: a.token, method: 'PUT' });
   assert.equal(staleSetup.status, 409);
-  const none = await api('/v1/profiles/me/setup', setup(1, false, false), { token: a.token, method: 'PUT' });
+  const none = await api('/v1/profiles/me/setup', setup(2, false, false), { token: a.token, method: 'PUT' });
   assert.equal(none.status, 200);
   assert.equal(none.data.onboarding.ready, false);
   assert.ok(none.data.onboarding.missing.includes('selectMode'));
-  const restored = await api('/v1/profiles/me/setup', setup(2, true, false), { token: a.token, method: 'PUT' });
-  assert.equal(restored.data.onboarding.ready, true);
+  const restored = await api('/v1/profiles/me/setup', setup(3, true, false), { token: a.token, method: 'PUT' });
+  assert.equal(restored.data.onboarding.ready, false);
+  assert.ok(restored.data.onboarding.missing.includes('dating.photos'));
   const emptyFriendship = await api('/v1/profiles/me/setup', setup(0, false, true), { token: b.token, method: 'PUT' });
   assert.equal(emptyFriendship.status, 200);
   assert.equal(emptyFriendship.data.onboarding.ready, false);
@@ -178,12 +196,13 @@ try {
   assert.equal(inherited.data.displayName, '');
   assert.equal(inherited.data.effectiveDisplayName, 'Common Person');
   const bAfter = await api('/v1/profiles/me', undefined, { token: b.token });
-  assert.equal(bAfter.data.onboarding.ready, true, 'common name applies without a duplicated mode nickname');
-  assert.equal((await api('/v1/profiles/me', undefined, { token: a.token })).data.onboarding.ready, true,
-    'server setup status survives reload');
+  assert.equal(bAfter.data.onboarding.ready, false, 'common name applies, but photos remain required');
+  assert.ok(bAfter.data.onboarding.missing.includes('friendship.photos'));
+  assert.equal((await api('/v1/profiles/me', undefined, { token: a.token })).data.onboarding.ready, false,
+    'server gate still requires two ready photos per selected mode after reload');
   const setupRace = await Promise.all([
-    api('/v1/profiles/me/setup', setup(3, true, false), { token: a.token, method: 'PUT' }),
-    api('/v1/profiles/me/setup', setup(3, true, true), { token: a.token, method: 'PUT' }),
+    api('/v1/profiles/me/setup', setup(4, true, false), { token: a.token, method: 'PUT' }),
+    api('/v1/profiles/me/setup', setup(4, true, true), { token: a.token, method: 'PUT' }),
   ]);
   assert.deepEqual(setupRace.map((result) => result.status).sort((x, y) => x - y), [200, 409],
     'two concurrent mode-setting writes cannot both commit');
@@ -226,7 +245,7 @@ try {
     ExpressionAttributeValues: { ':restricted': 'restricted' } }));
   assert.equal((await api('/v1/profiles/me', undefined, { token: a.token })).status, 403, 'restricted account denied');
   assert.equal((await api('/v1/profiles/me/dating', draft(2, 'No'), { token: a.token, method: 'PUT' })).status, 403);
-  assert.equal((await api('/v1/profiles/me/setup', setup(4, false, true), { token: a.token, method: 'PUT' })).status, 403);
+  assert.equal((await api('/v1/profiles/me/setup', setup(5, false, true), { token: a.token, method: 'PUT' })).status, 403);
   console.log('PASS P02-1: real local registration, authentication, unique atomic handles, revision conflicts, mode-isolated persisted drafts, validation, privacy, setup-gate persistence and restriction');
 } finally {
   for (const person of identities) {

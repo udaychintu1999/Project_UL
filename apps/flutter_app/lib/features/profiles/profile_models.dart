@@ -2,13 +2,13 @@
 class ProfileDraft {
   const ProfileDraft({required this.mode, required this.exists, required this.version,
     required this.displayName, required this.bio, required this.interests,
-    required this.intention, required this.missing});
+    required this.intention, required this.missing, this.photoIds = const []});
 
   final String mode;
   final bool exists;
   final int version;
   final String displayName, bio, intention;
-  final List<String> interests, missing;
+  final List<String> interests, missing, photoIds;
 
   factory ProfileDraft.fromJson(Map<String, dynamic> json) {
     final completeness = json['completeness'];
@@ -21,6 +21,7 @@ class ProfileDraft {
       interests: (json['interests'] is List ? json['interests'] as List : const [])
         .whereType<String>().toList(growable: false),
       intention: json['intention'] is String ? json['intention'] as String : '',
+      photoIds: (json['photoIds'] is List ? json['photoIds'] as List : const []).whereType<String>().toList(growable: false),
       missing: (completeness is Map && completeness['missing'] is List
         ? completeness['missing'] as List : const [])
         .whereType<String>().toList(growable: false),

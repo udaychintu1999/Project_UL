@@ -180,3 +180,27 @@ test('P02 isolated real-device test opts out of Flutter package uninstall (stubb
     rmSync(dir, {recursive: true, force: true});
   }
 });
+
+
+test('P02-2 UI-driven device action selects real UI suite and prevents base-app uninstall (stubbed SDK)', () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'uluv-p02-ui-flutter-guard-'));
+  try {
+    const stubEnv = {
+      ...createFakeSdk(dir),
+      ULUV_P02_1_ISOLATED_ANDROID_TEST: '1',
+      ULUV_P02_2_FIXTURE_EMAIL:
+        'p01-2-device-00000000-0000-4000-8000-000000000000@example.invalid',
+      ULUV_P02_2_FIXTURE_PASSWORD: 'DeviceStart@' + 'a'.repeat(20),
+      ULUV_P02_2_FIXTURE_UID: '00000000-0000-4000-8000-000000000000',
+    };
+    const result = runWithFakeSdk(stubEnv, 'p02-2-ui-e2e');
+    assert.equal(result.status, 0, result.stderr);
+    const flutterArgs = readFileSync(stubEnv.ULUV_TEST_FLUTTER_ARGS, 'utf8');
+    assert.match(flutterArgs, /test integration_test\/p02_2_ui_integration_test\.dart/);
+    assert.match(flutterArgs, /--no-uninstall/);
+    assert.match(flutterArgs, /ULUV_P02_2_ISOLATED_ANDROID_TEST=true/);
+    assert.doesNotMatch(result.stdout + result.stderr, /DeviceStart@/);
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
+});

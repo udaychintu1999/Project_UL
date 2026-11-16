@@ -72,7 +72,12 @@ void main() {
         dating: true, friendship: false));
       expect(setup, isNotNull);
       expect(setup!.ok, isTrue);
-      expect(setup.value!.onboarding.ready, isTrue);
+      expect(setup.value!.onboarding.ready, isFalse);
+      expect(setup.value!.onboarding.missing, contains('dating.photos'));
+      expect(setup.value!.shared.gender, 'prefer_not_to_say');
+      expect(setup.value!.shared.locality, 'Hyderabad');
+      expect(setup.value!.shared.dating, isTrue);
+      expect(setup.value!.shared.friendship, isFalse);
       expect(setup.value!.profiles['dating']!.missing, contains('photos'));
       final relaunched = PersistentSessionController(vault: vault, api: const DeviceSessionApi(base));
       await tester.runAsync(relaunched.restore);
@@ -83,9 +88,12 @@ void main() {
       expect(after!.ok, isTrue);
       expect(after.value!.handle, handle);
       expect(after.value!.shared.commonName, 'Common Name');
+      expect(after.value!.shared.locality, 'Hyderabad');
+      expect(after.value!.shared.gender, 'prefer_not_to_say');
       expect(after.value!.shared.dating, isTrue);
       expect(after.value!.shared.friendship, isFalse);
-      expect(after.value!.onboarding.ready, isTrue);
+      expect(after.value!.onboarding.ready, isFalse);
+      expect(after.value!.onboarding.missing, contains('dating.photos'));
       expect(after.value!.profiles['dating']!.displayName, 'Dating Name');
       expect(after.value!.profiles['friendship']!.displayName, 'Friendship Name');
       expect(after.value!.profiles['dating']!.missing, contains('photos'));

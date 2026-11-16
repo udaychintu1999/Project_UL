@@ -1,13 +1,15 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchGetCommand, GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ageFromBirthDate, draftMissing, onboardingMissing, parseDraft, parseHandleInput, parseMode, parseSetup } from './validation.js';
 import type { DraftFields, ProfileMode, SharedSetup } from './validation.js';
+import { validMediaId } from './media-policy.js';
 
 const usersTable = 'uluv_users';
 const profilesTable = 'uluv_profiles';
 const settingsTable = 'uluv_settings';
 const modeKey = (uid: string, mode: ProfileMode) => ({ PK: `USER#${uid}`, SK: `MODE#${mode.toUpperCase()}` });
+const mediaKey = (uid: string, mediaId: string) => ({ PK: `USER#${uid}`, SK: `MEDIA#${mediaId}` });
 const accountKey = (uid: string) => ({ PK: `USER#${uid}`, SK: 'META' });
 const settingsKey = (uid: string) => ({ PK: `USER#${uid}`, SK: 'SETTINGS' });
 const aliasKey = (handle: string) => ({ PK: `HANDLE#${handle}`, SK: 'META' });
@@ -31,12 +33,12 @@ function normalizedFields(raw?: Item): DraftFields {
 function revisionOf(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : fallback;
 }
-function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, commonName = '') {
+function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | null, commonName = '', verifiedPhotos: readonly string[] = []) {
   const fields = normalizedFields(raw);
   const photoIds = Array.isArray(raw?.photoIds) ? raw.photoIds.filter((x): x is string => typeof x === 'string').slice(0, 6) : [];
   // A typed city label may complete onboarding but is NOT a trusted locality
   // for P02-3 discovery/activation. Keep the future eligibility gate closed.
-  const missing = draftMissing({ ...fields, displayName: fields.displayName || commonName }, handle, null, photoIds);
+  const missing = draftMissing({ ...fields, displayName: fields.displayName || commonName }, handle, null, verifiedPhotos);
   return {
     mode, exists: Boolean(raw), ...fields, effectiveDisplayName: fields.displayName || commonName, photoIds,
     requestedActive: raw?.requestedActive === true,
@@ -77,9 +79,30 @@ async function ownerDashboard(db: DynamoDBDocumentClient, uid: string) {
   if (!account) return null;
   const handle = typeof account.handle === 'string' ? account.handle : null;
   const shared = sharedSetup(settings);
+  // A library upload alone does not satisfy onboarding. Only mode-assigned
+  // media still marked READY in this authenticated owner's partition counts.
+  // Batch-get is bounded to 12 (six per mode); fail closed on unprocessed keys.
+  const assigned = (row?: Item): string[] => Array.isArray(row?.photoIds)
+    ? row.photoIds.filter(validMediaId).slice(0, 6) : [];
+  const mediaIds = [...new Set([...assigned(dating), ...assigned(friendship)])];
+  const verified = new Set<string>();
+  if (mediaIds.length > 0) {
+    const batch = await db.send(new BatchGetCommand({ RequestItems: {
+      [profilesTable]: { Keys: mediaIds.map(id => mediaKey(uid, id)), ConsistentRead: true }
+    } }));
+    if ((batch.UnprocessedKeys?.[profilesTable]?.Keys?.length ?? 0) > 0) {
+      throw new Error('profile_photo_verification_unavailable');
+    }
+    for (const row of batch.Responses?.[profilesTable] ?? []) {
+      if (row.PK === `USER#${uid}` && validMediaId(row.mediaId) &&
+          row.SK === `MEDIA#${row.mediaId}` && row.state === 'READY' &&
+          typeof row.refCount === 'number' && row.refCount >= 1) verified.add(row.mediaId);
+    }
+  }
+  const photosFor = (row?: Item) => assigned(row).filter(id => verified.has(id));
   const drafts = {
-    dating: dating ? normalizedFields(dating) : undefined,
-    friendship: friendship ? normalizedFields(friendship) : undefined
+    dating: dating ? { ...normalizedFields(dating), photoIds: photosFor(dating) } : undefined,
+    friendship: friendship ? { ...normalizedFields(friendship), photoIds: photosFor(friendship) } : undefined
   };
   const missing = onboardingMissing(handle, shared, drafts);
   const age = ageFromBirthDate(account.birthDate);
@@ -95,8 +118,8 @@ async function ownerDashboard(db: DynamoDBDocumentClient, uid: string) {
     },
     onboarding: { ready: missing.length === 0, missing },
     profiles: {
-      dating: ownerDto('dating', dating, handle, shared.commonName),
-      friendship: ownerDto('friendship', friendship, handle, shared.commonName)
+      dating: ownerDto('dating', dating, handle, shared.commonName, photosFor(dating)),
+      friendship: ownerDto('friendship', friendship, handle, shared.commonName, photosFor(friendship))
     }
   };
 }

@@ -1,3 +1,41 @@
+## 2026-11-16 — P02-2 guided onboarding Flutter compile fix
+
+- Resolved reported `ProfileRepository.photoBytes` undefined-method build failure in final profile review by typing the media read through the existing `ProfileMediaRepository` capability; added an actual Flutter preview widget assertion and negative source guard.
+- Removed the redundant `dart:typed_data` import and added `const` to the reported `ProfileMedia` test fixture. Portable regression passes; owner Flutter and Android retests remain pending. No backend, media storage, auth, or database changes.
+- See `docs/qa/P02_2_GUIDED_ONBOARDING_FLUTTER_COMPILE_REPAIR_2026_11_16.md`.
+
+## 2026-11-15 — P02-2 Android UI checkpoint-12 freeze repair
+
+- Fixed an awaited animated viewport scroll that could deadlock the physical Android UI test after PASS 12. Uses an instant scroll, one pumped frame and bounded fallback frames, retains the real Continue tap and PASS 13 screen assertion. Added an executable negative regression guard. No production source changes; physical Android retest is pending. See `docs/qa/P02_2_CHECKPOINT_12_ANIMATED_SCROLL_DEADLOCK_REPAIR_2026_11_15.md`.
+
+## 2026-11-15 — P02-2 final Android UI Continue hit-test repair (verification pending)
+
+- Repaired the final real UI E2E interaction after owner Windows tests passed checkpoints 01–12 but missed Continue due to fixed bottom navigation overlapping its hit-test location.
+- Added an explicitly aligned and viewport-checked genuine Continue tap, plus small-screen Flutter widget regression and negative source guards. No app authentication, backend, database, production navigation or profile-data modifications.
+- Portable regression passed. The real physical Android retest is **UNVERIFIED** until the owner's device prints checkpoint 13 and `All tests passed!`.
+- See `docs/qa/P02_2_FINAL_CONTINUE_HIT_TEST_REPAIR_2026_11_15.md`.
+
+## 2026-11-15 — P02-2 genuine screen-driven physical Android verification
+
+- Added independent `p02_2_ui_integration_test.dart` that mounts the actual persistent U_luv app and drives real Android Flutter text fields, mode switches, photo buttons and Continue with real local API/DynamoDB writes.
+- Added 13 assertion-backed stage checkpoints, including two-photo gating for each enabled mode, cross-mode reuse, removal/recovery, settings tab and session/profile restoration.
+- Uses two deterministic valid PNGs through **only** the native picker MethodChannel. This validates the Flutter pick/preview/upload/assign UX and backend but does not test the OS SAF picker UI; separate manual native-picker check remains mandatory.
+- Existing direct-service physical Android media test remains unchanged and required. Full P02-2 verifier now executes both device suites. Added isolated-APK uninstall protection for the new suite, source-contract guard and updated runbooks.
+- Authoring portable verification PASS. Flutter analyzer, Dart compilation and real physical UI run unavailable in the authoring environment; owner Windows rerun pending. No changes to authentication protocol, DynamoDB schema, backend media processing, cloud services, or P02-3.
+
+---
+
+> **2026-11-15 P02-2 onboarding persisted-state/visibility repair:** Added backend mandatory explicit gender gate; Flutter saved account preview, required labels, correct mode editor selection, return-state validation and editable-profile restoration on relaunch; strengthened unit/real API/widget/Android integration assertions. Prior green tests had inadequate full-form UI persistence coverage; device and Windows retesting pending. See `docs/qa/P02_2_ONBOARDING_PERSISTENCE_UI_REPAIR_2026_11_15.md`.
+
+## 2026-11-15 — P02-2 Windows lint/media-store/Flutter analyzer repair
+
+- Addressed reported Windows `no-unsafe-finally` in isolated Android fixture cleanup without weakening owner ID checks or skipping account cleanup.
+- Made local-media symlink negative test Windows-compatible via NTFS junctions; now requires the exact `unsafe_media_store` error and reports when local policy makes junction testing impossible.
+- Removed redundant Flutter `typed_data` import and applied `const` in photo-panel widget fixture, resolving the two reported analyzer diagnostics.
+- No changes to P01 authentication, P02 media API/format/ownership logic, production architecture, or private test app isolation. See `docs/qa/P02_2_WINDOWS_LINT_STORE_FLUTTER_ANALYZER_REPAIR_2026_11_15.md`. Windows full verification and manual acceptance are pending.
+
+---
+
 ## 2026-11-15 — P02-1 V4 handle-only refresh / Flutter controller-value regression
 
 - Owner reports portable, typecheck, lint, Fastify/DynamoDB and physical Android all PASS. One Flutter widget still FAILS to find unsaved common-name text after handle save.

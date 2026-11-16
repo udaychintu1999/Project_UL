@@ -2,6 +2,10 @@ package com.example.uluv
 
 import android.os.Build
 import android.os.Bundle
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import java.io.ByteArrayOutputStream
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -21,6 +25,58 @@ import javax.crypto.spec.GCMParameterSpec
 /** P01-3 device-bound, encrypted auth state: never writes plaintext credentials. */
 class MainActivity : FlutterActivity() {
     private val channel = "uluv/p01_3_secure"
+    private val photoChannel = "uluv/p02_2_photo_picker"
+    private val photoRequestCode = 9202
+    private var pendingPhotoResult: MethodChannel.Result? = null
+
+    /** Android system document picker: no broad media/storage permission. */
+    private fun openPhotoPicker(result: MethodChannel.Result) {
+        if (pendingPhotoResult != null) {
+            result.error("PICKER_BUSY", "An image is already being selected", null)
+            return
+        }
+        pendingPhotoResult = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try { startActivityForResult(intent, photoRequestCode) }
+        catch (_: Exception) {
+            pendingPhotoResult = null
+            result.error("PICKER_UNAVAILABLE", "The Android image picker is unavailable", null)
+        }
+    }
+
+    @Deprecated("System picker activity-result bridge")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != photoRequestCode) return
+        val callback = pendingPhotoResult ?: return
+        pendingPhotoResult = null
+        if (resultCode != Activity.RESULT_OK || data?.data == null) {
+            callback.success(null)
+            return
+        }
+        try {
+            val uri: Uri = requireNotNull(data.data)
+            val source = contentResolver.openInputStream(uri) ?: error("File unavailable")
+            source.use { input ->
+                val bytes = ByteArrayOutputStream()
+                val chunk = ByteArray(64 * 1024)
+                while (true) {
+                    val count = input.read(chunk)
+                    if (count < 0) break
+                    require(bytes.size() + count <= 8 * 1024 * 1024) { "Photo too large" }
+                    bytes.write(chunk, 0, count)
+                }
+                callback.success(bytes.toByteArray()) // Flutter Uint8List; never a filesystem path.
+            }
+        } catch (_: Exception) {
+            callback.error("PICKER_INVALID_IMAGE", "Choose a JPEG, PNG or WebP under 8 MB", null)
+        }
+    }
+
     private val signingAlias = "uluv.p01_3.device.sign.v1"
     private val cipherAlias = "uluv.p01_3.device.store.v1"
     private val preferences = "uluv_p01_3_sealed"
@@ -105,6 +161,12 @@ class MainActivity : FlutterActivity() {
     /** Narrow MethodChannel surface; native errors never echo protected material. */
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, photoChannel).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "pickPhoto" -> openPhotoPicker(result)
+                else -> result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel).setMethodCallHandler { call, result ->
             try {
                 when (call.method) {

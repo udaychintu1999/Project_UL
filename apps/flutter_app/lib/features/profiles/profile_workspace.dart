@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../../design/uluv_design.dart';
 import 'profile_models.dart';
 import 'profile_service.dart';
 import 'profile_media.dart';
@@ -622,6 +623,12 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     key: const ValueKey('p02-page-common'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      const UluvStageBanner(
+        title: 'The real you, first',
+        subtitle: 'One shared identity. Your Dating and Friendship stories stay separate.',
+        icon: Icons.person_outline_rounded,
+      ),
+      const SizedBox(height: 14),
       const Text('Shared by Dating and Friendship. Complete and save your '
         'public handle, name, broad city, gender selection and at least one mode.'),
       const SizedBox(height: 12),
@@ -675,12 +682,28 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       Text('Connection modes', style: Theme.of(context).textTheme.titleMedium),
       const Text('Enable Dating, Friendship, or both. This does not activate '
         'public discovery.'),
-      SwitchListTile(key: const Key('p02-enable-dating'),
-        title: const Text('Enable Dating'), value: datingEnabled,
-        onChanged: busy ? null : (value) => setModeEnabled('dating', value)),
-      SwitchListTile(key: const Key('p02-enable-friendship'),
-        title: const Text('Enable Friendship'), value: friendshipEnabled,
-        onChanged: busy ? null : (value) => setModeEnabled('friendship', value)),
+      const SizedBox(height: 10),
+      UluvSectionCard(tint: UluvPalette.pinkTint,
+        padding: EdgeInsets.zero,
+        child: SwitchListTile(key: const Key('p02-enable-dating'),
+          secondary: const Icon(Icons.favorite_border_rounded,
+            color: UluvPalette.pinkAction),
+          title: const Text('Enable Dating',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: const Text('Romantic connections'),
+          value: datingEnabled,
+          onChanged: busy ? null : (value) => setModeEnabled('dating', value))),
+      const SizedBox(height: 10),
+      UluvSectionCard(tint: UluvPalette.tealTint,
+        padding: EdgeInsets.zero,
+        child: SwitchListTile(key: const Key('p02-enable-friendship'),
+          secondary: const Icon(Icons.people_outline_rounded,
+            color: UluvPalette.teal),
+          title: const Text('Enable Friendship',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: const Text('Platonic friendships'),
+          value: friendshipEnabled,
+          onChanged: busy ? null : (value) => setModeEnabled('friendship', value))),
       const SizedBox(height: 10),
       if (commonDirty || handleDirty || hasPendingHandle)
         warning('Unsaved common details do not unlock the next step.',
@@ -692,11 +715,23 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     key: ValueKey('p02-page-$selected-details'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      UluvStageBanner(
+        title: selected == 'dating' ? 'Your Dating story' : 'Your Friendship story',
+        subtitle: selected == 'dating'
+          ? 'Share what makes a meaningful connection for you.'
+          : 'A few interests can spark a great friendship.',
+        icon: selected == 'dating'
+          ? Icons.favorite_border_rounded : Icons.people_outline_rounded,
+        friendship: selected == 'friendship',
+      ),
+      const SizedBox(height: 14),
       const Text('A separate nickname is optional; your common name is used if blank. '
         'Bio, intention and at least one interest must be saved.'),
       const SizedBox(height: 10),
-      Text('Draft version ${dashboard!.profiles[selected]!.version}'
-        '${dashboard!.profiles[selected]!.exists ? '' : ' (new)'}'),
+      Text(dashboard!.profiles[selected]!.exists
+          ? 'Your saved draft stays private. Save & Next confirms any new edits.'
+          : 'New private draft · complete the fields, then choose Save & Next.',
+        style: Theme.of(context).textTheme.bodySmall),
       editField('p02-name', 'Optional name just for this mode', displayName,
         length: 60),
       editField('p02-bio', 'Short bio (no contact links or numbers)', bio,
@@ -716,6 +751,13 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     key: ValueKey('p02-page-$selected-photos'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      UluvStageBanner(
+        title: selected == 'dating' ? 'Show the real you' : 'Faces behind friendships',
+        subtitle: 'Add at least two private photos for this mode. Reuse photos safely.',
+        icon: Icons.add_photo_alternate_outlined,
+        friendship: selected == 'friendship',
+      ),
+      const SizedBox(height: 14),
       if (widget.repository is ProfileMediaRepository &&
           dashboard!.profiles[selected]!.exists)
         ProfilePhotosPanel(key: ValueKey('p02-photos-$selected'),
@@ -779,9 +821,10 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
           return const SizedBox(width: 68, height: 68,
             child: Icon(Icons.image_outlined));
         }
-        return Image.memory(snapshot.data!.value!, width: 68, height: 68,
-          fit: BoxFit.cover, errorBuilder: (_, __, ___) =>
-            const Icon(Icons.broken_image_outlined));
+        return ClipRRect(borderRadius: BorderRadius.circular(12),
+          child: Image.memory(snapshot.data!.value!, width: 68, height: 68,
+            fit: BoxFit.cover, errorBuilder: (_, __, ___) =>
+              const Icon(Icons.broken_image_outlined)));
       },
     );
   }
@@ -790,33 +833,69 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     final state = dashboard!;
     return Column(key: const ValueKey('p02-page-review'),
       crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const UluvStageBanner(
+        title: 'Your story, all together',
+        subtitle: 'Review what you saved before requesting private activation.',
+        icon: Icons.fact_check_outlined,
+      ),
+      const SizedBox(height: 14),
       Text('Review your saved details',
         style: Theme.of(context).textTheme.titleMedium),
       const SizedBox(height: 8),
-      Text('Username: @${state.handle ?? ''}'),
-      Text('Display name: ${state.shared.commonName}'),
-      Text('Age: ${state.shared.age?.toString() ?? 'unavailable'}'),
-      Text('City: ${state.shared.locality}'),
-      Text('Gender: ${genderLabel(state.shared.gender)}'),
-      Text('Enabled modes: ${selectedModeLabel(state.shared)}'),
+      UluvSectionCard(tint: UluvPalette.blush,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Username: @${state.handle ?? ''}'),
+            const SizedBox(height: 5),
+            Text('Display name: ${state.shared.commonName}'),
+            const SizedBox(height: 5),
+            Text('Age: ${state.shared.age?.toString() ?? 'unavailable'}'),
+            const SizedBox(height: 5),
+            Text('City: ${state.shared.locality}'),
+            const SizedBox(height: 5),
+            Text('Gender: ${genderLabel(state.shared.gender)}'),
+            const SizedBox(height: 5),
+            Text('Enabled modes: ${selectedModeLabel(state.shared)}'),
+          ],
+        ),
+      ),
       const Divider(height: 30),
       for (final selected in ['dating', 'friendship'])
         if (selected == 'dating' ? state.shared.dating : state.shared.friendship) ...[
-          Text(selected == 'dating' ? 'Dating' : 'Friendship',
-            style: Theme.of(context).textTheme.titleMedium),
-          Text('Name: ${state.profiles[selected]!.displayName.isEmpty
-              ? state.shared.commonName : state.profiles[selected]!.displayName}'),
-          Text('Bio: ${state.profiles[selected]!.bio}'),
-          Text('Intention: ${state.profiles[selected]!.intention}'),
-          Text('Interests: ${state.profiles[selected]!.interests.join(', ')}'),
-          Text('Photos: ${state.profiles[selected]!.photoIds.length}/6'),
-          const SizedBox(height: 6),
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            for (final id in state.profiles[selected]!.photoIds) reviewPhoto(id),
-          ]),
+          UluvStageBanner(
+            title: selected == 'dating' ? 'Dating' : 'Friendship',
+            subtitle: selected == 'dating'
+              ? 'Your romantic-connection introduction'
+              : 'Your platonic-connection introduction',
+            icon: selected == 'dating'
+              ? Icons.favorite_border_rounded : Icons.people_outline_rounded,
+            friendship: selected == 'friendship',
+          ),
+          const SizedBox(height: 10),
+          UluvSectionCard(
+            tint: selected == 'dating' ? UluvPalette.pinkTint : UluvPalette.tealTint,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Name: ${state.profiles[selected]!.displayName.isEmpty
+                    ? state.shared.commonName : state.profiles[selected]!.displayName}'),
+                const SizedBox(height: 5),
+                Text('Bio: ${state.profiles[selected]!.bio}'),
+                const SizedBox(height: 5),
+                Text('Intention: ${state.profiles[selected]!.intention}'),
+                const SizedBox(height: 5),
+                Text('Interests: ${state.profiles[selected]!.interests.join(', ')}'),
+                const SizedBox(height: 5),
+                Text('Photos: ${state.profiles[selected]!.photoIds.length}/6'),
+                const SizedBox(height: 9),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  for (final id in state.profiles[selected]!.photoIds) reviewPhoto(id),
+                ]),
+              ],
+            ),
+          ),
           const Divider(height: 30),
         ],
-      const Text('These details and photos are saved privately. Public '
+      const UluvStatusNotice(message: 'These details and photos are saved privately. Public '
         'discovery activation is a separate P02-3 step.'),
       const SizedBox(height: 12),
       FilledButton(key: const Key('p02-continue'),
@@ -839,7 +918,9 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     final ready = dashboard?.onboarding.ready == true;
     if (ready && readySummary) {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Icon(Icons.check_circle_outline, size: 50, color: Colors.green),
+        const UluvStageBanner(title: 'You are all set',
+          subtitle: 'Your saved profile is ready for private activation requests.',
+          icon: Icons.check_circle_outline),
         const SizedBox(height: 12),
         Text('Profile setup complete',
           style: Theme.of(context).textTheme.titleLarge,
@@ -851,7 +932,8 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         const SizedBox(height: 16),
         for (final selected in ['dating', 'friendship'])
           if (selected == 'dating' ? dashboard!.shared.dating : dashboard!.shared.friendship)
-            Card(child: Padding(padding: const EdgeInsets.all(12), child: Column(
+            Card(color: selected == 'dating' ? UluvPalette.pinkTint : UluvPalette.tealTint,
+              child: Padding(padding: const EdgeInsets.all(14), child: Column(
               crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${selected == 'dating' ? 'Dating' : 'Friendship'} activation',
                 style: Theme.of(context).textTheme.titleMedium),
@@ -889,18 +971,21 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
     final current = steps.contains(activeStep) ? steps.indexOf(activeStep) : 0;
     final step = steps[current];
     final currentComplete = dashboard != null && stepSaved(step);
+    final activeAccent = step.startsWith('friendship')
+      ? UluvPalette.teal : UluvPalette.pinkAction;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Text('Set up your profile', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 6),
       Text('Step ${current + 1} of ${steps.length} · ${stepTitle(step)}',
         key: const Key('p02-step-label'),
-        style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: UluvPalette.ink, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 12),
       Row(children: [for (var i = 0; i < steps.length; i++)
         Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Container(height: 5, decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
-            color: i <= current ? Theme.of(context).colorScheme.primary
+            color: i <= current ? activeAccent
                 : Theme.of(context).colorScheme.outlineVariant,
           )),
         )),
@@ -912,6 +997,8 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
             child: ChoiceChip(
               key: Key('p02-step-tab-$i'),
               label: Text(stepTitle(steps[i])), selected: i == current,
+              selectedColor: steps[i].startsWith('friendship')
+                ? UluvPalette.tealTint : UluvPalette.pinkTint,
               onSelected: busy || (i > current &&
                   (i != current + 1 || !currentComplete))
                   ? null : (_) => stepTo(i),
@@ -919,6 +1006,9 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
           ),
         ],
       )),
+      const SizedBox(height: 6),
+      Text('Swipe to revisit steps. Moving forward requires saved, verified details.',
+        style: Theme.of(context).textTheme.bodySmall),
       const SizedBox(height: 8),
       if (busy) const LinearProgressIndicator(key: Key('p02-progress')),
       if (notice.isNotEmpty) Semantics(liveRegion: true,
@@ -962,7 +1052,8 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
               key: const Key('p02-step-warning'))),
         if (step != 'review' && currentComplete)
           const Padding(padding: EdgeInsets.only(top: 12),
-            child: Text('Saved and verified. You can continue.')),
+            child: UluvStatusNotice(
+              message: 'Saved and verified. You can continue.')),
         const SizedBox(height: 14),
         Row(children: [
           if (current > 0) Expanded(child: OutlinedButton(
@@ -972,6 +1063,9 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
           if (current > 0) const SizedBox(width: 10),
           if (step != 'review') Expanded(child: FilledButton(
             key: const Key('p02-save-next'),
+            style: step.startsWith('friendship')
+              ? FilledButton.styleFrom(backgroundColor: UluvPalette.teal)
+              : null,
             onPressed: busy ? null : saveAndNext,
             child: const Text('Save & Next'))),
         ]),

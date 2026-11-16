@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../../design/uluv_design.dart';
 import 'profile_media.dart';
 import 'profile_models.dart';
 
@@ -130,9 +131,10 @@ class _ProfilePhotosPanelState extends State<ProfilePhotosPanel> {
       final data = snapshot.data;
       if (data?.ok != true) return const SizedBox(width: 84, height: 84,
         child: Icon(Icons.broken_image_outlined));
-      return Image.memory(data!.value!, width: 84, height: 84,
-        fit: BoxFit.cover, gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined));
+      return ClipRRect(borderRadius: BorderRadius.circular(14),
+        child: Image.memory(data!.value!, width: 78, height: 78,
+          fit: BoxFit.cover, gaplessPlayback: true,
+          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)));
     });
   }
 
@@ -140,9 +142,20 @@ class _ProfilePhotosPanelState extends State<ProfilePhotosPanel> {
   Widget build(BuildContext context) {
     final attached = widget.profile.photoIds;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('Photos · ${widget.mode == 'dating' ? 'Dating' : 'Friendship'}',
-        style: Theme.of(context).textTheme.titleMedium),
-      Text('${attached.length}/6 assigned. At least 2 validated, saved photos are required for this enabled mode before Continue. Discovery activation is a separate later step.'),
+      Row(children: [
+        Expanded(child: Text('Photos · ${widget.mode == 'dating' ? 'Dating' : 'Friendship'}',
+          style: Theme.of(context).textTheme.titleMedium)),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            color: widget.mode == 'dating'
+              ? UluvPalette.pinkTint : UluvPalette.tealTint,
+            borderRadius: BorderRadius.circular(20)),
+          child: Text('${attached.length} / 6', key: const Key('p02-photo-count'),
+            style: const TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 12))),
+      ]),
+      const SizedBox(height: 6),
+      const Text('At least two validated, saved photos are required before Continue. Your photos stay private until separately authorized discovery.'),
       if (message.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8),
         child: Semantics(liveRegion: true, child: Text(message,
           key: const Key('p02-photo-message'),
@@ -153,36 +166,59 @@ class _ProfilePhotosPanelState extends State<ProfilePhotosPanel> {
               : null))),
       if (busy) const LinearProgressIndicator(key: Key('p02-photo-progress')),
       for (var index = 0; index < attached.length; index++)
-        Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-          _thumbnail(attached[index]),
-          const SizedBox(width: 8),
-          Expanded(child: Text('Photo ${index + 1}')),
-          IconButton(key: Key('p02-photo-up-$index'), tooltip: 'Move photo up',
-            onPressed: busy || index == 0 ? null : () {
-              final next = List<String>.from(attached);
-              final previous = next[index - 1]; next[index - 1] = next[index]; next[index] = previous;
-              _assign(next);
-            }, icon: const Icon(Icons.arrow_upward)),
-          IconButton(key: Key('p02-photo-down-$index'), tooltip: 'Move photo down',
-            onPressed: busy || index == attached.length - 1 ? null : () {
-              final next = List<String>.from(attached);
-              final after = next[index + 1]; next[index + 1] = next[index]; next[index] = after;
-              _assign(next);
-            }, icon: const Icon(Icons.arrow_downward)),
-          IconButton(key: Key('p02-photo-replace-$index'), tooltip: 'Replace this photo',
-            onPressed: busy ? null : () => _pick(replaceAt: index), icon: const Icon(Icons.swap_horiz)),
-          IconButton(key: Key('p02-photo-remove-$index'), tooltip: 'Remove from this mode',
-            onPressed: busy ? null : () => _assign([...attached]..removeAt(index)),
-            icon: const Icon(Icons.remove_circle_outline)),
-        ])),
+        Padding(padding: const EdgeInsets.symmetric(vertical: 5),
+          child: UluvSectionCard(padding: const EdgeInsets.all(10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  _thumbnail(attached[index]),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('Photo ${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w700))),
+                  const Icon(Icons.lock_outline_rounded, size: 18,
+                    color: UluvPalette.muted),
+                ]),
+                const SizedBox(height: 2),
+                Align(alignment: Alignment.centerRight,
+                  child: Wrap(spacing: 2, runSpacing: 2, children: [
+                    IconButton(key: Key('p02-photo-up-$index'),
+                      tooltip: 'Move photo up',
+                      onPressed: busy || index == 0 ? null : () {
+                        final next = List<String>.from(attached);
+                        final previous = next[index - 1];
+                        next[index - 1] = next[index]; next[index] = previous;
+                        _assign(next);
+                      }, icon: const Icon(Icons.arrow_upward)),
+                    IconButton(key: Key('p02-photo-down-$index'),
+                      tooltip: 'Move photo down',
+                      onPressed: busy || index == attached.length - 1 ? null : () {
+                        final next = List<String>.from(attached);
+                        final after = next[index + 1];
+                        next[index + 1] = next[index]; next[index] = after;
+                        _assign(next);
+                      }, icon: const Icon(Icons.arrow_downward)),
+                    IconButton(key: Key('p02-photo-replace-$index'),
+                      tooltip: 'Replace this photo',
+                      onPressed: busy ? null : () => _pick(replaceAt: index),
+                      icon: const Icon(Icons.swap_horiz)),
+                    IconButton(key: Key('p02-photo-remove-$index'),
+                      tooltip: 'Remove from this mode',
+                      onPressed: busy ? null : () =>
+                        _assign([...attached]..removeAt(index)),
+                      icon: const Icon(Icons.remove_circle_outline,
+                        color: UluvPalette.danger)),
+                  ])),
+              ]),
+          )),
       const SizedBox(height: 8),
       OutlinedButton.icon(key: const Key('p02-pick-photo'),
         onPressed: busy || attached.length >= 6 ? null : () => _pick(),
         icon: const Icon(Icons.add_photo_alternate_outlined), label: const Text('Select photo from device')),
       if (pendingPhoto != null) ...[
         const SizedBox(height: 8),
-        Image.memory(pendingPhoto!, height: 180, fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Text('Preview unavailable; invalid images are rejected by the server.')),
+        ClipRRect(borderRadius: BorderRadius.circular(18),
+          child: Image.memory(pendingPhoto!, height: 180, fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Text('Preview unavailable; invalid images are rejected by the server.'))),
         FilledButton(key: const Key('p02-confirm-photo-upload'), onPressed: busy ? null : _upload,
           child: Text(replacingIndex == null ? 'Upload and add photo' : 'Upload and replace photo')),
         TextButton(key: const Key('p02-cancel-photo-upload'), onPressed: busy ? null : () => setState(() {
@@ -190,23 +226,36 @@ class _ProfilePhotosPanelState extends State<ProfilePhotosPanel> {
         }), child: const Text('Cancel selection')),
       ],
       const SizedBox(height: 12),
+      const UluvStageBanner(title: 'Your private photo library',
+        subtitle: 'Reuse photos across modes. Delete only photos no mode uses.',
+        icon: Icons.collections_outlined),
+      const SizedBox(height: 8),
       Text('My private photo library', style: Theme.of(context).textTheme.titleSmall),
       const Text('Reuse a photo in both modes without uploading again. Deletion is allowed only when no mode uses it.'),
       TextButton(key: const Key('p02-refresh-photo-library'), onPressed: busy ? null : _loadLibrary,
         child: const Text('Refresh photo library')),
       for (final item in library.take(24))
-        Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-          _thumbnail(item.mediaId),
-          const SizedBox(width: 8),
-          Expanded(child: Text('Used in ${item.refCount} mode(s)')),
-          if (!attached.contains(item.mediaId))
-            IconButton(key: Key('p02-reuse-${item.mediaId}'), tooltip: 'Use in this mode',
-              onPressed: busy || attached.length >= 6 ? null : () => _assign([...attached, item.mediaId]),
-              icon: const Icon(Icons.add_circle_outline)),
-          IconButton(key: Key('p02-delete-${item.mediaId}'), tooltip: 'Delete unused image',
-            onPressed: busy || item.refCount != 0 ? null : () => _delete(item.mediaId),
-            icon: const Icon(Icons.delete_outline)),
-        ])),
+        Padding(padding: const EdgeInsets.symmetric(vertical: 5),
+          child: UluvSectionCard(padding: const EdgeInsets.all(10),
+            child: Row(children: [
+              _thumbnail(item.mediaId),
+              const SizedBox(width: 10),
+              Expanded(child: Text('Used in ${item.refCount} mode(s)',
+                style: Theme.of(context).textTheme.bodySmall)),
+              if (!attached.contains(item.mediaId))
+                IconButton(key: Key('p02-reuse-${item.mediaId}'),
+                  tooltip: 'Use in this mode',
+                  onPressed: busy || attached.length >= 6
+                    ? null : () => _assign([...attached, item.mediaId]),
+                  icon: const Icon(Icons.add_circle_outline,
+                    color: UluvPalette.teal)),
+              IconButton(key: Key('p02-delete-${item.mediaId}'),
+                tooltip: 'Delete unused image',
+                onPressed: busy || item.refCount != 0
+                  ? null : () => _delete(item.mediaId),
+                icon: const Icon(Icons.delete_outline)),
+            ]),
+          )),
     ]);
   }
 }

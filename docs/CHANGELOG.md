@@ -1,3 +1,11 @@
+## 2026-11-16 — P02-5 physical Android guided photo-count check repair
+
+- Owner Windows verification confirmed Flutter analyzer/54 widgets and nested P02-4 Gates 1–11 PASS; only guided real Android UI Gate 12 stopped after checkpoint 04 waiting for stale `1/6 assigned` text (new visual badge renders `1 / 6`).
+- Updated four photo count waits in the isolated real Android UI journey to use the keyed, server-backed `p02-photo-count`, and surfaced safe photo-panel status on a genuine upload/assignment failure. Added the missing portable regression guard and negative mutations to avoid repeated UI-copy-based hangs.
+- No production feature, Flutter screen, backend, auth, media storage, API, DB schema, or Android package changes. Portable suite PASS; **post-repair Android and full phase verification pending**. See `docs/qa/P02_5_ANDROID_GATE12_PHOTO_COUNT_COPY_REGRESSION_REPAIR_2026_11_16.md`.
+
+> **2026-11-16 · P02-5:** Added accessible warm/pink/teal Flutter design tokens, polished auth and Home/Settings, guided profile/filtered mode cards/review/photo controls without changing Save & Next or swipe, new visual widget tests and fail-closed P02-5 verifier. Portable tests passed; Windows/Android acceptance pending.
+
 ## 2026-11-16 — P02-4 full-phase verifier and acceptance handoff
 
 - Owner-reported P02-3 acceptance documented, including unified Save & Next Android test repair; no new P02 feature changes.

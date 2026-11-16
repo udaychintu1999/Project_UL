@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../design/uluv_design.dart';
 import 'auth_service.dart';
 import 'account_navigation.dart';
 
@@ -239,7 +240,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 liveRegion: true,
                 child: Text(error,
                     key: Key('$key-error'),
-                    style: const TextStyle(color: Colors.red))),
+                    style: const TextStyle(color: UluvPalette.danger,
+                      fontWeight: FontWeight.w700))),
           );
   }
 
@@ -577,7 +579,12 @@ class _AuthScreenState extends State<AuthScreen> {
             Semantics(
               liveRegion: true,
               child: Text(message, key: const Key('auth-message'),
-                  textAlign: TextAlign.center),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: RegExp(r'failed|unavailable|incorrect|error|could not|invalid|expired|retry',
+                      caseSensitive: false).hasMatch(message)
+                        ? UluvPalette.danger : UluvPalette.muted,
+                    fontWeight: FontWeight.w700)),
             ),
             if (busy) const Center(child: CircularProgressIndicator()),
           ],
@@ -612,6 +619,21 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (token == null) ...[
+                      Row(children: [
+                        Container(width: 38, height: 38,
+                          decoration: BoxDecoration(
+                            color: UluvPalette.pinkTint,
+                            borderRadius: BorderRadius.circular(13)),
+                          child: const Icon(Icons.favorite_border_rounded,
+                            color: UluvPalette.pinkAction)),
+                        const SizedBox(width: 10),
+                        const Expanded(child: Text('Real people. Real choices.',
+                          style: TextStyle(fontWeight: FontWeight.w700,
+                            color: UluvPalette.muted))),
+                      ]),
+                      const SizedBox(height: 18),
+                    ],
                     Text(
                         token != null
                             ? 'Your account'
@@ -623,11 +645,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                         ? 'Reset your password'
                                         : 'Welcome to U_luv',
                         key: const Key('auth-heading'),
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w600)),
+                        style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 8),
                     const Text(
-                        'Local development: verification codes are in the private test outbox, not sent by email.'),
+                        'Local development: verification codes are in the private test outbox, not sent by email.',
+                        style: TextStyle(color: UluvPalette.muted,
+                          fontSize: 12.5, height: 1.4)),
                     const SizedBox(height: 16),
                     if (token == null) ...[
                       if (passwords != null) ...[

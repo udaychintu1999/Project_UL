@@ -275,7 +275,23 @@ void main() {
     await tapKey(tester, 'p02-save-next');
     expect(find.byKey(const Key('p02-common-name')), findsOneWidget);
     expect(repo.handle, isNull);
-    await tester.drag(find.byKey(const Key('p02-swipe-region')), const Offset(-320, 0));
+    // The swipe region is taller than the widget-test viewport. Its *center*
+    // can be above the screen after an earlier Save & Next scroll; dragging
+    // that center misses all hit targets. Start inside the visible static
+    // banner so the real ancestor GestureDetector receives the gesture.
+    final swipeOrigin = find.text('The real you, first');
+    await Scrollable.ensureVisible(tester.element(swipeOrigin),
+      alignment: 0.25, duration: Duration.zero,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit);
+    await tester.pump();
+    expect(find.ancestor(of: swipeOrigin,
+      matching: find.byKey(const Key('p02-swipe-region'))), findsOneWidget);
+    final origin = tester.getRect(swipeOrigin).center;
+    expect(origin.dy, inInclusiveRange(0, tester.view.physicalSize.height /
+      tester.view.devicePixelRatio));
+    // The wizard checks end velocity (250 px/s). A drag with no time between
+    // pointer events may have zero velocity and never exercise that gate.
+    await tester.flingFrom(origin, const Offset(-120, 0), 900);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('p02-common-name')), findsOneWidget);
   });

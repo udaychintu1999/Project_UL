@@ -1,3 +1,7 @@
+> **P02-5 Gate 5 Flutter lint repair (2026-11-16):** Owner-reported Flutter analyzer failure arose from five missing `const` constructors in one new visual widget test. Focused test-only fix and guard were added; portable checks passed, full Flutter/Android verification still required. `docs/qa/P02_5_GATE5_FLUTTER_CONST_REPAIR_2026_11_16.md`.
+
+> **Current slice P02-5 — UI polish only (2026-11-16):** Owner accepted P02-4 local flow. The UI pack is reference material, not permission for P03, cloud or payments. Run `npm run verify:p02-5:portable`; real Flutter/Android P02-5 acceptance pending. See `docs/design_reviews/P02_5_REFERENCE_TO_IMPLEMENTED_SCREENS_2026_11_16.md` and manual checklist.
+
 ## Current authoritative task — P02-4 verification (2026-11-16)
 
 P02-3 independent activation intent and unified Save & Next received owner report "all passed" after Android test repair. P02-4 is a **verification-only** closeout slice. Run `npm run verify:p02-4:plan` (safe), `npm run verify:p02-4:portable` (offline), then with Java DynamoDB Local, Fastify and a real USB Android phone `npm run verify:p02-4`. Complete native Android picker manual acceptance separately. Only a real full 12-stage PASS plus manual acceptance and owner signoff may close P02 as `CORE_FLOW_VERIFIED (LOCAL)`; none authorizes public P03 or cloud. Read `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md`.

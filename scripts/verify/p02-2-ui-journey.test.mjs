@@ -156,3 +156,47 @@ test('P02-3 step pointer positioning never awaits an unpumped animation', () => 
   assert.doesNotMatch(helper, /await tester\.pumpAndSettle\(\)/,
     'an unbounded animation settle after scroll can hang on a real device');
 });
+
+
+// P02-5 regression from owner's physical Android PASS 04 -> checkpoint 05
+// timeout: the photo badge now renders `1 / 6`, not legacy `1/6 assigned`.
+// A real upload could finish successfully while the test waited forever for
+// deleted visual copy. Check server-backed widget state by stable key instead.
+test('P02-5 Android photo journey checks saved count by key across upload, reuse and removal', () => {
+  const panel = source('apps/flutter_app/lib/features/profiles/profile_photos_panel.dart');
+  assert.match(panel, /key:\s*const Key\('p02-photo-count'\)/);
+  assert.match(ui, /String _savedPhotoCount\(WidgetTester tester\)/);
+  assert.match(ui, /_text\(tester, 'p02-photo-count'\)\.replaceAll\(RegExp\(r'\\s\+'\), ''\)/,
+    'count parser must ignore whitespace while reading keyed, saved profile state');
+  const waits = [
+    'first saved Dating photo',
+    'two saved Dating photos',
+    'Friendship photo removed',
+    '$expectedCount reusable photos assigned',
+  ];
+  for (const label of waits) {
+    assert.ok(ui.includes(label), `missing actual UI checkpoint: ${label}`);
+  }
+  for (const required of [
+    "await _waitForSavedPhotoCount(tester, 1, 'first saved Dating photo');",
+    "await _waitForSavedPhotoCount(tester, 2, 'two saved Dating photos');",
+    "await _waitForSavedPhotoCount(tester, 1, 'Friendship photo removed');",
+    'await _waitForSavedPhotoCount(\n      tester, expectedCount,',
+  ]) assert.ok(ui.includes(required), `missing server-backed count wait: ${required}`);
+  assert.doesNotMatch(ui, /find\.textContaining\([^)]*\/6 assigned/,
+    'deleted copy must not block an otherwise successful Android upload');
+  assert.match(ui, /on TestFailure[\s\S]*?'p02-photo-message'/,
+    'real backend failure must report safe photo status and current count');
+
+  // Negative mutations: a restored copy-dependent assertion or a removed
+  // first-photo count check would make the contract FAIL rather than silently pass.
+  const safe = candidate =>
+    candidate.includes("await _waitForSavedPhotoCount(tester, 1, 'first saved Dating photo');") &&
+    !/find\.textContaining\([^)]*\/6 assigned/.test(candidate);
+  assert.equal(safe(ui), true);
+  assert.equal(safe(ui.replace(
+    "await _waitForSavedPhotoCount(tester, 1, 'first saved Dating photo');", 
+    "await _until(tester, 'first saved Dating photo', () => find.textContaining('1/6 assigned').evaluate().isNotEmpty);")), false);
+  assert.equal(safe(ui.replace(
+    "await _waitForSavedPhotoCount(tester, 1, 'first saved Dating photo');", '')), false);
+});

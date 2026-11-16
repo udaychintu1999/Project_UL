@@ -1,3 +1,9 @@
+## 2026-11-16 — P02-5 Android Gate 12 real UI photo-count stale assertion
+
+Owner Windows log: `npm run test:flutter` **PASS 54 widget tests** and Flutter analyze no issues; `npm run verify:p02-5` nested P02-4 **Gates 1–11 PASS** (including local DB/API and two separate Android device suites), **Gate 12 FAIL** after UI checkpoints 01–04 when test waited for removed `1/6 assigned` copy. Authoring repair replaces four stale count checks with server-updated keyed `p02-photo-count` and bounded diagnostic failures, adds negative source regression; `npm run verify:p02-5:portable` **PASS**, 9/9 UI source guards and 10/10 P02-5 source guards. **Android Gate 12 after this repair NOT RUN; no P02-5 owner acceptance claimed.** See `docs/qa/P02_5_ANDROID_GATE12_PHOTO_COUNT_COPY_REGRESSION_REPAIR_2026_11_16.md`.
+
+---
+
 ## 2026-11-16 — P02-4 phase verification evidence and owner acceptance gate
 
 Owner-reported P02-3 Android Save & Next repair **all passed**; P02-1 and P02-2 previously owner-accepted local development. New P02-4 full regression includes portable, TS/lint, Sharp store, Flutter, real local Fastify/Java DB, three distinct integration scripts and three isolated Android E2E suites. **Full P02-4 verifier has not yet run on owner's Windows PC; native Android picker manual check remains outstanding.** Preserve the prior automated P01-1 OTP failure as historical failed/local-only waiver. Authoring portable results: see `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md`.

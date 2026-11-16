@@ -82,7 +82,11 @@
     "test:p02-4:contracts": "node --test scripts/verify/p02-4-verifier.test.mjs",
     "verify:p02-4:portable": "npm run verify:p02-3:portable && npm run test:p02-4:contracts",
     "verify:p02-4:plan": "node scripts/verify/p02-4-verifier.mjs --list",
-    "verify:p02-4": "node --env-file=apps/api/.env scripts/verify/p02-4-verifier.mjs"
+    "verify:p02-4": "node --env-file=apps/api/.env scripts/verify/p02-4-verifier.mjs",
+    "test:p02-5:contracts": "node --test scripts/verify/p02-5-visual-contracts.test.mjs scripts/verify/p02-5-verifier.test.mjs",
+    "verify:p02-5:portable": "npm run verify:p02-4:portable && npm run test:p02-5:contracts",
+    "verify:p02-5": "node --env-file=apps/api/.env scripts/verify/p02-5-verifier.mjs",
+    "verify:p02-5:plan": "node scripts/verify/p02-5-verifier.mjs --list"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

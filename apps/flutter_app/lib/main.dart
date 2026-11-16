@@ -3,6 +3,7 @@ import 'diagnostics_service.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/persistent_gate.dart';
+import 'design/uluv_design.dart';
 
 void main() {
   // These are local development defaults; the launcher supplies the actual
@@ -34,9 +35,7 @@ class UluvApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: persistentMode ? 'U_luv' : 'U_luv Diagnostics',
-      theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF2757E)),
-          useMaterial3: true),
+      theme: UluvTheme.light(),
       home: persistentMode && authService is HttpAuthService
           ? PersistentAuthGate(service: authService! as HttpAuthService)
           : DiagnosticsHome(service: service, authService: authService),

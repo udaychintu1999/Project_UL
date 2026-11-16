@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../design/uluv_design.dart';
 
 /// Authenticated P02-1 navigation. Pages remain mounted in IndexedStack so
 /// switching to Settings cannot silently discard unsubmitted profile edits.
@@ -34,9 +35,15 @@ class AccountNavigation extends StatelessWidget {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.favorite_rounded, color: colors.primary, size: 25),
-              const SizedBox(width: 9),
-              const Text('U_luv', style: TextStyle(fontWeight: FontWeight.w700)),
+              Container(
+                width: 33, height: 33,
+                decoration: BoxDecoration(color: UluvPalette.pinkTint,
+                  borderRadius: BorderRadius.circular(11)),
+                child: Icon(Icons.favorite_rounded, color: colors.primary, size: 21),
+              ),
+              const SizedBox(width: 10),
+              const Text('U_luv', style: TextStyle(fontWeight: FontWeight.w800,
+                letterSpacing: -0.25)),
             ],
           ),
         ),
@@ -46,22 +53,25 @@ class AccountNavigation extends StatelessWidget {
             children: [
               _AccountPage(
                 key: const Key('p02-home-page'),
-                heading: 'Your space',
-                caption: 'Make your introduction feel like you.',
+                heading: 'Your profile',
+                caption: 'A little about you goes a long way.',
                 icon: Icons.person_outline_rounded,
                 child: home,
               ),
               _AccountPage(
                 key: const Key('p02-settings-page'),
-                heading: 'Settings',
-                caption: 'Keep your account and signed-in devices secure.',
+                heading: 'Account & safety',
+                caption: 'Your privacy, security and signed-in devices.',
                 icon: Icons.tune_rounded,
                 child: settings,
               ),
             ],
           ),
         ),
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(color: UluvPalette.paper,
+            border: Border(top: BorderSide(color: UluvPalette.border))),
+          child: NavigationBar(
           key: const Key('p02-bottom-navigation'),
           selectedIndex: selectedIndex,
           onDestinationSelected: onSelect,
@@ -79,6 +89,7 @@ class AccountNavigation extends StatelessWidget {
               label: 'Settings',
             ),
           ],
+          ),
         ),
       ),
     );
@@ -101,8 +112,6 @@ class _AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     return CustomScrollView(
       key: PageStorageKey<String>('p02-scroll-$heading'),
       slivers: [
@@ -111,46 +120,19 @@ class _AccountPage extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 660),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 36),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 42),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: colors.primaryContainer,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(icon, color: colors.onPrimaryContainer),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(heading, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 2),
-                              Text(caption, style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
-                            ],
-                          ),
-                        ),
-                      ],
+                    UluvStageBanner(
+                      title: heading,
+                      subtitle: caption,
+                      icon: icon,
+                      friendship: false,
                     ),
-                    const SizedBox(height: 20),
-                    Card(
-                      margin: EdgeInsets.zero,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: colors.outlineVariant),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: child,
-                      ),
+                    const SizedBox(height: 16),
+                    UluvSectionCard(
+                      child: child,
                     ),
                   ],
                 ),

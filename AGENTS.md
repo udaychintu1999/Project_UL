@@ -1,3 +1,15 @@
+# Latest P02-5 Flutter widget runtime repair (2026-11-16)
+
+Owner's post-const Windows log: `flutter analyze` CLEAN, but eight widget tests FAILED after P02-5 visual upgrade. Root-cause audit found a real Material ink violation in colored `SwitchListTile` wrappers, a swipe test aimed off-screen, stale photo counter expectations, and an off-screen auth navigation tap. These are now repaired in production presentation and tests, with two new source guards and a positive Material/SwitchListTile widget regression. Authoring portable PASS; **Windows Flutter and full USB/Android P02-5 execution still PENDING**. No public discovery/activation change, no DB/cloud change. See `docs/qa/P02_5_FLUTTER_WIDGET_RUNTIME_ROOT_CAUSE_REPAIR_2026_11_16.md`.
+
+# Latest P02-5 Windows Gate 5 repair (2026-11-16)
+
+Owner logs show P02-5 portable, TypeScript, lint and private media store PASS but `npm run test:flutter` STOPPED on five `prefer_const_constructors` findings in the **new visual widget test** at lines 59–61; the full P02-5 verifier stopped at P02-4 gate 5, later gates NOT RUN. This test-only patch gives the 320dp fixture a transitive const root and adds a source regression guard. P02-5 Flutter/Android acceptance **PENDING owner Windows retest**; P02-4 remains previously owner-accepted. No production Flutter/API behavior changes. Read `docs/qa/P02_5_GATE5_FLUTTER_CONST_REPAIR_2026_11_16.md`.
+
+# P02-5 current UI visual upgrade — 2026-11-16
+
+Owner confirms P02-4 complete for local development. **P02-5 is a visual-only upgrade of existing P01/P02 Flutter UI** against the owner-committed reference pack; maintain the conditional swipe wizard, one **Save & Next**, backend photo/activation gates and P03 fail-closed privacy. New reusable Material tokens, native Flutter widgets and source/visual regressions are implemented; portable checks PASSED, Windows Flutter/Android and real native SAF picker acceptance **PENDING**. Run `npm run verify:p02-5:portable`, then `npm run verify:p02-5` with owner-started local services and USB phone. See `docs/qa/P02_5_UI_REFERENCE_VISUAL_IMPLEMENTATION_EVIDENCE_2026_11_16.md` and `docs/manual/P02_5_WINDOWS_VISUAL_ACCEPTANCE_2026_11_16.md`. Do not run real AWS or infer P03 authorization.
+
 ## P02-4 Gate 5 current repair (2026-11-16) — widget tests, owner recheck required
 
 Owner reported Flutter analyzer now clean but five widget-test failures after missed `p02-gender` tap, plus apparent long-scroll stall in `test:flutter`. The latest focused patch centers every shared widget test tap without awaiting animations, makes missed hits fatal, verifies the chosen gender, and removes the awaited 250ms navigation test scroll. P02-3 production code remains untouched and owner-accepted; the P02-4 local full verifier still requires a fresh owner Windows run (do not mark P02 fully complete). See `docs/qa/P02_4_GATE5_WIDGET_HIT_TEST_AND_SCROLL_REPAIR_2026_11_16.md`.

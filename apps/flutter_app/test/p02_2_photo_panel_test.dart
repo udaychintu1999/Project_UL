@@ -59,7 +59,7 @@ void main() {
       )),
     ))));
     await tester.pumpAndSettle();
-    expect(find.textContaining('0/6 assigned'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('p02-photo-count'))).data, '0 / 6');
     await tester.tap(find.byKey(const Key('p02-pick-photo')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('p02-confirm-photo-upload')), findsOneWidget);
@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.uploads, 1);
     expect(repo.current.photoIds.length, 1);
-    expect(find.textContaining('1/6 assigned'), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('p02-photo-count'))).data, '1 / 6');
     expect(repo.current.version, 2);
     await tester.ensureVisible(find.byKey(const Key('p02-photo-remove-0')));
     await tester.tap(find.byKey(const Key('p02-photo-remove-0')));

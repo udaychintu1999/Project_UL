@@ -145,6 +145,31 @@ String _text(WidgetTester tester, String key) {
   return widget.data ?? widget.textSpan?.toPlainText() ?? '';
 }
 
+// P02-5 changed the visual counter from `N/6 assigned` to `N / 6`.
+// Verify the REAL saved-profile count by its stable widget key, never by UI
+// copy. The server-backed onUpdated callback supplies this displayed count;
+// a preview or uploaded-but-unassigned media must NOT satisfy this gate.
+String _savedPhotoCount(WidgetTester tester) =>
+    _text(tester, 'p02-photo-count').replaceAll(RegExp(r'\s+'), '');
+
+Future<void> _waitForSavedPhotoCount(
+  WidgetTester tester, int expected, String description,
+) async {
+  try {
+    await _until(tester, description,
+        () => _savedPhotoCount(tester) == '$expected/6');
+  } on TestFailure {
+    // If a real upload/assignment failed, surface the private UI status
+    // instead of reporting a misleading generic photo-count timeout.
+    final observed = _text(tester, 'p02-photo-count');
+    final message = _text(tester, 'p02-photo-message');
+    final busy = _key('p02-photo-progress').evaluate().isNotEmpty;
+    throw TestFailure('P02-2 UI $description: expected $expected / 6 saved '
+        'photos; displayed "$observed"; photo status "$message"; '
+        'operation in progress: $busy. No private media/credentials logged.');
+  }
+}
+
 Future<void> _tap(WidgetTester tester, Finder target) async {
   await tester.ensureVisible(target);
   FocusManager.instance.primaryFocus?.unfocus();
@@ -269,8 +294,8 @@ Future<void> _reuseOne(WidgetTester tester, int expectedCount) async {
   await _until(tester, 'reusable owner-owned photo available',
       () => _reuseButtons.evaluate().isNotEmpty);
   await _tap(tester, _reuseButtons.first);
-  await _until(tester, '$expectedCount reusable photos assigned',
-      () => find.textContaining('$expectedCount/6 assigned').evaluate().isNotEmpty);
+  await _waitForSavedPhotoCount(
+      tester, expectedCount, '$expectedCount reusable photos assigned');
 }
 
 void main() {
@@ -354,8 +379,7 @@ void main() {
         await _until(tester, 'first photo preview',
             () => _key('p02-confirm-photo-upload').evaluate().isNotEmpty);
         await _tapKey(tester, 'p02-confirm-photo-upload');
-        await _until(tester, 'first saved Dating photo',
-            () => find.textContaining('1/6 assigned').evaluate().isNotEmpty);
+        await _waitForSavedPhotoCount(tester, 1, 'first saved Dating photo');
         expect(_canNext(tester), isFalse);
         _checkpoint(5, 'photo-picker button → preview → real upload, one photo still blocks Continue');
 
@@ -363,8 +387,7 @@ void main() {
         await _until(tester, 'second photo preview',
             () => _key('p02-confirm-photo-upload').evaluate().isNotEmpty);
         await _tapKey(tester, 'p02-confirm-photo-upload');
-        await _until(tester, 'two saved Dating photos',
-            () => find.textContaining('2/6 assigned').evaluate().isNotEmpty);
+        await _waitForSavedPhotoCount(tester, 2, 'two saved Dating photos');
         await _until(tester, 'Dating photo step unlocked by server',
             () => _canNext(tester));
         expect(pickerCalls, 2);
@@ -404,8 +427,7 @@ void main() {
         _checkpoint(9, 'two photos reused through Friendship UI without another upload');
 
         await _tapKey(tester, 'p02-photo-remove-0');
-        await _until(tester, 'Friendship photo removed',
-            () => find.textContaining('1/6 assigned').evaluate().isNotEmpty);
+        await _waitForSavedPhotoCount(tester, 1, 'Friendship photo removed');
         expect(_canNext(tester), isFalse);
         await _reuseOne(tester, 2);
         await _until(tester, 'gate reopened after Friendship restoration',

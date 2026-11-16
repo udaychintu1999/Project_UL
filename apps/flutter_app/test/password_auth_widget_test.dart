@@ -197,8 +197,26 @@ void main() {
     expect(find.byKey(const Key('auth-code')), findsNothing,
         reason:
             'No signup code was issued; never invite an impossible verification.');
-    expect(find.byKey(const Key('auth-signup-go-login')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('auth-signup-go-login')));
+    final goToLogin = find.byKey(const Key('auth-signup-go-login'));
+    expect(goToLogin, findsOneWidget);
+    // The reference-inspired auth layout is taller than the 800x600 test
+    // viewport. A direct tap can land below the screen and silently fail.
+    // Position the REAL control with an instantaneous, pumped scroll.
+    await Scrollable.ensureVisible(tester.element(goToLogin),
+      alignment: 0.4, duration: Duration.zero,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit);
+    await tester.pump();
+    final buttonRect = tester.getRect(goToLogin);
+    expect(buttonRect.top, greaterThanOrEqualTo(0));
+    expect(buttonRect.bottom, lessThanOrEqualTo(
+      tester.view.physicalSize.height / tester.view.devicePixelRatio));
+    final previousPolicy = WidgetController.hitTestWarningShouldBeFatal;
+    WidgetController.hitTestWarningShouldBeFatal = true;
+    try {
+      await tester.tap(goToLogin);
+    } finally {
+      WidgetController.hitTestWarningShouldBeFatal = previousPolicy;
+    }
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('auth-password-login')), findsOneWidget);
   });

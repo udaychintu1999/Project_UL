@@ -1,3 +1,5 @@
+> P03 pending owner gate (2026-11-17): apply API terminal diagnostics/Dart compile fix and run Windows `npm run typecheck`, `flutter analyze`, Flutter P03 widget tests, and moto g04s location save/reopen with API logs before proceeding. `docs/manual/P03_API_TERMINAL_LOGGING_AND_DART_COMPILE_REPAIR_2026_11_17.md`.
+
 > **NEXT:** Owner Windows verify P02-5 UI visual refresh (`npm run test:flutter`, `npm run verify:p02-5`) and native Android SAF picker/320–430dp visual review; accept only after actual PASS. Then return to P03 planning without fake public discovery. See `docs/manual/P02_5_WINDOWS_VISUAL_ACCEPTANCE_2026_11_16.md`.
 
 # Next owner action — verify P02-4 before opening P03 (2026-11-16)

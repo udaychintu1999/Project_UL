@@ -19,14 +19,40 @@ function equalDevToken(expected: string | undefined, supplied: string | undefine
  */
 export function buildApp(config: AppConfig, db: DynamoDBDocumentClient) {
   const app = Fastify({
+    disableRequestLogging: true, // one application-level result per request; avoid duplicate low-level JSON log noise
     logger: {
       level: config.env === 'test' ? 'silent' : 'info',
+      ...(config.env === 'local' ? {
+        transport: { target: 'pino-pretty', options: {
+          colorize: process.stdout.isTTY === true, translateTime: 'SYS:HH:MM:ss',
+          ignore: 'pid,hostname,req,res', singleLine: true,
+        } },
+      } : {}),
       redact: {
         paths: ['req.headers.authorization', 'req.headers.cookie', 'req.headers.x-uluv-dev-key', 'req.url', 'res.headers.set-cookie'],
         remove: true
       }
     },
     bodyLimit: 16 * 1024
+  });
+  // P03 diagnostic baseline for ALL API requests. Deliberately logs the
+  // registered route template, never req.url (which may contain query secrets),
+  // request bodies, authorization headers or user identifiers.
+  const apiStart=new WeakMap<import('fastify').FastifyRequest,number>();
+  app.addHook('onRequest',(request,_reply,done)=>{
+    apiStart.set(request,Date.now());
+    done();
+  });
+  app.addHook('onResponse',(request,reply,done)=>{
+    const status=reply.statusCode;
+    const detail={apiEvent:'request.completed',requestId:request.id,
+      method:request.method,route:request.routeOptions.url??'unknown_route',
+      status,elapsedMs:Date.now()-(apiStart.get(request)??Date.now())};
+    const summary=`[API] ${request.method} ${detail.route} → ${status} (${detail.elapsedMs}ms) [${request.id}]`;
+    if(status>=500)request.log.error(detail,summary);
+    else if(status>=400)request.log.warn(detail,summary);
+    else request.log.info(detail,summary);
+    done();
   });
   app.get('/health/live', async () => ({ status: 'ok', service: 'uluv-api' }));
   // Read a known DynamoDB sentinel rather than assuming a reachable TCP port
@@ -91,10 +117,14 @@ export function buildApp(config: AppConfig, db: DynamoDBDocumentClient) {
     });
   }
   if (config.env === 'local' || (config.env === 'test' && config.devToken)) registerLocalEmailAuth(app, db, config);
-  app.setErrorHandler((error, _req, reply) => {
+  app.setErrorHandler((error, request, reply) => {
     // Fastify can deliver non-Error throwables. Log only a safe category, never raw payloads.
     const errorName = error instanceof Error ? error.name : 'UnknownError';
-    app.log.error({ errorName }, 'request failed');
+    request.log.error({apiEvent:'uncaught',requestId:request.id,
+      route:request.routeOptions.url??'unknown_route',errorName,
+      errorCode:typeof error==='object' && error!==null && 'code' in error &&
+        typeof error.code==='string' && /^[A-Z0-9_]{1,64}$/.test(error.code) ? error.code : 'unspecified'},
+      'API unhandled error');
     if (typeof error === 'object' && error !== null &&
         'code' in error && error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
       reply.code(413).send({ error: 'payload_too_large' });

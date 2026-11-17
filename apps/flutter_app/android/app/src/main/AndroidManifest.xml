@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for private Fastify API and public CloudFront JSON (release and debug). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- One-time foreground GPS only; never request background location. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
         android:label="uluv"
         android:allowBackup="false"

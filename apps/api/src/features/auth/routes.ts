@@ -22,6 +22,9 @@ import { registerDeviceSessionRoutes } from './device-sessions.js';
 import { p13Keys, accessDigest } from './device-session-policy.js';
 import { registerProfileRoutes } from '../profiles/routes.js';
 import { registerProfileMediaRoutes } from '../profiles/media-routes.js';
+import { registerIndiaGeoRoutes } from '../geo/routes.js';
+import { registerGeoPreferenceRoutes } from '../geo/settings-routes.js';
+import { registerIndiaPincodeRoutes } from '../pincode/routes.js';
 
 const authTable = 'uluv_auth_links';
 const usersTable = 'uluv_users';
@@ -401,6 +404,9 @@ export function registerLocalEmailAuth(app: FastifyInstance, db: DynamoDBDocumen
   // P02-1 reuses this exact validated P01-2/P01-3 session guard.
   registerProfileRoutes(app, db, requireSession);
   registerProfileMediaRoutes(app, db, requireSession);
+  registerGeoPreferenceRoutes(app, db, requireSession);
+  registerIndiaGeoRoutes(app, db, requireSession);
+  registerIndiaPincodeRoutes(app, requireSession);
   const devices = registerDeviceSessionRoutes(app, db, secret, requireSession);
   app.get('/v1/auth/me', async (request, reply) => {
     const auth = await requireSession(request, reply);

@@ -40,3 +40,7 @@ __pycache__/
 *.zip
 artifacts/
 releases/
+
+# GeoNames JSON is kept ONLY in S3 (or an external temporary rebuild directory), not Git.
+/geo/india/
+/geo/india/pincodes/

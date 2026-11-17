@@ -4,6 +4,7 @@ import 'auth_service.dart';
 import 'persistent_session.dart';
 import '../profiles/profile_service.dart';
 import '../profiles/profile_workspace.dart';
+import '../geo/geo_settings_panel.dart';
 
 /// P01-3 root: no P00 buttons and no unverified account content during restore.
 /// The controller owns the session state; this widget only selects its UI.
@@ -208,6 +209,7 @@ class _DeviceManagementPanelState extends State<DeviceManagementPanel> {
   @override
   Widget build(BuildContext context) =>
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        UluvGeoSettingsPanel(baseUrl:widget.controller.api.baseUrl, access:widget.controller.access),
         OutlinedButton(
             key: const Key('p13-manage-devices'),
             onPressed: busy

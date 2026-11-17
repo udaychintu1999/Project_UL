@@ -9,9 +9,13 @@ import 'profile_photos_panel.dart';
 /// An in-place authenticated panel. Unlike a pushed route, it is immediately
 /// destroyed when PersistentAuthGate hides the account after logout/revocation.
 class ProfileWorkspace extends StatefulWidget {
-  const ProfileWorkspace({super.key, required this.repository, this.initiallyExpanded = false});
+  const ProfileWorkspace({super.key, required this.repository, this.initiallyExpanded = false,
+    this.onDashboardConfirmed, this.summaryOnReady = false});
   final bool initiallyExpanded;
   final ProfileRepository repository;
+  /// Derived only from authenticated Fastify /v1/profiles/me. Never optimistic.
+  final ValueChanged<ProfileDashboard>? onDashboardConfirmed;
+  final bool summaryOnReady;
   @override
   State<ProfileWorkspace> createState() => _ProfileWorkspaceState();
 }
@@ -32,6 +36,7 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
   final Map<String, ({String name, String bio, String interests,
       String intention, bool unsaved})> modeEdits = {};
   bool expanded = false, busy = false, dirty = false;
+  bool profileReadAttempted = false;
   String activeStep = 'common';
   String notice = '';
   String handleError = '';
@@ -141,6 +146,7 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         if (!dirty) loadMode(mode);
         notice = 'Common profile saved. Complete each enabled mode to continue.';
       });
+      widget.onDashboardConfirmed?.call(result.value!);
     } catch (_) {
       if (mounted) setState(() => notice = 'Common profile not confirmed saved. Reload before retrying.');
     } finally {
@@ -171,8 +177,11 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         dashboard = result.value;
         if (!preserveEditors && !commonDirty) loadCommon();
         if (!preserveEditors && !dirty) loadMode(mode);
+        if (widget.summaryOnReady && result.value!.onboarding.ready &&
+            !commonDirty && !dirty && !handleDirty) readySummary = true;
         notice = 'Saved details and setup status refreshed.';
       });
+      widget.onDashboardConfirmed?.call(result.value!);
     } catch (_) { // Persisted draft succeeded; a subsequent status read may fail.
       if (mounted) setState(() => notice = 'Draft saved. Reload to confirm setup readiness.');
     }
@@ -184,7 +193,8 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       final discard = await confirmDiscard();
       if (!discard || !mounted) return;
     }
-    setState(() { busy = true; notice = 'Loading your profile drafts...'; });
+    setState(() { busy = true; profileReadAttempted = true;
+      notice = 'Loading your profile drafts...'; });
     try {
       final result = await widget.repository.dashboard();
       if (!mounted) return;
@@ -209,10 +219,11 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         // Always restore the editable profile on launch. Previously, completed
         // onboarding silently switched to the completion screen and concealed
         // persisted city/gender/mode selections from the owner.
-        readySummary = false;
+        readySummary = widget.summaryOnReady && result.value!.onboarding.ready;
         activeStep = 'common';
         notice = 'Saved profile details loaded from your account.';
       });
+      widget.onDashboardConfirmed?.call(result.value!);
     } catch (_) {
       if (mounted) setState(() => notice = 'Unable to load profiles. Retry.');
     } finally {
@@ -344,6 +355,7 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         notice = value ? 'Activation requested. Profile remains private pending trusted locality.'
             : 'Mode deactivated and private.';
       });
+      widget.onDashboardConfirmed?.call(reply.value!);
     } catch (_) {
       if (mounted) setState(() => notice =
           'Activation status could not be confirmed. Reload the saved profile before retrying.');
@@ -915,6 +927,21 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
         label: const Text('Set up your profile'),
       );
     }
+    // Do not flash the first-time profile wizard while an existing owner's
+    // authoritative dashboard is still being loaded.
+    if (widget.summaryOnReady && dashboard == null) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(profileReadAttempted && !busy
+          ? 'Could not check your saved profile.'
+          : 'Checking your saved profile…',
+          key: const Key('p03-profile-restore-status')),
+        if (busy) const LinearProgressIndicator(),
+        if (profileReadAttempted && !busy)
+          OutlinedButton(key: const Key('p02-load-retry'),
+            onPressed: () => load(first: true),
+            child: const Text('Retry loading profiles')),
+      ]);
+    }
     final ready = dashboard?.onboarding.ready == true;
     if (ready && readySummary) {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -959,7 +986,7 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
           onPressed: () => setState(() {
             readySummary = false;
             activeStep = 'review';
-          }), child: const Text('Back to profile review')),
+          }), child: const Text('Edit profile details')),
         TextButton(key: const Key('p02-ready-reload'),
           onPressed: busy ? null : () async {
             setState(() => readySummary = false);

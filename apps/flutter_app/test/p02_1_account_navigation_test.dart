@@ -100,10 +100,9 @@ void main() {
     )));
     await tester.tap(find.byKey(const Key('p02-tab-settings')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('auth-me')));
-    await tester.tap(find.byKey(const Key('auth-me')));
-    await tester.pumpAndSettle();
-    expect(service.accountChecks, 1);
+    expect(find.byKey(const Key('auth-me')), findsNothing,
+      reason: 'Pre-profile Settings is limited to actual security/location actions.');
+    expect(service.accountChecks, 0);
     await tester.ensureVisible(find.byKey(const Key('auth-password-settings')));
     await tester.tap(find.byKey(const Key('auth-password-settings')));
     await tester.pumpAndSettle();

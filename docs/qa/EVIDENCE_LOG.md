@@ -1,48 +1,8 @@
-## 2026-11-16 — P02-5 Android Gate 12 real UI photo-count stale assertion
+## P02 final owner-reported acceptance — 16 November 2026
 
-Owner Windows log: `npm run test:flutter` **PASS 54 widget tests** and Flutter analyze no issues; `npm run verify:p02-5` nested P02-4 **Gates 1–11 PASS** (including local DB/API and two separate Android device suites), **Gate 12 FAIL** after UI checkpoints 01–04 when test waited for removed `1/6 assigned` copy. Authoring repair replaces four stale count checks with server-updated keyed `p02-photo-count` and bounded diagnostic failures, adds negative source regression; `npm run verify:p02-5:portable` **PASS**, 9/9 UI source guards and 10/10 P02-5 source guards. **Android Gate 12 after this repair NOT RUN; no P02-5 owner acceptance claimed.** See `docs/qa/P02_5_ANDROID_GATE12_PHOTO_COUNT_COPY_REGRESSION_REPAIR_2026_11_16.md`.
+P02-1 through P02-4 were already locally accepted. On 16 November, P02-5's submitted Windows run showed Flutter analyzer **No issues**, **54 widget tests passed**, portable/TypeScript/lint/media/local Fastify+DynamoDB and Android API/media gates passed, and the guided UI Gate 12 initially timed out on a stale photo-copy assertion. A targeted regression replaced literal text (`1/6 assigned`) with the keyed server-backed `p02-photo-count`; owner subsequently confirmed **“looks good all tests passed.”** Treat P02-5 automated verification as **owner-reported PASS**, not a newly captured full post-repair terminal transcript in this documentation package.
 
----
-
-## 2026-11-16 — P02-4 phase verification evidence and owner acceptance gate
-
-Owner-reported P02-3 Android Save & Next repair **all passed**; P02-1 and P02-2 previously owner-accepted local development. New P02-4 full regression includes portable, TS/lint, Sharp store, Flutter, real local Fastify/Java DB, three distinct integration scripts and three isolated Android E2E suites. **Full P02-4 verifier has not yet run on owner's Windows PC; native Android picker manual check remains outstanding.** Preserve the prior automated P01-1 OTP failure as historical failed/local-only waiver. Authoring portable results: see `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md`.
-
-Owner proof after execution: **date / commit / full `npm run verify:p02-4` exit code / 12 gate lines / Android checkpoint 15 / native system-picker manual result / explicit P02 acceptance**, all redacted. Never claim this evidence exists before it is supplied.
-
----
-
-## 2026-11-16 — P02-3 owner-reported Save & Next physical Android missed tap
-
-Owner reports physical Android P02-3 UI E2E passed checkpoints 01–03 but could not hit a scrollable `p02-save-next` button; the runner warned that the pointer position was obstructed. Added viewport-safe real-pointer Save & Next / Back helper and fail-closed regression checks. `npm run verify:p02-3:portable` and 8/8 UI source guards pass. **Flutter widgets, physical Android after repair, manual UX and owner acceptance UNVERIFIED**; run `npm run test:flutter:p02-3:e2e` on Windows. Full record: `docs/qa/P02_3_GUIDED_SAVE_NEXT_HIT_TEST_REPAIR_2026_11_16.md`.
-
----
-
-## 2026-11-16 — P02-2 owner acceptance and P02-3 authoring evidence
-
-Owner reports guided P02-2 onboarding and the prior Flutter compile repair **working**; P02-2 owner-accepted for local development. Previous Windows logs showed portable/typecheck/lint and live P02-2 database integration passing; owner later stated all UI/device checks passed. Preserve the unconfirmed *manual native photo picker* evidence gap.
-
-P02-3 authored activation/preview API and unified Save & Next. `npm run verify:p02-3:portable` results are documented in `docs/qa/P02_3_ACTIVATION_IMPLEMENTATION_EVIDENCE_2026_11_16.md`; semantic TS, live local DB, Flutter widgets and physical Android post-P02-3 are **UNVERIFIED until owner runs them**. P01-1 Android OTP exception remains a documented historical failure, not a pass.
-
----
-
-> **LATEST P02-2 gate repair (2026-11-15):** Owner confirmed the original Dating/gender-preference contract and mandated **two valid saved photos for EACH enabled Dating/Friendship mode before Continue**. Source now checks owner READY media records via bounded batch read, requires photo assignments per selected mode and refreshes Flutter readiness after photo writes. Draft saves (including incomplete photos) remain allowed; public discovery is still inactive. Authoring unit/portable checks PASS; Windows semantic/Flutter/live DB/Android/manual verification remains UNVERIFIED for this patch. Read `docs/qa/P02_2_TWO_PHOTO_CONTINUE_GATE_REPAIR_2026_11_15.md` and `docs/manual/P02_2_TWO_PHOTO_CONTINUE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical status below is not superseding this latest contract.
-
-# 2026-11-15 — P02-1 shared onboarding gate: authoring verification
-
-Portable chain `npm run verify:p02-1:portable` **PASS**; 33 API unit tests incl. 3 new onboarding cases PASS; global TypeScript syntax transpile of changed API files PASS. Flutter SDK, semantic TS compile, ESLint, live local Fastify/DB and physical Android after this update **UNVERIFIED**. Owner previously manually accepted Home/Settings and provided live P02-1/Android passes for the previous code. See `docs/qa/P02_1_COMMON_PROFILE_SETUP_GATE_EVIDENCE_2026_11_15.md`. No claim of P02-2/media/discovery activation.
-
----
-
-# 2026-11-15 — P02-1 source/portable authoring evidence
-
-New P02-1 Node unit tests 5/5, full `apps/api/tests/unit/*.test.ts` 30/30, existing `verify:p01-3:portable` exit 0 and P02-1 security source-contract negative tests PASS. TS syntax AST parse and new scripts `node --check` PASS. **TypeScript semantic, lint, Fastify/DynamoDB Local, Flutter analyze/widgets, physical Android and owner manual flow UNVERIFIED** until owner Windows results arrive. Documentation: `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`. P01-1 Android OTP automation remains FAILED local-development exception.
-
----
-
-# 2026-11-15 — P02-0 documentation milestone (no P02 runtime claims)
-
-Owner approved eight P02 product recommendations and local-only temporary media storage. P02-0 documents implementation requirements and proposed contracts. **NO P02 source/API/Flutter tests run or completed.** Documentation/secret/cloud/packaging results, if executed, are recorded in `docs/qa/P02_0_DESIGN_DOCUMENTATION_EVIDENCE_2026_11_15.md`. P01-1 Android OTP automation remains historical `FAILED` with local-only owner exception; no change to P00/P01 acceptance evidence.
+Separate **native gallery picker manual acceptance and complete visual/accessibility checklist are not explicitly confirmed**; do not record these as PASS. All P02 public discovery still fails closed. Historic P01-1 standalone OTP Android automation is a separate FAILED/local-only accepted exception. See [`P02 verification`](../p02/04_VERIFICATION_AND_ACCEPTANCE.md) and [`P02 repair history`](../p02/05_REPAIR_HISTORY.md).
 
 ---
 

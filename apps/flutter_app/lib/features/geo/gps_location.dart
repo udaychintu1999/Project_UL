@@ -100,10 +100,11 @@ class HttpGpsSelectionClient implements GpsSelectionClient {
 
 /// GPS is strictly opt-in and never invoked when Settings opens.
 class OneTimeGpsPanel extends StatefulWidget {
-  const OneTimeGpsPanel({super.key,required this.provider,required this.client,required this.onSaved});
+  const OneTimeGpsPanel({super.key,required this.provider,required this.client,required this.onSaved, this.compact = false});
   final OneTimeLocationProvider provider;
   final GpsSelectionClient client;
   final void Function(int revision,String name) onSaved;
+  final bool compact;
   @override State<OneTimeGpsPanel> createState()=>_OneTimeGpsPanelState();
 }
 class _OneTimeGpsPanelState extends State<OneTimeGpsPanel> {
@@ -158,11 +159,12 @@ class _OneTimeGpsPanelState extends State<OneTimeGpsPanel> {
   }
   @override Widget build(BuildContext context)=>Column(
     key:const Key('p03-gps-one-shot'),crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-      const Text('One-time GPS (optional)',style:TextStyle(fontWeight:FontWeight.w700)),
-      const Text('Tap below to request GPS permission and save your approximate India location in one action. Fastify checks the boundary and stores only an H3 R6 location, never your exact GPS fix.'),
+      if (!widget.compact) const Text('One-time GPS (optional)',style:TextStyle(fontWeight:FontWeight.w700)),
+      if (!widget.compact) const Text('Tap below to request GPS permission and save your approximate India location in one action. Fastify checks the boundary and stores only an H3 R6 location, never your exact GPS fix.'),
       const SizedBox(height:8),
       OutlinedButton.icon(key:const Key('p03-gps-capture'),onPressed:busy?null:_captureAndSave,
-        icon:const Icon(Icons.my_location),label:const Text('Use GPS and save location')),
+        icon:const Icon(Icons.my_location),
+        label:Text(widget.compact ? 'Use GPS' : 'Use GPS and save location')),
       if(busy) const LinearProgressIndicator(),
       if(status.isNotEmpty) Padding(padding:const EdgeInsets.only(top:8),
         child:Text(status,key:const Key('p03-gps-status'))),

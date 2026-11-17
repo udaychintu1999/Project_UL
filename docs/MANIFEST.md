@@ -1,4 +1,4 @@
-> **Added 2026-11-15:** `docs/qa/P02_2_ONBOARDING_PERSISTENCE_UI_REPAIR_2026_11_15.md` — owner-reported onboarding persistence/visible-restore repair and Windows acceptance checklist.
+> **P02 documentation consolidated 2026-11-17:** Use `docs/p02/README.md` for accepted P02-0–P02-5, authoritative technical/UX/verification summaries and historical repair digest. The formerly linked P02-2 repair filename now points to the digest.
 
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 

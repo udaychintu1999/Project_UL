@@ -1,3 +1,5 @@
+> **P02 documentation current state (16 November 2026):** P02-0–P02-5 owner-accepted for local development; see `docs/p02/README.md`. Old P02 `NOT STARTED` lines in dated P01 snapshots below are historical, not current. Native picker/manual visual acceptance remains a separate unconfirmed check. P03 is a separate phase.
+
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 
 **P00:** `CORE_FLOW_VERIFIED` (historical owner evidence). **P01-1:** manually accepted; its standalone Android OTP automation remains **FAILED**, explicitly accepted for *local development only* (never report PASS or production waiver). **P01-2:** owner-accepted after Windows automated and manual testing. **P01-3:** **OWNER-ACCEPTED for local development** after complete `npm run verify:p01-3` automated pipeline PASSED on Windows/physical Android and the owner reported that final manual phone testing worked as expected. **P02:** NOT STARTED; next is P02 specification/design review, not automatic authorization to implement.

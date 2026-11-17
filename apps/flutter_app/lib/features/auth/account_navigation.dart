@@ -12,6 +12,11 @@ class AccountNavigation extends StatelessWidget {
     required this.onBack,
     required this.home,
     required this.settings,
+    this.profileComplete = false,
+    this.navigationReady = true,
+    this.dating = const SizedBox.shrink(),
+    this.friendship = const SizedBox.shrink(),
+    this.localFeed = const SizedBox.shrink(),
   });
 
   final int selectedIndex;
@@ -19,6 +24,10 @@ class AccountNavigation extends StatelessWidget {
   final VoidCallback onBack;
   final Widget home;
   final Widget settings;
+  final bool profileComplete;
+  /// Hide navigation until the authenticated profile status has been checked.
+  final bool navigationReady;
+  final Widget dating, friendship, localFeed;
 
   @override
   Widget build(BuildContext context) {
@@ -53,44 +62,66 @@ class AccountNavigation extends StatelessWidget {
             children: [
               _AccountPage(
                 key: const Key('p02-home-page'),
-                heading: 'Your profile',
-                caption: 'A little about you goes a long way.',
+                heading: profileComplete ? 'Your home' : 'Your profile',
+                caption: profileComplete
+                    ? 'Your account, your choices.'
+                    : 'A little about you goes a long way.',
                 icon: Icons.person_outline_rounded,
                 child: home,
               ),
+              if (profileComplete) ...[
+                _AccountPage(key: const Key('p03-dating-page'),
+                  heading: 'Dating', caption: 'Connections on your terms.',
+                  icon: Icons.favorite_outline, child: dating),
+                _AccountPage(key: const Key('p03-friendship-page'),
+                  heading: 'Friendship', caption: 'Meet people nearby.',
+                  icon: Icons.people_outline, child: friendship),
+                _AccountPage(key: const Key('p03-feed-page'),
+                  heading: 'Local Feed', caption: 'Your local community.',
+                  icon: Icons.dynamic_feed_outlined, child: localFeed),
+              ],
               _AccountPage(
                 key: const Key('p02-settings-page'),
                 heading: 'Account & safety',
-                caption: 'Your privacy, security and signed-in devices.',
+                caption: profileComplete
+                    ? 'Your profile, privacy, preferences and account.'
+                    : 'Your privacy, security and signed-in devices.',
                 icon: Icons.tune_rounded,
                 child: settings,
               ),
             ],
           ),
         ),
-        bottomNavigationBar: Container(
+        bottomNavigationBar: navigationReady ? Container(
           decoration: const BoxDecoration(color: UluvPalette.paper,
             border: Border(top: BorderSide(color: UluvPalette.border))),
           child: NavigationBar(
-          key: const Key('p02-bottom-navigation'),
-          selectedIndex: selectedIndex,
-          onDestinationSelected: onSelect,
-          destinations: const [
-            NavigationDestination(
-              key: Key('p02-tab-home'),
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              key: Key('p02-tab-settings'),
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Settings',
-            ),
-          ],
+            key: const Key('p02-bottom-navigation'),
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onSelect,
+            destinations: [
+              const NavigationDestination(
+                key: Key('p02-tab-home'),
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
+              if (profileComplete) ...[
+                const NavigationDestination(key: Key('p03-tab-dating'),
+                  icon: Icon(Icons.favorite_border),
+                  selectedIcon: Icon(Icons.favorite), label: 'Dating'),
+                const NavigationDestination(key: Key('p03-tab-friendship'),
+                  icon: Icon(Icons.people_outline),
+                  selectedIcon: Icon(Icons.people), label: 'Friendship'),
+                const NavigationDestination(key: Key('p03-tab-local-feed'),
+                  icon: Icon(Icons.dynamic_feed_outlined),
+                  selectedIcon: Icon(Icons.dynamic_feed), label: 'Local Feed'),
+              ],
+              const NavigationDestination(
+                key: Key('p02-tab-settings'),
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings_rounded), label: 'Settings'),
+            ],
           ),
-        ),
+        ) : null,
       ),
     );
   }

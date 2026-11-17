@@ -3,7 +3,6 @@ import 'auth_screen.dart';
 import 'auth_service.dart';
 import 'persistent_session.dart';
 import '../profiles/profile_service.dart';
-import '../profiles/profile_workspace.dart';
 import '../geo/geo_settings_panel.dart';
 
 /// P01-3 root: no P00 buttons and no unverified account content during restore.
@@ -108,9 +107,7 @@ class _PersistentAuthGateState extends State<PersistentAuthGate> {
           initialToken: sessions.accessToken,
           initialUid: sessions.record!.uid,
           bottomNavigation: true,
-          homeContent: ProfileWorkspace(
-            initiallyExpanded: true,
-            repository: HttpProfileRepository(
+          profileRepository: HttpProfileRepository(
               baseUrl: widget.service.baseUrl,
               access: sessions.access,
               onAccessDenied: () async {
@@ -121,8 +118,11 @@ class _PersistentAuthGateState extends State<PersistentAuthGate> {
                 }
               },
             ),
-          ),
-          settingsContent: DeviceManagementPanel(controller: sessions),
+          geoBaseUrl: widget.service.baseUrl,
+          geoAccess: sessions.access,
+          settingsBuilder: (onSaved, completed, refreshEpoch) => DeviceManagementPanel(
+            controller: sessions, profileComplete: completed,
+            locationRefreshEpoch: refreshEpoch, onLocationSaved: onSaved),
           );
     }
 
@@ -136,9 +136,14 @@ class _PersistentAuthGateState extends State<PersistentAuthGate> {
 /// Lists the five bounded device slots and delegates all revocation to the API.
 /// No device is considered revoked solely because the local list changed.
 class DeviceManagementPanel extends StatefulWidget {
-  const DeviceManagementPanel({super.key, required this.controller});
+  const DeviceManagementPanel({super.key, required this.controller,
+    this.profileComplete = false, this.onLocationSaved,
+    this.locationRefreshEpoch = 0});
 
   final PersistentSessionController controller;
+  final bool profileComplete;
+  final int locationRefreshEpoch;
+  final ValueChanged<String>? onLocationSaved;
 
   @override
   State<DeviceManagementPanel> createState() => _DeviceManagementPanelState();
@@ -209,7 +214,10 @@ class _DeviceManagementPanelState extends State<DeviceManagementPanel> {
   @override
   Widget build(BuildContext context) =>
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        UluvGeoSettingsPanel(baseUrl:widget.controller.api.baseUrl, access:widget.controller.access),
+        UluvGeoSettingsPanel(baseUrl:widget.controller.api.baseUrl,
+          access:widget.controller.access, onLocationSaved:widget.onLocationSaved,
+          showDiscoveryPreferences: widget.profileComplete,
+          refreshEpoch: widget.locationRefreshEpoch),
         OutlinedButton(
             key: const Key('p13-manage-devices'),
             onPressed: busy

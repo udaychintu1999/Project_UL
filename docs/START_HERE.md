@@ -1,24 +1,4 @@
-> **P02-5 Gate 5 Flutter lint repair (2026-11-16):** Owner-reported Flutter analyzer failure arose from five missing `const` constructors in one new visual widget test. Focused test-only fix and guard were added; portable checks passed, full Flutter/Android verification still required. `docs/qa/P02_5_GATE5_FLUTTER_CONST_REPAIR_2026_11_16.md`.
-
-> **Current slice P02-5 — UI polish only (2026-11-16):** Owner accepted P02-4 local flow. The UI pack is reference material, not permission for P03, cloud or payments. Run `npm run verify:p02-5:portable`; real Flutter/Android P02-5 acceptance pending. See `docs/design_reviews/P02_5_REFERENCE_TO_IMPLEMENTED_SCREENS_2026_11_16.md` and manual checklist.
-
-## Current authoritative task — P02-4 verification (2026-11-16)
-
-P02-3 independent activation intent and unified Save & Next received owner report "all passed" after Android test repair. P02-4 is a **verification-only** closeout slice. Run `npm run verify:p02-4:plan` (safe), `npm run verify:p02-4:portable` (offline), then with Java DynamoDB Local, Fastify and a real USB Android phone `npm run verify:p02-4`. Complete native Android picker manual acceptance separately. Only a real full 12-stage PASS plus manual acceptance and owner signoff may close P02 as `CORE_FLOW_VERIFIED (LOCAL)`; none authorizes public P03 or cloud. Read `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md`.
-
-> **LATEST P02-2 gate repair (2026-11-15):** Owner confirmed the original Dating/gender-preference contract and mandated **two valid saved photos for EACH enabled Dating/Friendship mode before Continue**. Source now checks owner READY media records via bounded batch read, requires photo assignments per selected mode and refreshes Flutter readiness after photo writes. Draft saves (including incomplete photos) remain allowed; public discovery is still inactive. Authoring unit/portable checks PASS; Windows semantic/Flutter/live DB/Android/manual verification remains UNVERIFIED for this patch. Read `docs/qa/P02_2_TWO_PHOTO_CONTINUE_GATE_REPAIR_2026_11_15.md` and `docs/manual/P02_2_TWO_PHOTO_CONTINUE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical status below is not superseding this latest contract.
-
-# Current milestone: P02-1 source delivered, owner verification pending (2026-11-15)
-
-Read `docs/design_reviews/P02_1_SOURCE_IMPLEMENTATION_CONTRACT_2026_11_15.md` and `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. P02-1 profile identity/drafts code is included in the update, but live Java DynamoDB Local, Flutter and Android verification are still pending. Keep accepted P00/P01 and the P01-1 automation exception unchanged. No AWS or P02 photo upload.
-
----
-
-# CURRENT CHECKPOINT — P02-0 DESIGN MILESTONE (2026-11-15)
-
-P02 product decisions owner-approved; P02-0 design/requirements documentation prepared. **No P02 API, Flutter UI, media or test code implemented yet.** P02-1 is next source milestone. Read `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md`; preserve accepted P00/P01 and P01-1 Android OTP automation exception. P00–P16 Java DynamoDB Local, media adapter local for tests, no AWS calls without separately scoped approval. Older status blocks below are historical checkpoints.
-
----
+> **P02 CURRENT (17 November 2026):** P02-0–P02-5 locally owner-accepted after all P02-5 automated tests passed. See [`docs/p02/README.md`](p02/README.md) and [`docs/implementation/phases/P02.md`](implementation/phases/P02.md). Earlier P02 `pending`/`not started` snippets were historical and have been consolidated. P03 is now separate and underway. Native gallery picker/manual visual acceptance remains unconfirmed.
 
 # CURRENT AUTHORITATIVE CHECKPOINT — P01-3 OWNER-ACCEPTED (2026-11-14)
 

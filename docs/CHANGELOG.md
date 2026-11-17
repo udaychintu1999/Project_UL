@@ -1,3 +1,18 @@
+## 2026-11-17 — P02 documentation-only consolidation
+
+- Consolidated outdated P02-0–P02-5 intermediate `PENDING`/`NOT STARTED` status notes, overlapping manual acceptance guides and per-incident repair instructions into `docs/p02/` and a current `docs/implementation/phases/P02.md`.
+- Retained compatibility pointer files at old P02 paths referenced by other project docs, removed unreferenced obsolete P02 notes, and preserved P03/P01 subject matter.
+- P02-5 owner-reported automated pass is recorded; manual native SAF picker and full visual/accessibility checklist are **not** falsely marked PASS. No code, P03 feature contract, production AWS or cloud gate was changed.
+
+---
+
+## 2026-11-17 — P03 pre-discovery shell cleanup (owner validation pending)
+
+- Profile `onboarding.ready` from Fastify switches 2 ↔ 5 tabs; a complete returning owner sees saved summary instead of a repeated wizard.
+- Dating/Friendship/Local Feed tabs check private saved location and display one-tap GPS / a manual picker sheet only if location is absent. No discovery publication or artificial feed.
+- Pre/post Settings scaffolds preserve password, device, location and logout actions; PIN still on hold.
+- Added widget/source regression tests, full Windows/Android gate and pre-discovery architecture.
+
 ## 2026-11-16 — P02-5 physical Android guided photo-count check repair
 
 - Owner Windows verification confirmed Flutter analyzer/54 widgets and nested P02-4 Gates 1–11 PASS; only guided real Android UI Gate 12 stopped after checkpoint 04 waiting for stale `1/6 assigned` text (new visual badge renders `1 / 6`).

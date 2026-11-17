@@ -13,6 +13,10 @@
 - The app must show the server-confirmed saved location in the **Settings tile subtitle even while collapsed**, retrieve it again after a new authenticated Settings mount/reopen, and never hide a known saved label just because the public catalogue failed. A successful manual or GPS save closes the expanded Settings tile.
 - The optional **PIN-code** importer/UI remains on hold pending authentic India Post source data. **Discovery remains disabled** even after saving a location.
 
+## P03 pre-discovery UX and profile-completion handoff (2026-11-17)
+
+The five-tab account shell is **UI groundwork**, not a live discovery feature. The authoritative `GET /v1/profiles/me` `onboarding.ready` flag controls navigation: incomplete → **Home, Settings**; completed → **Home, Dating, Friendship, Local Feed, Settings**. Returning completed users see a saved-profile summary, never automatic first-time form entry. The Dating/Friendship/Local Feed tabs read authenticated saved account location only when opened; if no location is set, offer **Use GPS** (one tap and validated backend save) or **Manual selection** (bottom sheet using this handbook's verified GeoNames picker). If a verified location exists, the setup prompt disappears and the tab remains an honest future-feature shell. Pre/post profile Settings keep existing password, device, location and logout actions, adding future settings groups only after completion. For complete state transitions, privacy restrictions and regression commands, see `docs/architecture/P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md`.
+
 ## 2. Component map
 
 | Responsibility | Code / data |

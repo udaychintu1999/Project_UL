@@ -102,7 +102,10 @@
     "verify:p03:api-diagnostics": "npm run verify:p03:api-diagnostics:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
     "test:p03:geo-visibility:contracts": "node --test scripts/verify/p03-geo-visibility-contracts.test.mjs",
     "verify:p03:geo-visibility:portable": "npm run test:p03:geo-visibility:contracts && npm run verify:p03:api-diagnostics:portable && npm run test:p03:gps:unit",
-    "verify:p03:geo-visibility": "npm run verify:p03:geo-visibility:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter"
+    "verify:p03:geo-visibility": "npm run verify:p03:geo-visibility:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
+    "test:p03:pre-discovery:shell": "node --test scripts/verify/p03-pre-discovery-shell.test.mjs",
+    "verify:p03:pre-discovery:portable": "npm run test:p03:pre-discovery:shell && npm run verify:p03:geo-visibility:portable",
+    "verify:p03:pre-discovery": "npm run verify:p03:pre-discovery:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

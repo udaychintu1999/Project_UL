@@ -1,68 +1,8 @@
+> **Current next step (2026-11-17):** Apply and verify P03 pre-discovery shell cleanup with `npm run verify:p03:pre-discovery` and the moto g04s checklist. Only after owner acceptance should P03-2 H3 R6 discovery infrastructure begin. P03-1 location behavior owner-confirmed; this shell patch remains Windows/device unverified. See `docs/architecture/P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md`.
+
 > P03 pending owner gate (2026-11-17): apply API terminal diagnostics/Dart compile fix and run Windows `npm run typecheck`, `flutter analyze`, Flutter P03 widget tests, and moto g04s location save/reopen with API logs before proceeding. `docs/manual/P03_API_TERMINAL_LOGGING_AND_DART_COMPILE_REPAIR_2026_11_17.md`.
 
-> **NEXT:** Owner Windows verify P02-5 UI visual refresh (`npm run test:flutter`, `npm run verify:p02-5`) and native Android SAF picker/320–430dp visual review; accept only after actual PASS. Then return to P03 planning without fake public discovery. See `docs/manual/P02_5_WINDOWS_VISUAL_ACCEPTANCE_2026_11_16.md`.
-
-# Next owner action — verify P02-4 before opening P03 (2026-11-16)
-
-P02-1 through P02-3 are owner-reported accepted for **local development** after latest P02-3 Android E2E fix. P02-4 is now implemented as a **12-stage local verification wrapper** with no new runtime features. Start Java DynamoDB Local manually; start `npm run dev:api` in another terminal and connect USB Android. From project root run `npm run verify:p02-4` (or `npm run verify:p02-4:plan` to see stages). Run and report the *real native Android Gallery/Files picker* manual acceptance separately; the UI test fakes only the picker response. Attach redacted logs and explicit owner closeout decision. Until then status `P02 PARTIALLY_VERIFIED / P02-4 OWNER_ACCEPTANCE_PENDING`, with P03 H3/public discovery explicitly **not started**. See `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
-
----
-
-# NEXT ACTION — P02-3 Windows and real Android acceptance (2026-11-16)
-
-P02-2 is **OWNER_ACCEPTED for local development** following the owner's "Lovely working" confirmation. P02-3 implements independent activation requests, owner preview, fail-closed public visibility and **Save & Next** for guided onboarding, but **has not yet passed owner Windows/Android verification**. Apply the update-only ZIP and run `npm run verify:p02-3:portable`, `npm run typecheck`, `npm run lint`, `npm run test:p02-2:store`, `npm run test:flutter`; start Java DynamoDB Local manually and Fastify; run `npm run test:p02-1:integration`, `npm run test:p02-2:integration`, `npm run test:p02-3:integration`, `npm run test:flutter:p02-3:e2e`. Complete manual checks and report results before marking P02-3 accepted. Details: `docs/manual/P02_3_WINDOWS_ACCEPTANCE_2026_11_16.md`.
-
----
-
-# Current action — verify P02-2 guided onboarding Flutter compile fix (2026-11-16)
-
-Apply `U_luv_P02_2_Guided_Flutter_Compile_Repair_2026_11_16.zip` over the already merged guided-onboarding source. Portable suite passed in authoring runtime. The owner's prior `npm run test:flutter` and Android build failed because final review invoked `photoBytes` through the wrong static repository interface; this has been repaired, but **Flutter/Android verification is not yet complete**. Run `npm run test:flutter` and then `npm run test:flutter:p02-2:ui:e2e` with local DynamoDB and Fastify running. Confirm all 13 UI checkpoints and manually check the native picker. See `docs/qa/P02_2_GUIDED_ONBOARDING_FLUTTER_COMPILE_REPAIR_2026_11_16.md`.
-
-## Immediate gate — P02-2 real UI final Continue retest
-
-Run `npm run test:flutter:p02-2:ui:e2e` on the Windows/Android setup after applying the P02-2 final-tap repair. Previous test passed UI checkpoints 01–12 but missed the final Continue hit target because it overlapped the bottom navigation. Checkpoint 13 and `All tests passed!` are **not yet verified after this patch**. Keep P02-3 on hold; see `docs/manual/P02_2_FINAL_CONTINUE_ANDROID_RETEST_2026_11_15.md`.
-
-> **P02-2 UI-DRIVEN ANDROID TEST ADDENDUM (2026-11-15):** The owner observed that the existing media Android suite displayed only the Flutter test harness, not the real profile screens. Inspection confirmed it exercised real HTTP/database operations through `HttpProfileRepository` but bypassed UI taps. The P02-2 **UI-driven Android suite** now mounts the actual persistent UluvApp, completes login and account/mode forms, taps upload/assign/reuse/remove, checks the two-photo Continue gate and reopens the widget tree for session/profile restoration. Test images are supplied ONLY through a deterministic picker-channel intercept; the native Android picker still needs separate owner manual verification. Both API-driven and UI-driven suites are mandatory in `verify:p02-2`. Authoring portable checks PASS; physical Android suite remains UNVERIFIED until run on Windows. No production profile/auth/backend logic changed. See `docs/qa/P02_2_REAL_UI_ANDROID_AUTOMATION_2026_11_15.md` and `docs/manual/P02_2_UI_E2E_AND_NATIVE_PICKER_ACCEPTANCE_2026_11_15.md`. P02-3 remains on hold.
-
-> **LATEST P02-2 gate repair (2026-11-15):** Owner confirmed the original Dating/gender-preference contract and mandated **two valid saved photos for EACH enabled Dating/Friendship mode before Continue**. Source now checks owner READY media records via bounded batch read, requires photo assignments per selected mode and refreshes Flutter readiness after photo writes. Draft saves (including incomplete photos) remain allowed; public discovery is still inactive. Authoring unit/portable checks PASS; Windows semantic/Flutter/live DB/Android/manual verification remains UNVERIFIED for this patch. Read `docs/qa/P02_2_TWO_PHOTO_CONTINUE_GATE_REPAIR_2026_11_15.md` and `docs/manual/P02_2_TWO_PHOTO_CONTINUE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical status below is not superseding this latest contract.
-
-> **LATEST P02-2 ONBOARDING UX REPAIR (2026-11-15):** Owner reported previously all-green P02-2 tests but city/gender/mode persistence or visible restoration is doubtful. The active setup contract now requires a saved public @handle, shared display name, broad city, explicit gender (including Prefer not to say), at least one selected mode and each selected mode’s saved bio/intention/interest. Continue is **not** intentionally disabled for P02-2; it opens the private completion placeholder when server-derived onboarding is ready. Flutter now shows saved values and reopens into the editable form. Authoring portable tests passed; Windows Flutter/API/Android retesting and owner manual UX acceptance are pending. Full plan: `docs/qa/P02_2_ONBOARDING_PERSISTENCE_UI_REPAIR_2026_11_15.md`. P02-3 remains out of scope.
-
-> **P02-2 verification update (2026-11-15):** Initial owner Windows portable/typecheck PASS; lint, local-store test and Flutter analyzer failed for specific identified issues. Targeted repair supplied for unsafe-finally, Windows junction test, redundant import and missing const. After merging repair, rerun all five local checks plus real Fastify/DynamoDB integration and isolated physical Android media flow. P02-2 is **NOT YET OWNER_ACCEPTED**; do not proceed to P02-3. See `docs/qa/P02_2_WINDOWS_LINT_STORE_FLUTTER_ANALYZER_REPAIR_2026_11_15.md`.
-
-> **Next required action (2026-11-15):** Owner installs the P02-2 update ZIP, runs `npm ci` (new Sharp native dependency), then `npm run verify:p02-2:portable`, `npm run typecheck`, `npm run lint`, `npm run test:p02-2:store`, `npm run test:flutter`, `npm run test:p02-2:integration` and `npm run test:flutter:p02-2:e2e`; manually verifies actual Android chooser, uploads, reuse, deletion and recovery. P02-2 code is not yet owner-accepted. Do NOT start P02-3 until the owner approves. See `docs/manual/P02_2_WINDOWS_LOCAL_PHOTO_ACCEPTANCE_2026_11_15.md`.
-
-> **2026-11-15 P02-1 V4 owner follow-up:** Latest owner Windows TypeScript/lint/portable, live API/DynamoDB and physical Android all **PASS**; one Flutter widget (`handle saving preserves unsaved common and mode fields`) **FAILS** on `find.text` for the unsaved name. V4 implements an explicit handle-only status refresh that cannot reload common/mode editor controllers, plus positive pre/post controller-value checks and negative mutation guard. Authoring portable PASS only after execution; Windows Flutter retest pending. Read `docs/qa/P02_1_FINAL_WIDGET_STATE_RETENTION_REPAIR_2026_11_15.md`. P02-2 not started.
-
-> **2026-11-15 latest P02-1 Flutter + Android follow-up:** Owner-reported live API integration **PASS**, TypeScript/lint/portable **PASS**, but three Flutter widgets **FAIL** due to pre-frame button assertions, and physical Android test assertions **PASS** while Flutter attempts dangerous base-app uninstall on teardown. Added explicit widget settling, positive persisted-state assertions and `--no-uninstall` for P02 E2E with exact-package host cleanup. Portable tests pass in authoring environment; Windows widget/physical Android **RETEST PENDING**. See `docs/qa/P02_1_FLUTTER_WIDGET_AND_UNINSTALL_SAFETY_REPAIR_2026_11_15.md`. Do not start P02-2.
-
-> **2026-11-15 newest gate — P02-1 widget/Android runner repair:** Owner's real local Fastify/DynamoDB integration **PASSED**, along with portable/typecheck/lint; owner reported two Flutter widget failures and an Android E2E runner that aborted before device execution. The targeted code repair and five new safe-package tests have passed portable verification here, but Flutter/Android are **OWNER_RETEST_PENDING**. Run `npm run test:flutter` and `npm run test:flutter:p02-1:e2e` after merging the latest repair ZIP; see `docs/qa/P02_1_WIDGET_AND_ANDROID_RUNNER_REPAIR_2026_11_15.md`. Do not begin P02-2.
-
-> **2026-11-15 next gate — P02-1 repair verification:** Apply the P02-1 failed-test repair update-only ZIP and run the Windows automated chain documented in `docs/qa/P02_1_COMMON_SETUP_WINDOWS_FAILURE_REPAIR_2026_11_15.md`. Do not move to P02-2 until the integration, Flutter widgets and *isolated* physical Android E2E pass, then manually accept the common-setup UI. Preserve the normal Android app's Keystore session.
-
-# CURRENT ACTION — P02-1 common profile and setup-gate verification (2026-11-15)
-
-Apply the P02-1 common-profile update-only ZIP at project root. Run `npm run verify:p02-1:portable`, `npm run typecheck`, `npm run lint`, `npm run test:flutter`. With owner-managed Java DynamoDB Local and `npm run dev:api`, run `npm run test:p02-1:integration` and `npm run test:flutter:p02-1:e2e`. Then manually verify single common profile, explicit mode selections, requirements for **every selected mode**, disabled Continue until saved, and setup-ready placeholder/restart. Existing Settings password/session/logout actions must remain available. Detailed plan: `docs/manual/P02_1_COMMON_PROFILE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Authoring portable **PASS**; Windows updated checks **UNVERIFIED**. P02-2 media and P03 main discovery screen not started. Historical next steps below are retained.
-
----
-
-# CURRENT ACTION — 2026-11-15 P02-1 Home / Settings continuation owner verification
-
-Authenticated **two-tab Home / Settings** source implementation is delivered. Before P02-2, run `npm run verify:p02-1:portable`, `npm run typecheck`, `npm run lint`, `npm run test:flutter`, live `npm run test:p02-1:integration`, and the existing physical Android `npm run test:flutter:p02-1:e2e` with owner-managed Java DynamoDB Local. Then manually verify both new tabs, preserved unsaved draft on tab switch, password/device actions, Back, logout and restart. See `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`.
-
-The owner previously **PASSED** live P02-1 API/DB and Android E2E, portable checks, and 40 Flutter widget tests, but reported TypeScript TS18046. This continuation corrects that source error; the owner must rerun the semantic compiler and Flutter tests. Authoring portable tests passed; Flutter/device unavailable in authoring container. **Do not mark this continuation OWNER_ACCEPTED until new evidence arrives.** P02-2 remains unstarted. All historical statuses below are preserved.
-
----
-
-# NEXT ACTION — Verify P02-1 on Windows/Android (2026-11-15)
-
-**SOURCE_IMPLEMENTED / PARTIALLY_VERIFIED — NOT OWNER ACCEPTED.** P02-1 backend and Flutter account handle/two-mode draft workflow plus test runners are packaged. In project root, run `npm ci`, `npm run verify:p02-1:portable`, `npm run typecheck`, `npm run lint`, `npm run test:flutter`; with manually started Java DynamoDB Local and Fastify, run `npm run test:p02-1:integration` and `npm run test:flutter:p02-1:e2e`. Then manually accept the real in-app editor workflow. Report failure logs without secrets. See `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Do **not** mark P02 complete or start P02-2 until owner authorization. **P02-2:** dev-only media; **P02-3:** trusted locality, activation and public preview.
-
----
-
-# NEXT MILESTONE — P02-1 PROFILE IDENTITY + DRAFTS (2026-11-15)
-
-**P02-0 design documentation is prepared.** Eight product decisions have owner approval; API/validation and media thresholds marked `PROPOSED` still require implementation-source review. Next **coding** slice P02-1: reuse the existing P01 session guard without changing token behavior; implement unique public handle, independently saved/edited Dating/Friendship drafts, server-derived age and selected broad locality; wire to real Flutter authenticated UI and real local Fastify/DynamoDB operations; add functional negative/concurrency/recovery tests. **Do not claim this is implemented.** P02-2 media, P02-3 activation/privacy and P02-4 end-to-end acceptance follow. Local `.local/media/` remains dev-only; no AWS/cloud/payment/P03 work. See `docs/design_reviews/P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md` and companion contract/QA docs.
+ > **P02 accepted baseline (historical phase, not the next action):** All P02-5 automated checks owner-reported PASSED on 16 November 2026. For P02 use [`docs/p02/README.md`](p02/README.md). The P03 action above remains current; do not rerun old P02 repair ZIP workflows. Native SAF/visual manual checks remain separately unconfirmed.
 
 ---
 
@@ -73,10 +13,6 @@ The owner previously **PASSED** live P02-1 API/DB and Android E2E, portable chec
 **Evidence:** `docs/qa/P01_3_OWNER_ACCEPTANCE_2026_11_14.md` (current) and historical `docs/qa/P01_3_INITIAL_IMPLEMENTATION_EVIDENCE_2026_11_14.md`. A real 30-day elapsed-time field observation and production/security/provider readiness have **not** been demonstrated by these logs; automated 30-day boundary tests passed. Do not equate owner acceptance of local development with production release. Java DynamoDB Local remains the database through P16; no AWS/email-provider/payments integration is authorized by this acceptance. Earlier status blocks below are preserved as dated history, not current instructions.
 
 ---
-
-## NEXT AUTHORIZED ACTIVITY — P02 SPECIFICATION REVIEW (not code)
-
-The P01-3 local-development acceptance gate is closed by owner report. Keep the existing implementation stable; commit this documentation checkpoint after reviewing it. The next conversation can audit **P02 profile architecture** and make product decisions for public username, display name, Dating/Friendship separation, photos and visibility. There is **no implicit P02 coding authorization**. Consult `docs/handoff/P01_3_TO_P02_ACCEPTED_CHECKPOINT_2026_11_14.md`.
 
 # CURRENT CHECKPOINT — P01-3 V1 SOURCE IMPLEMENTED, WINDOWS VERIFICATION PENDING (2026-11-14)
 

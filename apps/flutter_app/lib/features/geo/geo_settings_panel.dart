@@ -12,7 +12,9 @@ class UluvGeoSettingsPanel extends StatefulWidget {
   const UluvGeoSettingsPanel({super.key,required this.baseUrl,required this.access,
     @visibleForTesting this.testReadLocation, @visibleForTesting this.testGet,
     @visibleForTesting this.testCacheDirectory, @visibleForTesting this.testSaveManual,
-    @visibleForTesting this.testHideDiscoveryPreferences=false});
+    @visibleForTesting this.testHideDiscoveryPreferences=false,
+    this.onLocationSaved, this.showDiscoveryPreferences = true,
+    this.refreshEpoch = 0});
   final String baseUrl;
   final Future<String> Function() access;
   final Future<Map<String,dynamic>> Function()? testReadLocation;
@@ -20,6 +22,9 @@ class UluvGeoSettingsPanel extends StatefulWidget {
   final Future<Directory> Function()? testCacheDirectory;
   final Future<Map<String,dynamic>> Function(Map<String,dynamic> body)? testSaveManual;
   final bool testHideDiscoveryPreferences;
+  final ValueChanged<String>? onLocationSaved;
+  final bool showDiscoveryPreferences;
+  final int refreshEpoch;
   @override State<UluvGeoSettingsPanel> createState()=>_UluvGeoSettingsPanelState();
 }
 class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
@@ -32,6 +37,14 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
   @override void initState(){
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){if(mounted)_readSavedLocation();});
+  }
+  @override void didUpdateWidget(covariant UluvGeoSettingsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshEpoch != oldWidget.refreshEpoch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _readSavedLocation();
+      });
+    }
   }
   Uri _endpoint() {
     final base=Uri.parse(widget.baseUrl);
@@ -90,6 +103,7 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
     if(!mounted)return;
     setState((){_savedName=label;_savedLoaded=true;_savedError=null;_savedLoading=false;});
     if(_expanded) _tile.collapse();
+    widget.onLocationSaved?.call(label);
   }
   @override Widget build(BuildContext context)=>Column(
     crossAxisAlignment:CrossAxisAlignment.stretch,children:[
@@ -122,7 +136,7 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
               testCacheDirectory:widget.testCacheDirectory,
               testSaveManual:widget.testSaveManual,
               onLocationSaved:_onSaved),
-            if(!widget.testHideDiscoveryPreferences)
+            if(widget.showDiscoveryPreferences && !widget.testHideDiscoveryPreferences)
               _DiscoveryPreferences(baseUrl:widget.baseUrl,access:widget.access),
           ]),
         )],

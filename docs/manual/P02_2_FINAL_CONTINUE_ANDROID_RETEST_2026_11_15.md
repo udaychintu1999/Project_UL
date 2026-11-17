@@ -1,10 +1,7 @@
-# P02-2 final Continue interaction — Windows retest
+# Historical P02 document — consolidated
 
-1. Apply the update-only repair ZIP at project root. Preserve local `.env`, the Java DynamoDB Local data and all Android login state.
-2. Start DynamoDB Local **manually**, run `npm run dev:api` in a separate terminal, and connect the USB Android phone.
-3. Run `npm run verify:p02-2:portable`, `npm run typecheck`, `npm run lint` and `npm run test:flutter`.
-4. Run `npm run test:flutter:p02-2:ui:e2e`. The test must emit the **13th checkpoint** and `All tests passed!` to count as success.
-5. Verify the normal app still has its saved login. The test runner must touch only `com.example.uluv.p02isolated` and uses `--no-uninstall` to protect the base application.
-6. Manually test the real Android system photo chooser, including a cancel action. The automated UI test substitutes only the chooser's returned image bytes, never the profile service or backend.
+**Not a current P02 status or action list.** This filename is retained only because older project documents link to it.
 
-**If checkpoint 13 fails:** Do not change the two-photo requirement. Inspect any hit-test warning, the Scrollable/NavigationBar layout at the actual device size, and the real completion-screen transition. Capture and share the failure; no automated pass may be claimed.
+The approved P02 content is now in **[04 Verification And Acceptance](../p02/04_VERIFICATION_AND_ACCEPTANCE.md)**. Start with [P02 index](../p02/README.md).
+
+P02-0–P02-5 were owner-accepted for local development on 16 November 2026; this does not prove the separate manual native-picker/visual checklist or any P03/production gate.

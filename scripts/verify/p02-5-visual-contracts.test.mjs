@@ -26,15 +26,22 @@ test('P02-5 design tokens are installed in the real app without extra dependenci
   assert.doesNotMatch(read('apps/flutter_app/pubspec.yaml'), /google_fonts:|cached_network_image:/);
 });
 
-test('P02-5 keeps current authenticated P02 two-tab navigator; future mock tabs are not shipped', () => {
+test('P02-5 default remains two tabs; P03 completed accounts have working location-gated five-tab shell', () => {
   for (const key of ['p02-bottom-navigation', 'p02-tab-home', 'p02-tab-settings']) {
     assert.ok(shell.includes(key));
   }
   assert.match(shell, /IndexedStack\(/);
   assert.match(shell, /UluvStageBanner\(/);
-  const section = shell.match(/destinations:\s*const\s*\[([\s\S]*?)\],/)?.[1] ?? '';
-  assert.equal((section.match(/NavigationDestination\(/g) ?? []).length, 2,
-    'P03 must implement real four-tab destinations with functional routes');
+  assert.match(shell, /this\.profileComplete = false/);
+  assert.match(shell, /if \(profileComplete\) \.\.\./);
+  assert.equal((shell.match(/NavigationDestination\(/g) ?? []).length, 5,
+    'P03 post-onboarding shell must expose exactly five destinations');
+  const tabOwner=read('apps/flutter_app/lib/features/auth/auth_screen.dart');
+  const locationGate=read('apps/flutter_app/lib/features/geo/discovery_location_gate.dart');
+  assert.match(tabOwner, /verified\.onboarding\.ready/);
+  assert.match(tabOwner, /DiscoveryLocationGate\(/);
+  assert.match(locationGate, /OneTimeGpsPanel\(/);
+  assert.match(locationGate, /IndiaLocationPanel\(/);
   assert.doesNotMatch(shell, /onDestinationSelected:\s*\(\w+\)\s*=>\s*\{\s*\}/);
 });
 

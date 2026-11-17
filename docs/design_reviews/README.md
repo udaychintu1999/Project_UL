@@ -1,13 +1,6 @@
-# P02-0 design package — current for next phase (2026-11-15)
+# P02 design reviews — consolidated after owner acceptance
 
-- `P02_0_APPROVED_SCOPE_AND_IMPLEMENTATION_CONTRACT_2026_11_15.md` — eight owner-approved product decisions; overall scope and milestone gates.
-- `P02_0_API_AND_VALIDATION_CONTRACT_2026_11_15.md` — **proposed** API paths/typed payloads/limits; not implemented endpoints.
-- `P02_0_DATABASE_MEDIA_AND_THREAT_MODEL_2026_11_15.md` — existing 18-table keys, security, media ownership and local storage.
-- `P02_0_REQUIREMENTS_TRACEABILITY_AND_TEST_MATRIX_2026_11_15.md` — R01–R17, executable test plan and acceptance gates.
-- `../manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md` — **future** Windows owner instructions; not proof of tests.
-- `../qa/P02_0_DESIGN_DOCUMENTATION_EVIDENCE_2026_11_15.md` — truthful design verification evidence.
-
-**P02 runtime NOT IMPLEMENTED; P01-3 owner acceptance unchanged.** Prior P01-3 review index below remains historical/contextual.
+The P02-0 design decisions, P02-1/P02-2 implemented contracts and P02-5 visual reference are now in [`docs/p02/README.md`](../p02/README.md), with separate product, technical, UI, verification and incident-history guides. Original P02 review filenames remain as compatibility pointers where still referenced; they are **not** current `NOT IMPLEMENTED` instructions. P02-0–P02-5 are locally owner-accepted as of 16 November 2026; the separate native SAF/visual checklist remains unconfirmed. The P01 design-review index below is preserved unchanged.
 
 ---
 

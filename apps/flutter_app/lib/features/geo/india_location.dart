@@ -18,7 +18,8 @@ import 'gps_location.dart';
 class IndiaLocationPanel extends StatefulWidget {
   const IndiaLocationPanel({super.key, required this.baseUrl, required this.access,
     @visibleForTesting this.testGet, @visibleForTesting this.testCacheDirectory,
-    this.onLocationSaved, @visibleForTesting this.testSaveManual});
+    this.onLocationSaved, this.showGps = true,
+    @visibleForTesting this.testSaveManual});
   final String baseUrl;
   final Future<String> Function() access;
   /// Test-only API transport. Production always uses authenticated HTTP.
@@ -27,6 +28,8 @@ class IndiaLocationPanel extends StatefulWidget {
   final Future<Directory> Function()? testCacheDirectory;
   /// Receives only the server-confirmed label, never a raw GPS fix.
   final ValueChanged<String>? onLocationSaved;
+  /// Hide the duplicate GPS action when manually selecting from a discovery tab.
+  final bool showGps;
   /// Test-only transport for verifying save behavior. Production uses PUT.
   final Future<Map<String,dynamic>> Function(Map<String,dynamic> body)? testSaveManual;
   @override
@@ -560,7 +563,7 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
         child:Text('Saved location: $selectedLocationName',key:const Key('p03-1b-selected-location'))),
       if(accountStatus.isNotEmpty) Text(accountStatus,key:const Key('p03-1b-account-status')),
       const SizedBox(height:10),
-      OneTimeGpsPanel(
+      if (widget.showGps) OneTimeGpsPanel(
         provider:AndroidOneTimeGpsProvider(),
         client:HttpGpsSelectionClient(baseUrl:widget.baseUrl,access:widget.access),
         onSaved:(nextRevision,name){

@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../design/uluv_design.dart';
 import 'auth_service.dart';
 import 'account_navigation.dart';
+import '../profiles/profile_service.dart';
+import '../profiles/profile_models.dart';
+import '../profiles/profile_workspace.dart';
+import '../geo/discovery_location_gate.dart';
 
 /// P01-2: distinct login, registration, password recovery, and account pages.
 /// P01-3 alone will persist credentials/renew sessions across app restarts.
@@ -16,6 +20,8 @@ class AuthScreen extends StatefulWidget {
       this.accountExtra,
       this.homeContent,
       this.settingsContent,
+      this.profileRepository, this.geoBaseUrl, this.geoAccess,
+      this.settingsBuilder,
       this.bottomNavigation = false});
   final AuthService service;
   final String? initialToken, initialUid;
@@ -26,6 +32,13 @@ class AuthScreen extends StatefulWidget {
   final bool bottomNavigation;
   final Widget? homeContent;
   final Widget? settingsContent;
+  /// Set only on authenticated persistent accounts; source of completion truth
+  /// is the server dashboard, not a device-local onboarding flag.
+  final ProfileRepository? profileRepository;
+  final String? geoBaseUrl;
+  final Future<String> Function()? geoAccess;
+  final Widget Function(ValueChanged<String> onLocationSaved, bool profileComplete,
+    int locationRefreshEpoch)? settingsBuilder;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -55,7 +68,10 @@ class _AuthScreenState extends State<AuthScreen> {
   // an existing-user OTP login must never collect signup DOB/consent again.
   String mode = 'password'; // password | signup | otp | recovery
   String accountPanel = 'home'; // home | setup | options | create | change
-  int selectedAccountTab = 0; // 0: profile home, 1: security/settings
+  int selectedAccountTab = 0; // incomplete: Home/Settings; complete: 5 tabs
+  bool profileComplete = false;
+  bool profileStatusKnown = false;
+  int locationRefreshEpoch = 0;
   bool? passwordConfigured; // unknown for an existing account reached by OTP
   final Set<String> touched =
       <String>{}; // local guidance, never an authorization gate
@@ -133,14 +149,35 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
+  void _onProfileDashboard(ProfileDashboard verified) {
+    final ready = verified.onboarding.ready;
+    if (!mounted || (ready == profileComplete && profileStatusKnown)) return;
+    setState(() {
+      profileStatusKnown = true;
+      // Preserve Settings when the navigation expands or contracts.
+      if (selectedAccountTab == (profileComplete ? 4 : 1)) {
+        selectedAccountTab = ready ? 4 : 1;
+      } else if (!ready && selectedAccountTab > 1) {
+        selectedAccountTab = 0;
+      }
+      profileComplete = ready;
+    });
+  }
+
+  void _onLocationSaved(String name) {
+    if (!mounted || name.trim().isEmpty) return;
+    setState(() => locationRefreshEpoch++);
+  }
+
   /// Keep the Home editor mounted across navigation. Leaving Settings also
   /// clears unsubmitted password text to avoid retaining secrets in memory.
   void chooseAccountTab(int index) {
-    if (busy || index == selectedAccountTab) return;
+    if (busy || index == selectedAccountTab ||
+        index < 0 || index > (profileComplete ? 4 : 1)) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       selectedAccountTab = index;
-      if (index == 0) {
+      if (index != (profileComplete ? 4 : 1)) {
         accountPanel = 'home';
         currentPassword.clear();
         newPassword.clear();
@@ -506,7 +543,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 busy ? null : () => chooseAccountPanel('home'),
                             child: Text(tabbed ? 'Back to settings' : 'Back to account')),
                       ] else ...[
-                        FilledButton(
+                        if (!tabbed) FilledButton(
                             key: const Key('auth-me'),
                             onPressed: busy
                                 ? null
@@ -552,7 +589,10 @@ class _AuthScreenState extends State<AuthScreen> {
                                   },
                             child: const Text('Retry secure login')),
                       if (!tabbed && widget.accountExtra != null) widget.accountExtra!,
-                      if (tabbed && widget.settingsContent != null) widget.settingsContent!,
+                      if (tabbed && widget.settingsBuilder != null)
+                        widget.settingsBuilder!(_onLocationSaved, profileComplete, locationRefreshEpoch)
+                      else if (tabbed && widget.settingsContent != null)
+                        widget.settingsContent!,
                       const SizedBox(height: 12),
                       OutlinedButton(
                           key: const Key('auth-logout'),
@@ -563,33 +603,82 @@ class _AuthScreenState extends State<AuthScreen> {
                           child: const Text('Log out')),
   ];
 
-  Widget _tabbedAccount() => AccountNavigation(
-        selectedIndex: selectedAccountTab,
-        onSelect: busy ? null : chooseAccountTab,
-        onBack: accountBack,
-        home: widget.homeContent ?? widget.accountExtra ??
-            const Text('Your profile editor is not available.'),
-        settings: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Account and security', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            ..._accountControls(tabbed: true),
+  Widget _tabbedAccount() {
+    final geoAvailable = widget.geoBaseUrl != null && widget.geoAccess != null;
+    final profile = widget.profileRepository != null
+        ? ProfileWorkspace(
+            repository: widget.profileRepository!,
+            initiallyExpanded: true,
+            summaryOnReady: true,
+            onDashboardConfirmed: _onProfileDashboard,
+          )
+        : widget.homeContent ?? widget.accountExtra ??
+            const Text('Your profile editor is not available.');
+
+    Widget locationTab(String mode, int index) => geoAvailable
+        ? DiscoveryLocationGate(
+            key: ValueKey('p03-location-gate-$mode'), mode: mode,
+            baseUrl: widget.geoBaseUrl!, access: widget.geoAccess!,
+            active: selectedAccountTab == index,
+            refreshEpoch: locationRefreshEpoch,
+            onLocationSaved: _onLocationSaved)
+        : const Text('Location setup is temporarily unavailable.');
+
+    return AccountNavigation(
+      selectedIndex: selectedAccountTab,
+      onSelect: busy ? null : chooseAccountTab,
+      onBack: accountBack,
+      profileComplete: profileComplete,
+      navigationReady: widget.profileRepository == null || profileStatusKnown,
+      home: profile,
+      dating: profileComplete ? locationTab('dating', 1) : const SizedBox.shrink(),
+      friendship: profileComplete ? locationTab('friendship', 2) : const SizedBox.shrink(),
+      localFeed: profileComplete ? locationTab('local-feed', 3) : const SizedBox.shrink(),
+      settings: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(profileComplete ? 'Settings' : 'Account and security',
+            style: Theme.of(context).textTheme.titleLarge),
+          if (profileComplete) ...[
             const SizedBox(height: 12),
-            Semantics(
-              liveRegion: true,
-              child: Text(message, key: const Key('auth-message'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: RegExp(r'failed|unavailable|incorrect|error|could not|invalid|expired|retry',
-                      caseSensitive: false).hasMatch(message)
-                        ? UluvPalette.danger : UluvPalette.muted,
-                    fontWeight: FontWeight.w700)),
-            ),
-            if (busy) const Center(child: CircularProgressIndicator()),
+            const Text('Profile & modes',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Manage your saved profile and selected modes from Home.'),
+            TextButton.icon(key: const Key('p03-settings-open-profile'),
+              onPressed: () => chooseAccountTab(0),
+              icon: const Icon(Icons.person_outline),
+              label: const Text('Open my profile')),
+            const Divider(),
+            const Text('Location & discovery',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Your location and distance preferences stay private.'),
+            const SizedBox(height: 12),
           ],
-        ),
-      );
+          if (!profileComplete) const SizedBox(height: 6),
+          ..._accountControls(tabbed: true),
+          if (profileComplete) ...[
+            const Divider(height: 24),
+            const Text('Future settings',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Notifications, discovery visibility and other controls '
+              'will appear here when their phases are implemented.'),
+          ],
+          const SizedBox(height: 12),
+          Semantics(
+            liveRegion: true,
+            child: Text(message, key: const Key('auth-message'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: RegExp(r'failed|unavailable|incorrect|error|could not|invalid|expired|retry',
+                  caseSensitive: false).hasMatch(message)
+                    ? UluvPalette.danger : UluvPalette.muted,
+                fontWeight: FontWeight.w700)),
+          ),
+          if (busy) const Center(child: CircularProgressIndicator()),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

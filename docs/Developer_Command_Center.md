@@ -1,12 +1,13 @@
-## P02-4 full profile phase verification (2026-11-16)
+## P02 accepted baseline: current verification commands (16 November 2026)
 
 ```powershell
-npm run verify:p02-4:plan       # read-only 12-stage overview; no .env required
-npm run verify:p02-4:portable   # offline source/unit/security regressions only
-npm run verify:p02-4            # FULL local API/DB + Flutter + real USB Android (manual services required)
+npm run verify:p02-5:plan       # Lists stages only
+npm run verify:p02-5:portable   # Offline source regressions only
+npm run test:flutter           # Analyzer + widget tests
+npm run verify:p02-5           # Full local API/DB/Flutter and USB Android tests
 ```
 
-Before full verification start Java DynamoDB Local manually, then `npm run dev:api` in a persistent separate terminal and connect the phone. The full verifier fails at first real error and never runs AWS/payment calls. Record separate manual native picker acceptance. Details: `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
+P02-5 was owner-reported passing after its final Android photo-count regression repair. Java DynamoDB Local remains manually started; Fastify and USB device are required for the full verifier. See [`docs/p02/04_VERIFICATION_AND_ACCEPTANCE.md`](p02/04_VERIFICATION_AND_ACCEPTANCE.md). The next P03 actions belong to P03 docs. **Manual native gallery picker/screenshot review is not independently documented.** Older dated commands below are historical.
 
 ---
 

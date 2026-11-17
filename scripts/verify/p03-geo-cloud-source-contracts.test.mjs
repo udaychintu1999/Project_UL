@@ -50,7 +50,8 @@ test('P03 settings and PIN code remain distinct from P02-5 frozen baseline',()=>
   const flutter=file('apps/flutter_app/lib/features/auth/persistent_gate.dart');
   assert.match(auth,/registerIndiaGeoRoutes\(app, db, requireSession\)/);
   assert.match(pincode,/requiresManualPlaceConfirmation:true/);
-  assert.match(flutter,/settingsContent: DeviceManagementPanel\(controller: sessions\)/);
+  assert.match(flutter,/settingsBuilder: \(onSaved, completed, refreshEpoch\) => DeviceManagementPanel\(/);
+  assert.match(flutter,/controller: sessions, profileComplete: completed/);
   assert.match(flutter,/UluvGeoSettingsPanel/);
   assert.doesNotMatch(file('apps/flutter_app/android/app/src/main/AndroidManifest.xml'),/ACCESS_BACKGROUND_LOCATION/);
 });

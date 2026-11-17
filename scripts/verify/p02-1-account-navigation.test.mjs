@@ -19,10 +19,12 @@ function assertTabs(source) {
   for (const tab of ['home', 'settings']) {
     assert.match(source, new RegExp(`Key\\s*\\(\\s*'p02-tab-${tab}'\\s*\\)`));
   }
-  assert.equal((source.match(/NavigationDestination\s*\(/g) ?? []).length, 2);
+  assert.equal((source.match(/NavigationDestination\s*\(/g) ?? []).length, 5);
+  assert.match(source, /if\s*\(profileComplete\) \.\.\./);
+  assert.match(source, /this\.profileComplete = false/);
 }
 
-test('new navigation mounts exactly two interactive tabs and preserves inactive page state', () => {
+test('navigation preserves two-tab default, conditional five-tab shell and inactive page state', () => {
   assertTabs(shell);
   assert.throws(() => assertTabs(shell.replace('IndexedStack(', 'Column(')));
   assert.throws(() => assertTabs(shell.replace('onDestinationSelected: onSelect', 'onDestinationSelected: null')));
@@ -30,9 +32,11 @@ test('new navigation mounts exactly two interactive tabs and preserves inactive 
 
 test('P01 persistent authentication gate uses the real existing profile and device panels', () => {
   assert.match(gate, /\bbottomNavigation\s*:\s*true\b/);
-  assert.match(gate, /\bhomeContent\s*:\s*ProfileWorkspace\s*\(/);
-  assert.match(gate, /\binitiallyExpanded\s*:\s*true\b/);
-  assert.match(gate, /\bsettingsContent\s*:\s*DeviceManagementPanel\s*\(/);
+  assert.match(gate, /\bprofileRepository\s*:\s*HttpProfileRepository\s*\(/);
+  assert.match(auth, /\bProfileWorkspace\s*\(/);
+  assert.match(auth, /\binitiallyExpanded\s*:\s*true\b/);
+  assert.match(gate, /\bsettingsBuilder\s*:/);
+  assert.match(gate, /DeviceManagementPanel\s*\(/);
   assert.match(gate, /\bRenewingAuthService\s*\(/);
   assert.match(gate, /\bSessionStage\.authenticated\b/);
   assert.match(workspace, /\bwidget\.initiallyExpanded\b/);

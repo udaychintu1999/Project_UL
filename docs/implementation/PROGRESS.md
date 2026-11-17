@@ -1,58 +1,10 @@
+> **2026-11-17 P03 pre-discovery UI cleanup authored:** server-confirmed 2/5 tab shell, returning-owner summary, private manual/GPS location gate and pre/post Settings scaffold added. P03-2 H3 query work **NOT STARTED**. Full Windows Flutter/Android acceptance pending. See `docs/qa/P03_PRE_DISCOVERY_SHELL_IMPLEMENTATION_EVIDENCE.md`.
+
 > 2026-11-17 P03 API diagnostics/Dart compile repair: update-only source prepared with targeted portable passes; Windows Flutter/typecheck/live integration **UNVERIFIED**. See `docs/qa/P03_API_TERMINAL_LOGGING_AND_DART_COMPILE_REPAIR_2026_11_17.md`.
 
-> **2026-11-16 P02-5 Android Gate 12 owner evidence and repair:** Owner Windows Flutter analyzer + 54 widget tests PASS; nested P02-4 Gates 1–11/12 PASS, including two isolated physical Android suites. Guided Android real UI at Gate 12 passed checkpoints 01–04 but timed out at checkpoint 05 because the Android test expected deleted `1/6 assigned` copy instead of keyed saved count `1 / 6`. All four stale photo-copy waits replaced with server-updated `p02-photo-count` checks and safe failure diagnostics; new portable regression PASS. **Post-repair Gate 12 and full P02-5 owner verification PENDING**; P03 public discovery stays disabled. See `docs/qa/P02_5_ANDROID_GATE12_PHOTO_COUNT_COPY_REGRESSION_REPAIR_2026_11_16.md`.
+## P02 final closeout — 16 November 2026 (supersedes earlier P02 progress snippets)
 
-> **2026-11-16 P02-5:** P02-4 core locally owner-accepted. New reference-inspired UI source delivered, 7 P02-5 contracts and previous portable regression PASSED in authoring environment. Flutter analyzer/widgets, real DB/USB and visual acceptance **PENDING owner Windows**. No P03 functionality launched.
-
-# 2026-11-16 — P02-4 final verification source delivered; FULL OWNER ACCEPTANCE PENDING
-
-**Owner-confirmed local development baseline:** P02-1, P02-2 and P02-3. The owner stated "all passed" after P02-3 Save & Next physical Android repair; this is an owner report, not a new P02-4 full-verifier transcript. **P02-4 PARTIALLY_VERIFIED until full `npm run verify:p02-4` + real native Android picker + owner signoff.** New 12-stage verifier fails at the first unsuccessful portable/TypeScript/lint/media-store/Flutter/live-DB/local-integration/isolated-Android gate. P03 public visibility stays off (`discoveryEligible=false`). Existing P01-1 Android OTP automated failure remains historical FAILED/local-development exception. See `docs/qa/P02_4_FINAL_VERIFICATION_EVIDENCE_2026_11_16.md` and `docs/manual/P02_4_WINDOWS_FINAL_ACCEPTANCE_2026_11_16.md`.
-
----
-
-# 2026-11-16 — P02-2 OWNER_ACCEPTED; P02-3 implementation checkpoint
-
-**P02-2 OWNER_ACCEPTED (local development):** Owner explicitly confirmed guided onboarding working after prior Windows/backend/Android test rounds, and requested closing P02-2 in docs. Distinguish owner report from independently captured CLI log; native Android gallery/files chooser manual gate remains without explicit evidence.
-
-**P02-3 SOURCE_IMPLEMENTED / PORTABLE_VERIFIED / OWNER_RETEST_PENDING:** Separate Dating/Friendship activation intent, stale-revision invalidation, owner-safe profile preview, public fail-closed behavior and unified Save & Next. No P03 discovery or AWS. See `docs/qa/P02_3_ACTIVATION_IMPLEMENTATION_EVIDENCE_2026_11_16.md`. Do not treat a completed ZIP as release verification.
-
----
-
-> **P02-2 UI test repair (2026-11-15):** The owner observed PASS 01–12 followed by an apparent hang. Repaired an awaited nonzero-duration scroll before frame pumping in `p02_2_ui_integration_test.dart`; portable regressions PASS. Re-run `npm run test:flutter:p02-2:ui:e2e` on Windows before claiming complete P02-2 UI verification. No backend or product code changed.
-
-> **P02-2 UI-DRIVEN ANDROID TEST ADDENDUM (2026-11-15):** The owner observed that the existing media Android suite displayed only the Flutter test harness, not the real profile screens. Inspection confirmed it exercised real HTTP/database operations through `HttpProfileRepository` but bypassed UI taps. The P02-2 **UI-driven Android suite** now mounts the actual persistent UluvApp, completes login and account/mode forms, taps upload/assign/reuse/remove, checks the two-photo Continue gate and reopens the widget tree for session/profile restoration. Test images are supplied ONLY through a deterministic picker-channel intercept; the native Android picker still needs separate owner manual verification. Both API-driven and UI-driven suites are mandatory in `verify:p02-2`. Authoring portable checks PASS; physical Android suite remains UNVERIFIED until run on Windows. No production profile/auth/backend logic changed. See `docs/qa/P02_2_REAL_UI_ANDROID_AUTOMATION_2026_11_15.md` and `docs/manual/P02_2_UI_E2E_AND_NATIVE_PICKER_ACCEPTANCE_2026_11_15.md`. P02-3 remains on hold.
-
-> **LATEST P02-2 gate repair (2026-11-15):** Owner confirmed the original Dating/gender-preference contract and mandated **two valid saved photos for EACH enabled Dating/Friendship mode before Continue**. Source now checks owner READY media records via bounded batch read, requires photo assignments per selected mode and refreshes Flutter readiness after photo writes. Draft saves (including incomplete photos) remain allowed; public discovery is still inactive. Authoring unit/portable checks PASS; Windows semantic/Flutter/live DB/Android/manual verification remains UNVERIFIED for this patch. Read `docs/qa/P02_2_TWO_PHOTO_CONTINUE_GATE_REPAIR_2026_11_15.md` and `docs/manual/P02_2_TWO_PHOTO_CONTINUE_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical status below is not superseding this latest contract.
-
-> **2026-11-15 — P02-2 SOURCE_IMPLEMENTED / PORTABLE_VERIFIED / OWNER_ACCEPTANCE_PENDING.** P02-2 adds local-only private photo import, normalization, owner media lifecycle, 0–6 ordered mode references, cross-mode reuse, guarded deletion and Android SAF chooser. Prior P02-1 V4 owner reported portable/typecheck/lint/Flutter green; previously real API/DB and isolated Android E2E green. For P02-2, authoring portable validation PASSED; real Windows TypeScript/Flutter/local DB/Android/chooser testing UNVERIFIED. No P02-3 activation, P03 discovery or real AWS. See `docs/qa/P02_2_SOURCE_TEST_EVIDENCE_2026_11_15.md`.
-
-> **2026-11-15 P02-1 V4 owner follow-up:** Latest owner Windows TypeScript/lint/portable, live API/DynamoDB and physical Android all **PASS**; one Flutter widget (`handle saving preserves unsaved common and mode fields`) **FAILS** on `find.text` for the unsaved name. V4 implements an explicit handle-only status refresh that cannot reload common/mode editor controllers, plus positive pre/post controller-value checks and negative mutation guard. Authoring portable PASS only after execution; Windows Flutter retest pending. Read `docs/qa/P02_1_FINAL_WIDGET_STATE_RETENTION_REPAIR_2026_11_15.md`. P02-2 not started.
-
-> **2026-11-15 latest P02-1 Flutter + Android follow-up:** Owner-reported live API integration **PASS**, TypeScript/lint/portable **PASS**, but three Flutter widgets **FAIL** due to pre-frame button assertions, and physical Android test assertions **PASS** while Flutter attempts dangerous base-app uninstall on teardown. Added explicit widget settling, positive persisted-state assertions and `--no-uninstall` for P02 E2E with exact-package host cleanup. Portable tests pass in authoring environment; Windows widget/physical Android **RETEST PENDING**. See `docs/qa/P02_1_FLUTTER_WIDGET_AND_UNINSTALL_SAFETY_REPAIR_2026_11_15.md`. Do not start P02-2.
-
-> **2026-11-15 P02-1 common-setup regression repair:** Owner Windows reported portable/typecheck/lint PASS but real P02-1 integration, two Flutter widgets and Android E2E FAIL. Integration failure was a contradictory fixture assertion (B's own draft erroneously expected absent); Android test encountered pre-existing normal-app session and leaked a sealed credential in failure output; Flutter save-refresh readiness raced. Targeted fixes made; authoring portable evidence and Windows rechecks are separately recorded in `docs/qa/P02_1_COMMON_SETUP_WINDOWS_FAILURE_REPAIR_2026_11_15.md`. P02-2 not started.
-
-# 2026-11-15 — P02-1 common profile/onboarding continuation: SOURCE_IMPLEMENTED / PORTABLE_VERIFIED / OWNER_RETEST_PENDING
-
-The owner reported the preceding two-tab Home/Settings continuation as **working and manually tested**. The new request is implemented as one common profile (shared account handle/name/self-declared broad locality/optional gender; age derived from signup DOB), explicit independently persisted Dating/Friendship selection, mode-specific drafts and a **server-calculated setup-ready gate** requiring at least one selected and completed mode. A minimal setup-ready placeholder is used instead of future discovery Home. P02-2 photo requirements and P02-3 activation remain strictly separate. Full authoring portable checks **PASS**; real Windows semantic typecheck, Flutter widgets, live local DB and Android after this continuation **UNVERIFIED**. See `docs/qa/P02_1_COMMON_PROFILE_SETUP_GATE_EVIDENCE_2026_11_15.md` and the Windows runbook. Historical checkpoints below remain historical.
-
----
-
-# 2026-11-15 — P02-1 navigation continuation: SOURCE_IMPLEMENTED / OWNER_RETEST_PENDING
-
-Owner Windows reported P02-1 real Fastify/DynamoDB integration **PASS** and physical Android Keystore/real API/profile persistence E2E **PASS**; portable source checks and 40 Flutter widget tests also **PASS**. One semantic compiler failure at `apps/api/src/app.ts` (TS18046 `unknown` error) was reported. This continuation adds exactly two signed-in bottom tabs (**Home** with direct Dating/Friendship draft editor; **Settings** with existing password, devices, account verification and logout), resolves the `error.code` type narrowing, and adds navigation regression tests. Authoring portable tests **PASS**; post-patch typecheck, Flutter widgets, Android manual navigation and owner acceptance **PENDING**. P02-2 not started. Read `docs/qa/P02_1_HOME_SETTINGS_CONTINUATION_EVIDENCE_2026_11_15.md` and `docs/manual/P02_1_HOME_SETTINGS_WINDOWS_ACCEPTANCE_2026_11_15.md`. Historical checkpoints below are preserved.
-
----
-
-# 2026-11-15 — P02-1 SOURCE IMPLEMENTED; local/Android acceptance PENDING
-
-P02-1 authenticated shared @handle (conditional alias transaction), independent Dating/Friendship drafts (versioned CAS), Flutter editor/API connection and automated tests are in source. Authoring Node validation (30/30) and P01-3 portable regressions pass; real Java DynamoDB Local, typecheck/lint, Flutter and physical Android are **UNVERIFIED** until owner Windows commands run. See `docs/qa/P02_1_IMPLEMENTATION_TEST_EVIDENCE_2026_11_15.md`, `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. Locality write is held pending approved coarse locality catalog; P02-2 media/P02-3 activation not implemented.
-
----
-
-# 2026-11-15 — P02-0 DESIGN_DOCUMENTED; P02-1..4 NOT IMPLEMENTED
-
-Owner approved eight product decisions for P02 (single account `@handle`, mode-specific names, 2–6 photos, shared photo objects, independent activation, age from *self-declared* DOB, broad locality and practical-not-comprehensive media checks), and confirmed `.local/media/` is disposable **development-only** storage. P02-0 design specification, API proposals, DynamoDB/media security blueprint, traceability/tests and future Windows runbook are documented at `docs/design_reviews/P02_0_*` and `docs/manual/P02_1_WINDOWS_IMPLEMENTATION_AND_ACCEPTANCE_PLAN.md`. **This is documentation only. No P02 routes/UI/tests or new tables exist. P02 runtime is NOT_IMPLEMENTED/UNVERIFIED; P02 has not been owner-accepted.** Next: P02-1 end-to-end handle + draft profile editing, respecting P01 regression and explicit approval gates. Historical checkpoints below remain true for their dates.
+Owner reported **all P02-5 automated tests passed** after the Gate 12 photo-count assertion repair. P02-0 to P02-5 are accepted for **local development**: 54 Flutter widgets, real API/DB and isolated Android regression were in the verification chain. The full owner-reported completion is separate from authoring-environment portable evidence. Native Android picker/manual visual check is **not separately evidenced**; no public P02 discovery or production release. Read [`docs/p02/README.md`](../p02/README.md), [`P02 phase`](phases/P02.md) and [`P02 verification`](../p02/04_VERIFICATION_AND_ACCEPTANCE.md). Older intermediate FAIL/PENDING checkpoints are consolidated in [`repair history`](../p02/05_REPAIR_HISTORY.md).
 
 ---
 

@@ -7,6 +7,7 @@ const api = source('apps/api/src/features/profiles/routes.ts');
 const policy = source('apps/api/src/features/profiles/validation.ts');
 const gate = source('apps/flutter_app/lib/features/auth/persistent_gate.dart');
 const workspace = source('apps/flutter_app/lib/features/profiles/profile_workspace.dart');
+const flutterAccount = source('apps/flutter_app/lib/features/auth/auth_screen.dart');
 const client = source('apps/flutter_app/lib/features/profiles/profile_service.dart');
 
 function guarded(text) {
@@ -31,7 +32,8 @@ assert.match(policy, /invalid_profile_fields/);
 assert.match(policy, /const allowed = new Set/); // explicit positive-field allowlist
 assert.doesNotMatch(policy.match(/const allowed = new Set\([^;]+/s)?.[0] ?? '', /requestedActive/);
 assert.ok(renewedAccess(gate), 'profile must request a freshly valid device token');
-assert.match(gate, /ProfileWorkspace/);
+assert.match(gate, /profileRepository:\s*HttpProfileRepository\s*\(/);
+assert.match(flutterAccount, /ProfileWorkspace\s*\(/);
 assert.match(client, /client\.putUrl/);
 assert.match(workspace, /p02-save-next/);
 assert.doesNotMatch(workspace, /key:\s*const Key\('p02-save-(?:draft|handle|common)'\)/);

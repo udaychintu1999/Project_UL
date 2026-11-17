@@ -31,13 +31,13 @@ void main(){
         testHideDiscoveryPreferences:true))));
     try{
       await tester.pumpWidget(page());
-      await eventually(tester,find.text('Saved location: Hyderabad, Telangana, India'));
+      await eventually(tester,find.text('Hyderabad, Telangana, India'));
       expect(find.byKey(const Key('p03-1b-india-selector')),findsNothing,
         reason:'Manual picker must not auto-mount or load while collapsed');
       expect(readCount,greaterThan(0));
       await tester.pumpWidget(const MaterialApp(home:Scaffold(body:SizedBox())));
       await tester.pumpWidget(page());
-      await eventually(tester,find.text('Saved location: Hyderabad, Telangana, India'));
+      await eventually(tester,find.text('Hyderabad, Telangana, India'));
     }finally{await dir.delete(recursive:true);}
   });
 
@@ -68,8 +68,8 @@ void main(){
         testSaveManual:save,testHideDiscoveryPreferences:true))));
     try{
       await tester.pumpWidget(page());
-      await eventually(tester,find.text('No saved location yet'));
-      await tester.tap(find.text('Location & discovery preferences'));
+      await eventually(tester,find.text('Choose location'));
+      await tester.tap(find.text('Location & discovery'));
       await eventually(tester,find.byKey(const Key('p03-1b-state-null')));
       await tester.tap(find.byKey(const Key('p03-1b-state-null')));
       await tester.pump(const Duration(milliseconds:250));
@@ -87,14 +87,14 @@ void main(){
       expect(find.byKey(const Key('p03-1b-results-scroll')),findsNothing);
       await tester.ensureVisible(find.byKey(const Key('p03-1b-save')));
       await tester.tap(find.byKey(const Key('p03-1b-save')));
-      await eventually(tester,find.text('Saved location: Saved Nicobar Place, Andaman and Nicobar Islands, India'));
+      await eventually(tester,find.text('Saved Nicobar Place, Andaman and Nicobar Islands, India'));
       expect(saves,1);
       // After animation collapses, the child remains Offstage for efficiency.
       await tester.pump(const Duration(milliseconds:500));
       expect(find.byKey(const Key('p03-selected-place-summary')),findsNothing);
       await tester.pumpWidget(const MaterialApp(home:Scaffold(body:SizedBox())));
       await tester.pumpWidget(page());
-      await eventually(tester,find.text('Saved location: Saved Nicobar Place, Andaman and Nicobar Islands, India'));
+      await eventually(tester,find.text('Saved Nicobar Place, Andaman and Nicobar Islands, India'));
     }finally{await dir.delete(recursive:true);}
   });
 }

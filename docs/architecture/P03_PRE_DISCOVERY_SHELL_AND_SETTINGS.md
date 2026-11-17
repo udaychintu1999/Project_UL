@@ -1,55 +1,54 @@
-# U_luv — P03 pre-discovery authenticated shell, location gate, settings
+# P03 — Five-tab navigation and clean Settings (owner update, 2026-11-17)
 
-**Decision date:** 2026-11-17. **Phase:** P03-1 cleanup before P03-2. **Status:** implementation authored; full Windows/Flutter/physical device verification pending. **Do not** read this as authorization to publish public discovery data.
+**Status:** Owner-requested five-tab correction implemented; automated verification details are in the P03 QA record. Flutter/Android acceptance still required. This decision supersedes the earlier four-tab P03 shell and the historical four-tab product-navigation wording only. It does not alter P01-3 sessions or P02 profile/photo logic.
 
-## Product decisions
+## Canonical product navigation
 
-- A newly authenticated account with **server-confirmed incomplete onboarding** has exactly two bottom destinations: **Home** (guided profile setup) and **Settings** (essential security/location tools).
-- An authenticated account with `GET /v1/profiles/me` returning `onboarding.ready == true` has exactly five destinations, in order: **Home**, **Dating**, **Friendship**, **Local Feed**, **Settings**. This is a saved-state decision, never based on draft text, local app flags, or locally cached profile fields.
-- `onboarding.ready` comes from Fastify's saved common profile, selected mode and existing per-mode readiness checks, including required saved photos. It is not the same as `SharedProfile.locality`, which is self-declared, and is not the same as **verified location** from `/v1/me/geo/location`.
-- A returning complete account sees **Checking your saved profile** and no bottom navigation until the authoritative response; it does **not** flash the blank wizard or show an incorrect two-tab state. Complete accounts land on a summary and can deliberately select **Edit profile details**. This keeps P02 Save & Next, edits, private preview and activation requests intact.
-- The Dating, Friendship and Local Feed tabs are **shells**, not live feeds. Each tab reads private account location only when opened or when the account's saved-location generation changes. If the server explicitly confirms no location, show the prompt **We need your location to get started** with **Use GPS** and **Manual selection**.
-- **Use GPS** invokes the existing one-shot permission/fix/backend-save path. **Manual selection** opens a bottom sheet containing the already-verified State → District → Village/Town picker, with the duplicate GPS control hidden. Only a server-confirmed save removes the prompt. A failed/unauthenticated GET shows **Retry**, not an incorrect "no location" state.
-- Once location exists, the tab shows the stored approximate-area label and a truthful not-yet-implemented message. No people, posts, location ranking, H3 queries, discovery publication or fake data is returned by this change.
-- Settings has two states. **Pre profile:** password configuration/change, location, signed-in devices, logout. **Post profile:** adds a grouped base for Profile & modes, Location & discovery, future notifications/privacy/visibility; existing security controls remain active. Future actions are labelled **future** as text rather than fake buttons.
-- Incomplete owner profiles stay private; no auto-profile activation, media publication, direct CDN token forwarding or GPS permission on tab launch.
+**Owner-approved navigation (2026-11-17):** Five main tabs, in exact order:
+**Dating → Friendship → Local Feed → Connects → Settings**. The third **Local Feed** tab contains two sections, **Local Feed** and **Activities**. Friendship is a separate tab for People/Friendship only; it does not contain either local section. The last destination remains Settings and owns the saved profile summary/editor. **There is no Home tab.**
 
-## State and screen ownership
+The earlier shared `docs/ui/DESIGN_SYSTEM.md` and `docs/product/PRODUCT_CONTRACT.md` mention four tabs with Local Feed/Activities nested in Friendship. This P03 owner decision **supersedes only that navigation detail**. Do not rewrite those shared/P01/P02 documents within a P03-only ZIP. Future consolidation should make their navigation language consistent without altering other product rules.
 
-| Component | Owned responsibility |
-| --- | --- |
-| `persistent_gate.dart` | P01-3 Keystore-backed session; wires repository, API origin, token supplier; removes account tree on signout |
-| `auth_screen.dart` | Server-reported profile completion controls 2/5 tabs; remaps Settings 1 ↔ 4 on completion transitions; refresh generation for geo tabs; authenticated settings actions |
-| `account_navigation.dart` | Mounted bottom-bar surfaces and IndexedStack, retaining unsaved Home edits across tab switching |
-| `profile_workspace.dart` | Authenticated `GET /v1/profiles/me`, private onboarding wizard or saved owner summary, revisioned writes and status-refresh callback |
-| `discovery_location_gate.dart` | Read-only private saved-location check, empty-location GPS/manual gateway and truthful future-phase placeholder |
-| `india_location.dart` | SHA-verified State/District/place pack picker, local cache and authenticated manual save; `showGps=false` inside manual sheet |
-| `gps_location.dart` | One-shot Android GPS + existing Fastify boundary/H3 save; compact button presentation for the discovery tab |
-| `geo_settings_panel.dart` | Collapsible location editor, independent saved-label read, callback on confirmed save; hides future distance preferences in pre-profile Settings |
+| Account status | Bottom navigation order | Visible content |
+| --- | --- | --- |
+| Authenticated, profile status loading | Hidden until server dashboard replies | Saved-profile checking/retry, no onboarding flash |
+| Server-confirmed incomplete `onboarding.ready=false` | **Dating, Settings** | Dating shows the existing guided P02 Save & Next onboarding; Settings has location, password, devices and logout |
+| Server-confirmed complete `onboarding.ready=true` | **Dating, Friendship, Local Feed, Connects, Settings** | Dating and Friendship await later discovery features; Local Feed includes Local Feed/Activities sections; Settings owns saved profile/edit and account controls |
+| Profile changes from complete to incomplete after verified server update | **Dating, Settings** | Settings index **4 → 1**; other tabs → Dating index **0** |
+| Profile changes from incomplete to complete | Five destinations restored | If Settings was selected, index **1 → 4**; otherwise remain on Dating |
 
-## Authoritative API and storage paths
+Navigation indexes are zero-based: **Dating 0, Friendship 1, Local Feed 2, Connects 3, Settings 4** (completed); **Dating 0, Settings 1** (incomplete). Do not use the old completed Settings index 3. `IndexedStack` preserves tab state; no new discovery endpoint is enabled by this correction.
 
-- `GET /v1/profiles/me` → complete/incomplete **from the backend**. No new endpoint or migration.
-- `GET /v1/me/geo/location` → `settingsRevision`, nullable `location` with display `name`. Authenticated. A nullable `location` means the account needs location setup; **network failures do not**.
-- `PUT /v1/me/geo/manual` → selected GeoNames ID, version, state/district and revision. Fastify validates against pinned canonical S3/CloudFront index and persists private H3 R6 home center in DynamoDB `uluv_settings`.
-- `POST /v1/me/geo/gps` → only on explicit tap. Fastify validates bundled `india-boundary.geojson`, fresh/accurate coordinates, revision and cooldown; persists approximate H3 R6, not raw fix.
-- GeoNames catalogue remains in one S3 bucket under `geo/india/v1/`; bundled Flutter manifest is small metadata only, with district packs fetched, verified and cached on demand. Country boundary stays in the API codebase, not S3. PIN-code search remains on hold.
-- Existing server-side `discoveryEligible` flags continue **false**, no `uluv_discovery` publication or scanning in this patch.
+### Source ownership and state transitions
 
-## Navigation transitions and privacy invariants
+- `apps/flutter_app/lib/features/auth/persistent_gate.dart` is the immutable P01-3 identity/session parent. It creates the authenticated account subtree only after cryptographically verified restoration; logout/revocation disposes the subtree. No P03 auth change.
+- `apps/flutter_app/lib/features/auth/auth_screen.dart` owns `selectedAccountTab`, `profileStatusKnown`, `profileComplete`, `locationRefreshEpoch`; only a backend-verified `ProfileDashboard.onboarding.ready` changes the 2/5-tab state. Never infer completed onboarding from local form text or mere presence of location.
+- `apps/flutter_app/lib/features/auth/account_navigation.dart` implements the active five-tab design and temporary two-tab onboarding variant. `IndexedStack` retains active editors between tab switches. No visible Home destination. Bottom tab `Settings` is the owner-facing Profile destination in the original specification.
+- `apps/flutter_app/lib/features/profiles/profile_workspace.dart` provides the wizard during incomplete setup, and the compact owner summary/edit/activation interface inside Settings when complete. All profile writes/readiness checks remain authenticated server operations; edits can invalidate completeness.
+- `apps/flutter_app/lib/features/geo/friendship_sections.dart` displays Friendship/People only and reuses the private saved-location gate.
+- `apps/flutter_app/lib/features/geo/local_feed_activities_sections.dart` owns the **third main tab** and its Local Feed/Activities toggle. Only the active section checks saved location, with no public feed/activity API calls.
+- `apps/flutter_app/lib/features/geo/discovery_location_gate.dart` checks `/v1/me/geo/location` upon entering an eligible discovery surface; if the backend positively confirms `location:null`, show single-tap GPS and a manual sheet. An API error shows Retry, **not** a false "location missing" prompt. A confirmed save updates the active gate and other views via `locationRefreshEpoch`.
+- `apps/flutter_app/lib/features/geo/geo_settings_panel.dart` presents a single `Location & discovery` expansion item in Settings, with a concise saved-area subtitle, private location editor and nested distance preferences. `IndiaLocationPanel(compact:true)` hides duplicate explanations/maintenance actions; errors and retry remain visible. No automatic permission prompt or background GPS.
 
-1. Authenticate: no profile form is shown until `GET /v1/profiles/me` resolves. If the fetch fails, show a retry in Home; do not guess that the owner is new or complete.
-2. Incomplete profile: Home wizard, Settings at tab 1. When a verified save/read reports `onboarding.ready`, expand to five tabs. If Settings is open, retain Settings by remapping 1 → 4.
-3. Complete profile: Home saved summary; the owner may choose Edit profile details. When a later verified response reports incomplete status, collapse to two tabs and move from a discovery page to Home, or remap Settings 4 → 1.
-4. On discovery-tab activation, read saved location with current P01-3 auth. If null, prompt GPS/manual; if present, show it without the setup controls.
-5. On a confirmed location save, locally show the server label and increase a refresh generation. Other tabs reread when activated and the Settings header receives the same refresh generation; no account label survives sign-out because the authenticated tree is disposed.
-6. No automatic device GPS permission, raw GPS persistence, public discovery API, or background location collection.
+### Settings behavior
 
-## Deferred to P03-2 and later
+**Before profile completion:** Essential account controls only: password settings, signed-in device management, **Location & discovery** expansion, logout. Do not show new profile/public visibility or unsupported settings actions.
 
-H3 geographic query planning, discovery pointer management, eligibility publication, mode filtering, distance-band query APIs, paginated results and real Dating/Friendship/Local Feed content. Their existing contracts stay gated and do **not** become active merely because a five-tab shell is present.
+**After profile completion:** Top owner summary (name/handle, Edit) plus expandable Profiles & visibility preserving P02-3 activation/preview actions, one Location & discovery expandable item, password controls, signed-in devices and logout. No large banners, two redundant Settings headings, advertising copy or rows of speculative future settings. The full existing profile editor appears only after explicit Edit.
 
-## Verification
+### Privacy and no-discovery gate
 
-Portable gate: `npm run verify:p03:pre-discovery:portable`.
-Full Windows gate (from repository root): `npm run verify:p03:pre-discovery`. This additionally requires TypeScript typechecking, real GPS API tests and the entire Flutter analyzer/widget suite. It does not substitute for the authenticated Android manual tests in `docs/manual/P03_PRE_DISCOVERY_NAVIGATION_WINDOWS_ACCEPTANCE.md`.
+An existing GeoNames place selection and GPS selection are private owner location in `uluv_settings`. The signed-in API derives the approximate H3 R6 cell; no raw GPS coordinates are retained. The original one-bucket CloudFront GeoNames catalogue is **public geographical source data only**, never owner records, and its manifest/shards are SHA-verified. Bundled India country polygon is loaded by Fastify locally, not on every request. PIN search remains on hold.
+
+**P03-2 is NOT started by this cleanup:** No public publication to `uluv_discovery`, no people/post ranking, no discovery queries, no feed, no Connects functionality and no new DynamoDB table. `discoveryEnabled` must remain false until a later independently tested slice.
+
+### P03 document ownership and reading order
+
+- `docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md` — data import, S3, checksums, caching, H3, GPS, DynamoDB and operational diagnostics.
+- `docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md` — implemented HTTP methods, auth/revision/privacy/error contracts and API route ownership.
+- `docs/P03_READ_ME_FIRST.md` — current P03 index, retired-document cleanup and links to unchanged P01/P02 references.
+- `docs/manual/P03_FOUR_TAB_SETTINGS_WINDOWS_ANDROID_ACCEPTANCE.md` — exact Flutter, API and device tests.
+
+### Verification state
+
+Authoring workspace: portable Node source/contract checks executed. Flutter analyser, widget tests, real DynamoDB Local, CloudFront, and moto g04s remain **owner verification required**. The new `npm run verify:p03:navigation-docs` runs portable assertions; `npm run verify:p03:navigation-docs:full` additionally invokes typecheck and the Flutter suite. A source-contract pass never proves Dart compiles.

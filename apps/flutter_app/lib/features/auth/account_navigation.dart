@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../design/uluv_design.dart';
 
-/// Authenticated P02-1 navigation. Pages remain mounted in IndexedStack so
-/// switching to Settings cannot silently discard unsubmitted profile edits.
-/// The parent authentication gate removes this entire tree on sign-out.
+/// P03 owner-approved completed navigation has FIVE destinations:
+/// Dating, Friendship, Local Feed (with Activities), Connects and Settings.
+/// An incomplete account temporarily sees Dating/setup and Settings only.
+/// There is no separate Home destination; Settings owns the profile editor.
+/// IndexedStack keeps unsubmitted editor state while switching destinations.
 class AccountNavigation extends StatelessWidget {
   const AccountNavigation({
     super.key,
     required this.selectedIndex,
     required this.onSelect,
     required this.onBack,
-    required this.home,
+    required this.home, // Legacy name: incomplete Dating/setup content.
     required this.settings,
     this.profileComplete = false,
     this.navigationReady = true,
     this.dating = const SizedBox.shrink(),
     this.friendship = const SizedBox.shrink(),
-    this.localFeed = const SizedBox.shrink(),
+    this.connects = const SizedBox.shrink(),
+    this.localFeed = const SizedBox.shrink(), // Combined Local Feed / Activities tab.
   });
 
   final int selectedIndex;
@@ -25,9 +28,8 @@ class AccountNavigation extends StatelessWidget {
   final Widget home;
   final Widget settings;
   final bool profileComplete;
-  /// Hide navigation until the authenticated profile status has been checked.
   final bool navigationReady;
-  final Widget dating, friendship, localFeed;
+  final Widget dating, friendship, connects, localFeed;
 
   @override
   Widget build(BuildContext context) {
@@ -41,84 +43,99 @@ class AccountNavigation extends StatelessWidget {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           titleSpacing: 20,
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 33, height: 33,
-                decoration: BoxDecoration(color: UluvPalette.pinkTint,
-                  borderRadius: BorderRadius.circular(11)),
-                child: Icon(Icons.favorite_rounded, color: colors.primary, size: 21),
+          title: Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 33, height: 33,
+              decoration: BoxDecoration(
+                color: UluvPalette.pinkTint,
+                borderRadius: BorderRadius.circular(11),
               ),
-              const SizedBox(width: 10),
-              const Text('U_luv', style: TextStyle(fontWeight: FontWeight.w800,
-                letterSpacing: -0.25)),
-            ],
-          ),
+              child: Icon(Icons.favorite_rounded, color: colors.primary, size: 21),
+            ),
+            const SizedBox(width: 10),
+            const Text('U_luv', style: TextStyle(
+              fontWeight: FontWeight.w800, letterSpacing: -0.25)),
+          ]),
         ),
         body: SafeArea(
           child: IndexedStack(
             index: selectedIndex,
             children: [
               _AccountPage(
-                key: const Key('p02-home-page'),
-                heading: profileComplete ? 'Your home' : 'Your profile',
-                caption: profileComplete
-                    ? 'Your account, your choices.'
-                    : 'A little about you goes a long way.',
-                icon: Icons.person_outline_rounded,
-                child: home,
+                key: const Key('p03-dating-page'),
+                heading: 'Dating',
+                caption: profileComplete ? '' : 'Complete your profile to get started.',
+                icon: Icons.favorite_outline,
+                child: profileComplete ? dating : home,
               ),
               if (profileComplete) ...[
-                _AccountPage(key: const Key('p03-dating-page'),
-                  heading: 'Dating', caption: 'Connections on your terms.',
-                  icon: Icons.favorite_outline, child: dating),
-                _AccountPage(key: const Key('p03-friendship-page'),
-                  heading: 'Friendship', caption: 'Meet people nearby.',
-                  icon: Icons.people_outline, child: friendship),
-                _AccountPage(key: const Key('p03-feed-page'),
-                  heading: 'Local Feed', caption: 'Your local community.',
-                  icon: Icons.dynamic_feed_outlined, child: localFeed),
+                _AccountPage(
+                  key: const Key('p03-friendship-page'),
+                  heading: 'Friendship', caption: '',
+                  icon: Icons.people_outline, child: friendship,
+                ),
+                _AccountPage(
+                  key: const Key('p03-local-feed-activities-page'),
+                  heading: 'Local Feed & Activities', caption: '',
+                  icon: Icons.article_outlined, child: localFeed,
+                ),
+                _AccountPage(
+                  key: const Key('p03-connects-page'),
+                  heading: 'Connects', caption: '',
+                  icon: Icons.chat_bubble_outline, child: connects,
+                ),
               ],
               _AccountPage(
                 key: const Key('p02-settings-page'),
-                heading: 'Account & safety',
-                caption: profileComplete
-                    ? 'Your profile, privacy, preferences and account.'
-                    : 'Your privacy, security and signed-in devices.',
-                icon: Icons.tune_rounded,
-                child: settings,
+                heading: 'Settings', caption: '',
+                icon: Icons.settings_outlined,
+                compact: true, child: settings,
               ),
             ],
           ),
         ),
         bottomNavigationBar: navigationReady ? Container(
-          decoration: const BoxDecoration(color: UluvPalette.paper,
-            border: Border(top: BorderSide(color: UluvPalette.border))),
+          decoration: const BoxDecoration(
+            color: UluvPalette.paper,
+            border: Border(top: BorderSide(color: UluvPalette.border)),
+          ),
           child: NavigationBar(
             key: const Key('p02-bottom-navigation'),
             selectedIndex: selectedIndex,
             onDestinationSelected: onSelect,
             destinations: [
-              const NavigationDestination(
-                key: Key('p02-tab-home'),
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
+              NavigationDestination(
+                // Keep the old key on the two-destination setup shell for
+                // legacy integration harnesses. The visible label is Dating.
+                key: profileComplete
+                    ? const Key('p03-tab-dating')
+                    : const Key('p02-tab-home'),
+                icon: const Icon(Icons.favorite_border),
+                selectedIcon: const Icon(Icons.favorite),
+                label: 'Dating',
+              ),
               if (profileComplete) ...[
-                const NavigationDestination(key: Key('p03-tab-dating'),
-                  icon: Icon(Icons.favorite_border),
-                  selectedIcon: Icon(Icons.favorite), label: 'Dating'),
-                const NavigationDestination(key: Key('p03-tab-friendship'),
+                const NavigationDestination(
+                  key: Key('p03-tab-friendship'),
                   icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people), label: 'Friendship'),
-                const NavigationDestination(key: Key('p03-tab-local-feed'),
-                  icon: Icon(Icons.dynamic_feed_outlined),
-                  selectedIcon: Icon(Icons.dynamic_feed), label: 'Local Feed'),
+                  selectedIcon: Icon(Icons.people), label: 'Friendship',
+                ),
+                const NavigationDestination(
+                  key: Key('p03-tab-local-feed-activities'),
+                  icon: Icon(Icons.article_outlined),
+                  selectedIcon: Icon(Icons.article_rounded), label: 'Local Feed',
+                ),
+                const NavigationDestination(
+                  key: Key('p03-tab-connects'),
+                  icon: Icon(Icons.chat_bubble_outline),
+                  selectedIcon: Icon(Icons.chat_bubble), label: 'Connects',
+                ),
               ],
               const NavigationDestination(
                 key: Key('p02-tab-settings'),
                 icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings_rounded), label: 'Settings'),
+                selectedIcon: Icon(Icons.settings_rounded), label: 'Settings',
+              ),
             ],
           ),
         ) : null,
@@ -128,50 +145,39 @@ class AccountNavigation extends StatelessWidget {
 }
 
 class _AccountPage extends StatelessWidget {
-  const _AccountPage({
-    super.key,
-    required this.heading,
-    required this.caption,
-    required this.icon,
-    required this.child,
-  });
+  const _AccountPage({super.key, required this.heading,
+    required this.caption, required this.icon, required this.child,
+    this.compact = false});
 
-  final String heading;
-  final String caption;
+  final String heading, caption;
   final IconData icon;
   final Widget child;
+  final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    return CustomScrollView(
-      key: PageStorageKey<String>('p02-scroll-$heading'),
-      slivers: [
-        SliverToBoxAdapter(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 660),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 42),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    UluvStageBanner(
-                      title: heading,
-                      subtitle: caption,
-                      icon: icon,
-                      friendship: false,
-                    ),
-                    const SizedBox(height: 16),
-                    UluvSectionCard(
-                      child: child,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+  Widget build(BuildContext context) => CustomScrollView(
+    key: PageStorageKey<String>('p03-scroll-$heading'),
+    slivers: [SliverToBoxAdapter(
+      child: Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 660),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (compact)
+              Padding(padding: const EdgeInsets.only(bottom: 12),
+                child: Text(heading,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700))),
+            if (!compact) ...[
+              UluvStageBanner(title: heading,
+                subtitle: caption.isEmpty ? ' ' : caption,
+                icon: icon, friendship: heading == 'Friendship'),
+              const SizedBox(height: 12),
+            ],
+            if (compact) child else UluvSectionCard(child: child),
+          ]),
         ),
-      ],
-    );
-  }
+      )),
+    )],
+  );
 }

@@ -110,10 +110,10 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
       ExpansionTile(
         controller:_tile,
         key:const PageStorageKey<String>('p03-location-expansion'),
-        title:const Text('Location & discovery preferences'),
-        subtitle:Text(_savedName!=null?'Saved location: $_savedName':
-          _savedError!=null?'Saved location unavailable — retry':
-          _savedLoaded?'No saved location yet':'Checking saved location…',
+        title:const Text('Location & discovery'),
+        subtitle:Text(_savedName!=null?_savedName!:
+          _savedError!=null?'Unable to refresh location':
+          _savedLoaded?'Choose location':'Location',
           key:const Key('p03-settings-saved-location')),
         leading:const Icon(Icons.location_on_outlined),
         maintainState:true,
@@ -135,9 +135,14 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
               testGet:widget.testGet==null?null:(path) async=>Uint8List.fromList(await widget.testGet!(path)),
               testCacheDirectory:widget.testCacheDirectory,
               testSaveManual:widget.testSaveManual,
-              onLocationSaved:_onSaved),
+              onLocationSaved:_onSaved, compact:true),
             if(widget.showDiscoveryPreferences && !widget.testHideDiscoveryPreferences)
-              _DiscoveryPreferences(baseUrl:widget.baseUrl,access:widget.access),
+              ExpansionTile(
+                key:const PageStorageKey<String>('p03-discovery-distance-expansion'),
+                tilePadding:EdgeInsets.zero,
+                title:const Text('Distance preferences'),
+                children:[_DiscoveryPreferences(baseUrl:widget.baseUrl,access:widget.access)],
+              ),
           ]),
         )],
       ),
@@ -206,8 +211,7 @@ class _DiscoveryPreferencesState extends State<_DiscoveryPreferences> {
     finally{if(mounted)setState(()=>busy=false);}
   }
   @override Widget build(BuildContext context)=>Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-    const Text('Future discovery distance',style:TextStyle(fontWeight:FontWeight.w700)),
-    const Text('Preferences are saved privately but the discovery feed is not enabled.'),
+
     if(loaded)...[
       DropdownButtonFormField<String>(
         key:ValueKey('p03-distance-$revision'),initialValue:band,
@@ -227,8 +231,8 @@ class _DiscoveryPreferencesState extends State<_DiscoveryPreferences> {
       ),
       FilledButton(key:const Key('p03-save-preferences'),onPressed:busy?null:_save,child:const Text('Save preferences')),
     ],
-    if(busy)const Text('Checking discovery preferences…'),
+    if(busy)const LinearProgressIndicator(),
     if(status.isNotEmpty)Text(status,key:const Key('p03-preferences-status')),
-    TextButton(key:const Key('p03-reload-preferences'),onPressed:busy?null:_load,child:const Text('Reload preferences')),
+    if(status.isNotEmpty || !loaded)TextButton(key:const Key('p03-reload-preferences'),onPressed:busy?null:_load,child:const Text('Retry')),
   ]);
 }

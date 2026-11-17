@@ -52,7 +52,7 @@ class _Profiles implements ProfileRepository {
 }
 
 void main() {
-  testWidgets('incomplete profile keeps Home + Settings, not premature discovery', (tester) async {
+  testWidgets('incomplete profile keeps Dating setup + Settings only', (tester) async {
     final profiles=_Profiles(false);
     await tester.pumpWidget(MaterialApp(home:AuthScreen(service:_Auth(),
       initialToken:'test-session', initialUid:'test-user', bottomNavigation:true,
@@ -66,10 +66,10 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('auth-password-settings')), findsOneWidget);
     expect(find.byKey(const Key('auth-logout')), findsOneWidget);
-    expect(find.byKey(const Key('p03-settings-open-profile')), findsNothing);
+    expect(find.byKey(const Key('p03-settings-profile-summary')), findsNothing);
   });
 
-  testWidgets('server-ready profile shows five tabs and summary, not onboarding editor', (tester) async {
+  testWidgets('server-ready profile shows five tabs and Settings profile summary', (tester) async {
     final profiles=_Profiles(true);
     await tester.pumpWidget(MaterialApp(home:AuthScreen(service:_Auth(),
       initialToken:'test-session',initialUid:'test-user',bottomNavigation:true,
@@ -78,15 +78,18 @@ void main() {
     await tester.pump(const Duration(milliseconds:200));
     expect(profiles.reads, greaterThanOrEqualTo(1));
     expect(find.byType(NavigationDestination), findsNWidgets(5));
-    expect(find.byKey(const Key('p02-setup-ready')), findsOneWidget);
+    // The profile is owned by Settings, which is offstage until selected.
     expect(find.byKey(const Key('p02-step-label')), findsNothing);
     expect(find.byKey(const Key('p03-tab-dating')), findsOneWidget);
     expect(find.byKey(const Key('p03-tab-friendship')), findsOneWidget);
-    expect(find.byKey(const Key('p03-tab-local-feed')), findsOneWidget);
+    expect(find.byKey(const Key('p03-tab-local-feed-activities')), findsOneWidget);
+    expect(find.byKey(const Key('p03-tab-connects')), findsOneWidget);
     await tester.tap(find.byKey(const Key('p02-tab-settings')));
     await tester.pump();
-    expect(find.byKey(const Key('p03-settings-open-profile')), findsOneWidget);
-    expect(find.text('Future settings'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byKey(const Key('p02-setup-ready')), findsOneWidget);
+    expect(find.byKey(const Key('p03-settings-profile-summary')), findsOneWidget);
+    expect(find.byKey(const Key('p03-settings-edit-profile')), findsOneWidget);
   });
 
   testWidgets('missing location presents GPS and manual, saved location hides setup', (tester) async {
@@ -117,20 +120,23 @@ void main() {
     expect(find.byKey(const Key('p03-discovery-manual')), findsNothing);
   });
 
-  testWidgets('five-tab shell keeps existing home and Settings indices stable', (tester) async {
+  testWidgets('five-tab shell starts with Dating and puts Settings last', (tester) async {
     var selected=0;
     await tester.pumpWidget(MaterialApp(home:StatefulBuilder(builder:(context,update)=>
       AccountNavigation(selectedIndex:selected,onSelect:(n)=>update(()=>selected=n),
         onBack:()=>update(()=>selected=0),profileComplete:true,
-        home:const Text('Home content'),settings:const Text('Settings content'),
+        home:const Text('Setup content'),settings:const Text('Settings content'),
         dating:const Text('Dating content'),friendship:const Text('Friendship content'),
-        localFeed:const Text('Local feed content')))));
+        connects:const Text('Connects content')))));
     expect(find.byType(NavigationDestination), findsNWidgets(5));
-    await tester.tap(find.byKey(const Key('p03-tab-local-feed')));
+    expect(find.text('Home'), findsNothing);
+    expect(find.byKey(const Key('p03-tab-dating')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('p03-tab-connects')));
     await tester.pump();
     expect(selected, 3);
     await tester.tap(find.byKey(const Key('p02-tab-settings')));
     await tester.pump();
-    expect(selected,4);
+    expect(selected, 4);
   });
+
 }

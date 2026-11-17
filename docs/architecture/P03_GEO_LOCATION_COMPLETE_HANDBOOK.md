@@ -2,6 +2,8 @@
 
 **Status:** implementation reference for the U_luv P03 codebase, 17 November 2026. **Scope:** current India GeoNames manual selection, one-time GPS, backend validation, private location storage and offline search. **PIN code is on hold.** This document describes implementation contracts, not proof that every device/build has passed. For live acceptance run the checks at the bottom.
 
+> Read this for the **GeoNames/GPS/data processing** contract. For the five-tab Flutter shell use [P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md](P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md), and for HTTP requests/responses use [../api/P03_GEO_AND_SHELL_API_CONTRACTS.md](../api/P03_GEO_AND_SHELL_API_CONTRACTS.md).
+
 ## 1. Decision summary and non-negotiables
 
 - All **large public GeoNames reference JSON** is versioned under `geo/india/v1/` in **one S3 bucket**, read through **one CloudFront distribution with S3 Origin Access Control**. No public source dataset is committed in the Flutter/API source repository.
@@ -13,9 +15,10 @@
 - The app must show the server-confirmed saved location in the **Settings tile subtitle even while collapsed**, retrieve it again after a new authenticated Settings mount/reopen, and never hide a known saved label just because the public catalogue failed. A successful manual or GPS save closes the expanded Settings tile.
 - The optional **PIN-code** importer/UI remains on hold pending authentic India Post source data. **Discovery remains disabled** even after saving a location.
 
-## P03 pre-discovery UX and profile-completion handoff (2026-11-17)
+## P03 shell and Settings integration (current decision, 2026-11-17)
 
-The five-tab account shell is **UI groundwork**, not a live discovery feature. The authoritative `GET /v1/profiles/me` `onboarding.ready` flag controls navigation: incomplete → **Home, Settings**; completed → **Home, Dating, Friendship, Local Feed, Settings**. Returning completed users see a saved-profile summary, never automatic first-time form entry. The Dating/Friendship/Local Feed tabs read authenticated saved account location only when opened; if no location is set, offer **Use GPS** (one tap and validated backend save) or **Manual selection** (bottom sheet using this handbook's verified GeoNames picker). If a verified location exists, the setup prompt disappears and the tab remains an honest future-feature shell. Pre/post profile Settings keep existing password, device, location and logout actions, adding future settings groups only after completion. For complete state transitions, privacy restrictions and regression commands, see `docs/architecture/P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md`.
+The latest owner-approved P03 navigation has **five main tabs** for completed accounts: **Dating · Friendship · Local Feed · Connects · Settings**. The third tab contains two sections, **Local Feed** and **Activities**; Friendship no longer contains them. The original shared product/design documents retain a historical four-tab description, which is superseded only for P03 navigation. Before authenticated `GET /v1/profiles/me` confirms `onboarding.ready`, the shell does not guess profile status. Incomplete accounts see **Dating (onboarding) · Settings**. There is no Home page. The saved-location gate checks each active Dating, Friendship, Local Feed or Activities surface only when a successful authenticated read confirms no location; it does **not** enable public discovery. Detailed transitions: [P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md](P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md).
+
 
 ## 2. Component map
 
@@ -77,7 +80,7 @@ ULUV_GEO_CANONICAL_MANIFEST_SHA256=<sha256 of the exact published server-index-m
 
 ## 5. Manual State → District → Village/Town flow
 
-1. User visits authenticated Settings; the collapsed `Location & discovery preferences` tile independently reads `GET /v1/me/geo/location` so the saved selection is already visible. **The tile's contents do not mount or begin downloading until first expansion.**
+1. User visits authenticated Settings; the collapsed `Location & discovery` tile independently reads `GET /v1/me/geo/location` so the saved selection is already visible. **The tile's contents do not mount or begin downloading until first expansion.**
 2. On expansion, Flutter checks the **bundled**, checksum-pinned State/District manifest immediately. It also asks Fastify for the previously saved account revision and selection **independently** of the public catalogue.
 3. Flutter calls **authenticated** `GET /v1/geo/india/delivery` for the configured provider/version/manifest SHA. Fastify validates canonical release metadata and returns the public URL. A phone-origin CloudFront request never carries a bearer token.
 4. Flutter independently downloads and hashes `manifest.json` from the delivery origin. A failed CDN/manifest does **not** hide the bundled State/District choices, and **must not** erase the saved account location.

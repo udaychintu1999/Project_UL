@@ -16,7 +16,7 @@ test('manual place picker collapses result list, sends authenticated save, updat
   assert.match(picker,/p03-selected-place-summary/);
   assert.match(picker,/widget\.onLocationSaved\?\.call\(newName\)/);
   assert.match(tile,/_tile\.collapse\(\)/);
-  assert.match(tile,/Saved location: \$_savedName/);
+  assert.match(tile,/subtitle:Text\(_savedName!=null\?_savedName!/);
   assert.match(tile,/_readSavedLocation\(\)/);
   assert.match(tile,/_everOpened/);
 });

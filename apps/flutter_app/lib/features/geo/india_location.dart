@@ -18,7 +18,7 @@ import 'gps_location.dart';
 class IndiaLocationPanel extends StatefulWidget {
   const IndiaLocationPanel({super.key, required this.baseUrl, required this.access,
     @visibleForTesting this.testGet, @visibleForTesting this.testCacheDirectory,
-    this.onLocationSaved, this.showGps = true,
+    this.onLocationSaved, this.showGps = true, this.compact = false,
     @visibleForTesting this.testSaveManual});
   final String baseUrl;
   final Future<String> Function() access;
@@ -30,6 +30,8 @@ class IndiaLocationPanel extends StatefulWidget {
   final ValueChanged<String>? onLocationSaved;
   /// Hide the duplicate GPS action when manually selecting from a discovery tab.
   final bool showGps;
+  /// Settings/sheet mode: hide duplicate explanations and maintenance controls.
+  final bool compact;
   /// Test-only transport for verifying save behavior. Production uses PUT.
   final Future<Map<String,dynamic>> Function(Map<String,dynamic> body)? testSaveManual;
   @override
@@ -556,12 +558,15 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
     key: const Key('p03-1b-india-selector'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text('Choose an approximate location',style:TextStyle(fontSize:19,fontWeight:FontWeight.bold)),
-      const SizedBox(height:8),
-      const Text('Manual place selection works without GPS. Selected account location is private and does not make your profile public.'),
+      if (!widget.compact) ...[
+        const Text('Choose an approximate location',style:TextStyle(fontSize:19,fontWeight:FontWeight.bold)),
+        const SizedBox(height:8),
+        const Text('Manual place selection works without GPS. Selected account location is private and does not make your profile public.'),
+      ],
       if (selectedLocationName!=null) Padding(padding:const EdgeInsets.symmetric(vertical:8),
         child:Text('Saved location: $selectedLocationName',key:const Key('p03-1b-selected-location'))),
-      if(accountStatus.isNotEmpty) Text(accountStatus,key:const Key('p03-1b-account-status')),
+      if(accountStatus.isNotEmpty && (!widget.compact || accountStatus.toLowerCase().contains('could not')))
+        Text(accountStatus,key:const Key('p03-1b-account-status')),
       const SizedBox(height:10),
       if (widget.showGps) OneTimeGpsPanel(
         provider:AndroidOneTimeGpsProvider(),
@@ -572,10 +577,12 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
             status='GPS location saved privately. Manual selection remains available.';});
           widget.onLocationSaved?.call(name);
         }),
-      const Divider(height:22),
-      const Text('Manual location: State → District → Village / Town',
-        key:Key('p03-manual-location-heading'),style:TextStyle(fontWeight:FontWeight.w700)),
-      const SizedBox(height:8),
+      if (!widget.compact) ...[
+        const Divider(height:22),
+        const Text('Manual location: State → District → Village / Town',
+          key:Key('p03-manual-location-heading'),style:TextStyle(fontWeight:FontWeight.w700)),
+        const SizedBox(height:8),
+      ] else const SizedBox(height:8),
       if (manifest==null) const Text('Loading State and District choices…'),
       if (manifest!=null) ...[
         DropdownButtonFormField<String>(
@@ -614,7 +621,7 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
             controller:_placeSearchController,
             key:const Key('p03-1b-search'),onChanged:_search,
             decoration:const InputDecoration(labelText:'Search village / town / locality',prefixIcon:Icon(Icons.search),border:OutlineInputBorder()))),
-          if(showPlaceResults) Text('Showing ${visible.length} of ${places.length} places',style:const TextStyle(fontSize:12)),
+          if(showPlaceResults && !widget.compact) Text('Showing ${visible.length} of ${places.length} places',style:const TextStyle(fontSize:12)),
           if(showPlaceResults) ConstrainedBox(constraints:const BoxConstraints(maxHeight:260),child:ListView.builder(
             key:const PageStorageKey<String>('p03-1b-results-scroll'),
             shrinkWrap:true,itemCount:visible.length,itemBuilder:(context,i){final place=visible[i];
@@ -628,7 +635,7 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
           if(!showPlaceResults && selectedPlace!=null) ListTile(
             key:const Key('p03-selected-place-summary'),
             title:Text('Selected: ${selectedPlace!['name']}'),
-            subtitle:const Text('Save this place to your private account'),
+            subtitle: widget.compact ? null : const Text('Save this place to your private account'),
             trailing:TextButton(key:const Key('p03-change-place'),onPressed:busy?null:()=>setState(()=>showPlaceResults=true),
               child:const Text('Change'))),
           FilledButton.icon(key:const Key('p03-1b-save'),onPressed:busy||!currentDistrictVerified||!accountLoaded||selectedPlace==null?null:_save,
@@ -636,13 +643,20 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
         ],
       ],
       if (busy && !downloading) const LinearProgressIndicator(),
-      if (status.isNotEmpty) Padding(padding:const EdgeInsets.symmetric(vertical:8),child:Text(status,key:const Key('p03-1b-status'))),
-      Wrap(spacing:8,children:[
+      if (status.isNotEmpty && (!widget.compact || districtFailure!=null ||
+          RegExp(r'could not|unavailable|failed|mismatch|invalid|retry',caseSensitive:false).hasMatch(status)))
+        Padding(padding:const EdgeInsets.symmetric(vertical:8),child:Text(status,key:const Key('p03-1b-status'))),
+      if (!widget.compact) Wrap(spacing:8,children:[
         TextButton(key:const Key('p03-1b-reload'),onPressed:busy||initializing?null:_init,child:const Text('Reload catalogue / settings')),
         TextButton(key:const Key('p03-1b-clear-cache'),onPressed:busy?null:_clearCache,child:const Text('Clear downloaded districts')),
       ]),
-      const Text('Location data © GeoNames · CC BY 4.0. Names and boundaries may be incomplete or outdated.',style:TextStyle(fontSize:12)),
-      const Divider(height:28),
+      if (widget.compact) const Padding(
+        padding:EdgeInsets.only(top:10),
+        child:Text('GeoNames · CC BY 4.0',style:TextStyle(fontSize:11)))
+      else ...[
+        const Text('Location data © GeoNames · CC BY 4.0. Names and boundaries may be incomplete or outdated.',style:TextStyle(fontSize:12)),
+        const Divider(height:28),
+      ],
     ],
   );
 }

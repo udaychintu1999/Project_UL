@@ -10,12 +10,15 @@ import 'profile_photos_panel.dart';
 /// destroyed when PersistentAuthGate hides the account after logout/revocation.
 class ProfileWorkspace extends StatefulWidget {
   const ProfileWorkspace({super.key, required this.repository, this.initiallyExpanded = false,
-    this.onDashboardConfirmed, this.summaryOnReady = false});
+    this.onDashboardConfirmed, this.summaryOnReady = false,
+    this.compactSummary = false});
   final bool initiallyExpanded;
   final ProfileRepository repository;
   /// Derived only from authenticated Fastify /v1/profiles/me. Never optimistic.
   final ValueChanged<ProfileDashboard>? onDashboardConfirmed;
   final bool summaryOnReady;
+  /// Compact owner profile surface when embedded inside Settings.
+  final bool compactSummary;
   @override
   State<ProfileWorkspace> createState() => _ProfileWorkspaceState();
 }
@@ -943,6 +946,58 @@ class _ProfileWorkspaceState extends State<ProfileWorkspace> {
       ]);
     }
     final ready = dashboard?.onboarding.ready == true;
+    if (ready && readySummary && widget.compactSummary) {
+      final shared = dashboard!.shared;
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        ListTile(
+          key: const Key('p03-settings-profile-summary'),
+          contentPadding: EdgeInsets.zero,
+          leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+          title: Text(shared.commonName.isEmpty ? 'My profile' : shared.commonName,
+            key: const Key('p02-setup-ready'),
+            style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(dashboard!.handle?.isNotEmpty == true
+              ? '@${dashboard!.handle}' : 'Your account'),
+          trailing: TextButton.icon(
+            key: const Key('p03-settings-edit-profile'),
+            onPressed: busy ? null : () => setState(() {
+              readySummary = false;
+              activeStep = 'review';
+            }),
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Edit'),
+          ),
+        ),
+        ExpansionTile(
+          key: const PageStorageKey<String>('p03-profile-visibility-expansion'),
+          tilePadding: EdgeInsets.zero,
+          title: const Text('Profiles & visibility'),
+          children: [
+            for (final selected in ['dating', 'friendship'])
+              if ((selected == 'dating' ? shared.dating : shared.friendship) &&
+                  dashboard!.profiles[selected] != null)
+                Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  SwitchListTile(
+                    key: Key('p02-activate-$selected'),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(selected == 'dating' ? 'Dating' : 'Friendship'),
+                    subtitle: Text('Status: ${dashboard!.profiles[selected]!.visibility}'),
+                    value: dashboard!.profiles[selected]!.requestedActive,
+                    onChanged: busy ? null : (value) => changeActivation(selected, value),
+                  ),
+                  if (dashboard!.profiles[selected]!.activationMissing.isNotEmpty)
+                    Text('Not eligible: ${dashboard!.profiles[selected]!.activationMissing.join(', ')}'),
+                  Align(alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: Key('p02-owner-preview-$selected'),
+                      onPressed: busy ? null : () => showOwnerPreview(selected),
+                      child: const Text('Preview profile'),
+                    )),
+                ]),
+          ],
+        ),
+      ]);
+    }
     if (ready && readySummary) {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const UluvStageBanner(title: 'You are all set',

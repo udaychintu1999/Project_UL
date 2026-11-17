@@ -7,6 +7,8 @@ import '../profiles/profile_service.dart';
 import '../profiles/profile_models.dart';
 import '../profiles/profile_workspace.dart';
 import '../geo/discovery_location_gate.dart';
+import '../geo/friendship_sections.dart';
+import '../geo/local_feed_activities_sections.dart';
 
 /// P01-2: distinct login, registration, password recovery, and account pages.
 /// P01-3 alone will persist credentials/renew sessions across app restarts.
@@ -68,7 +70,7 @@ class _AuthScreenState extends State<AuthScreen> {
   // an existing-user OTP login must never collect signup DOB/consent again.
   String mode = 'password'; // password | signup | otp | recovery
   String accountPanel = 'home'; // home | setup | options | create | change
-  int selectedAccountTab = 0; // incomplete: Home/Settings; complete: 5 tabs
+  int selectedAccountTab = 0; // Dating first; incomplete: 2 tabs; complete: 5 tabs
   bool profileComplete = false;
   bool profileStatusKnown = false;
   int locationRefreshEpoch = 0;
@@ -169,7 +171,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => locationRefreshEpoch++);
   }
 
-  /// Keep the Home editor mounted across navigation. Leaving Settings also
+  /// Keep the onboarding editor mounted across navigation. Leaving Settings also
   /// clears unsubmitted password text to avoid retaining secrets in memory.
   void chooseAccountTab(int index) {
     if (busy || index == selectedAccountTab ||
@@ -605,23 +607,28 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _tabbedAccount() {
     final geoAvailable = widget.geoBaseUrl != null && widget.geoAccess != null;
-    final profile = widget.profileRepository != null
+    Widget profileWorkspace({required bool compact}) =>
+        widget.profileRepository != null
         ? ProfileWorkspace(
             repository: widget.profileRepository!,
             initiallyExpanded: true,
             summaryOnReady: true,
+            compactSummary: compact,
             onDashboardConfirmed: _onProfileDashboard,
           )
         : widget.homeContent ?? widget.accountExtra ??
-            const Text('Your profile editor is not available.');
+            const Text('Profile setup is temporarily unavailable.');
 
     Widget locationTab(String mode, int index) => geoAvailable
         ? DiscoveryLocationGate(
-            key: ValueKey('p03-location-gate-$mode'), mode: mode,
-            baseUrl: widget.geoBaseUrl!, access: widget.geoAccess!,
+            key: ValueKey('p03-location-gate-$mode'),
+            mode: mode,
+            baseUrl: widget.geoBaseUrl!,
+            access: widget.geoAccess!,
             active: selectedAccountTab == index,
             refreshEpoch: locationRefreshEpoch,
-            onLocationSaved: _onLocationSaved)
+            onLocationSaved: _onLocationSaved,
+          )
         : const Text('Location setup is temporarily unavailable.');
 
     return AccountNavigation(
@@ -630,50 +637,54 @@ class _AuthScreenState extends State<AuthScreen> {
       onBack: accountBack,
       profileComplete: profileComplete,
       navigationReady: widget.profileRepository == null || profileStatusKnown,
-      home: profile,
-      dating: profileComplete ? locationTab('dating', 1) : const SizedBox.shrink(),
-      friendship: profileComplete ? locationTab('friendship', 2) : const SizedBox.shrink(),
-      localFeed: profileComplete ? locationTab('local-feed', 3) : const SizedBox.shrink(),
+      // Only incomplete profiles see onboarding. There is no Home page.
+      home: profileComplete ? const SizedBox.shrink()
+          : profileWorkspace(compact: false),
+      dating: profileComplete
+          ? locationTab('dating', 0) : const SizedBox.shrink(),
+      friendship: profileComplete && geoAvailable
+          ? FriendshipSections(
+              baseUrl: widget.geoBaseUrl!,
+              access: widget.geoAccess!,
+              active: selectedAccountTab == 1,
+              refreshEpoch: locationRefreshEpoch,
+              onLocationSaved: _onLocationSaved,
+            )
+          : const SizedBox.shrink(),
+      localFeed: profileComplete && geoAvailable
+          ? LocalFeedActivitiesSections(
+              baseUrl: widget.geoBaseUrl!,
+              access: widget.geoAccess!,
+              active: selectedAccountTab == 2,
+              refreshEpoch: locationRefreshEpoch,
+              onLocationSaved: _onLocationSaved,
+            )
+          : const SizedBox.shrink(),
+      connects: const Text('Your connects and chats will appear here when available.',
+        key: Key('p03-connects-not-yet-enabled')),
       settings: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(profileComplete ? 'Settings' : 'Account and security',
-            style: Theme.of(context).textTheme.titleLarge),
           if (profileComplete) ...[
-            const SizedBox(height: 12),
-            const Text('Profile & modes',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-            const Text('Manage your saved profile and selected modes from Home.'),
-            TextButton.icon(key: const Key('p03-settings-open-profile'),
-              onPressed: () => chooseAccountTab(0),
-              icon: const Icon(Icons.person_outline),
-              label: const Text('Open my profile')),
-            const Divider(),
-            const Text('Location & discovery',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-            const Text('Your location and distance preferences stay private.'),
-            const SizedBox(height: 12),
+            profileWorkspace(compact: true),
+            const SizedBox(height: 8),
+            const Divider(height: 16),
           ],
-          if (!profileComplete) const SizedBox(height: 6),
           ..._accountControls(tabbed: true),
-          if (profileComplete) ...[
-            const Divider(height: 24),
-            const Text('Future settings',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-            const Text('Notifications, discovery visibility and other controls '
-              'will appear here when their phases are implemented.'),
-          ],
-          const SizedBox(height: 12),
-          Semantics(
-            liveRegion: true,
-            child: Text(message, key: const Key('auth-message'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: RegExp(r'failed|unavailable|incorrect|error|could not|invalid|expired|retry',
-                  caseSensitive: false).hasMatch(message)
-                    ? UluvPalette.danger : UluvPalette.muted,
-                fontWeight: FontWeight.w700)),
-          ),
+          if (message != 'Account ready.' && message.trim().isNotEmpty)
+            Semantics(
+              liveRegion: true,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(message, key: const Key('auth-message'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: RegExp(r'failed|unavailable|incorrect|error|could not|invalid|expired|retry',
+                      caseSensitive: false).hasMatch(message)
+                        ? UluvPalette.danger : UluvPalette.muted,
+                  )),
+              ),
+            ),
           if (busy) const Center(child: CircularProgressIndicator()),
         ],
       ),

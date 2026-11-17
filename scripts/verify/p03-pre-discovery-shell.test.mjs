@@ -14,14 +14,14 @@ const manual=file('apps/flutter_app/lib/features/geo/india_location.dart');
 const gps=file('apps/flutter_app/lib/features/geo/gps_location.dart');
 const settings=file('apps/flutter_app/lib/features/geo/geo_settings_panel.dart');
 
-test('two-tab mode before server-confirmed onboarding.ready and five-tab mode after',()=>{
+test('two-tab setup before onboarding.ready and five-tab navigation after',()=>{
  assert.match(auth,/verified\.onboarding\.ready/);
  assert.match(auth,/profileComplete = ready/);
  assert.match(auth,/profileStatusKnown = true/);
  assert.match(nav,/bottomNavigationBar: navigationReady \? Container/);
  assert.match(gate,/profileRepository: HttpProfileRepository/);
  assert.match(nav,/if \(profileComplete\) \.\.\./);
- for(const name of ['p03-tab-dating','p03-tab-friendship','p03-tab-local-feed','p02-tab-settings','p02-tab-home'])assert.ok(nav.includes(name),name);
+ for(const name of ['p03-tab-dating','p03-tab-friendship','p03-tab-local-feed-activities','p03-tab-connects','p02-tab-settings','p02-tab-home'])assert.ok(nav.includes(name),name);
  assert.match(auth,/selectedAccountTab = ready \? 4 : 1/);
 });
 test('returning owner loads summary instead of flashing onboarding steps',()=>{

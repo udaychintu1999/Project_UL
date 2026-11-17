@@ -1,6 +1,6 @@
-# U_luv P03-1C — India postal PIN code lookup (foundation only)
+# U_luv P03-1C — India postal PIN code lookup (ON HOLD)
 
-**Status: SOURCE IMPLEMENTED / PARTIALLY VERIFIED. No owner acceptance. P03 remains open.**
+**Status: ON HOLD by owner, 2026-11-17.** Source foundation may exist but official India Post data is not supplied; do not expose or activate PIN search. The active P03 implementation is documented in `docs/P03_READ_ME_FIRST.md`. This note is retained solely for deferred reactivation.
 
 ## Source and separation of concerns
 

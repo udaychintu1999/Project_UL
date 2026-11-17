@@ -26,7 +26,7 @@ test('P02-5 design tokens are installed in the real app without extra dependenci
   assert.doesNotMatch(read('apps/flutter_app/pubspec.yaml'), /google_fonts:|cached_network_image:/);
 });
 
-test('P02-5 default remains two tabs; P03 completed accounts have working location-gated five-tab shell', () => {
+test('P02-5 setup remains two tabs; P03 uses the owner-approved five-tab shell', () => {
   for (const key of ['p02-bottom-navigation', 'p02-tab-home', 'p02-tab-settings']) {
     assert.ok(shell.includes(key));
   }

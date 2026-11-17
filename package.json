@@ -105,7 +105,10 @@
     "verify:p03:geo-visibility": "npm run verify:p03:geo-visibility:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
     "test:p03:pre-discovery:shell": "node --test scripts/verify/p03-pre-discovery-shell.test.mjs",
     "verify:p03:pre-discovery:portable": "npm run test:p03:pre-discovery:shell && npm run verify:p03:geo-visibility:portable",
-    "verify:p03:pre-discovery": "npm run verify:p03:pre-discovery:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter"
+    "verify:p03:pre-discovery": "npm run verify:p03:pre-discovery:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
+    "test:p03:navigation-docs": "node --test scripts/verify/p03-four-tabs-and-documentation.test.mjs scripts/verify/p03-pre-discovery-shell.test.mjs",
+    "verify:p03:navigation-docs": "npm run test:p03:navigation-docs && npm run test:p02-1:navigation:contracts && npm run test:p02-5:contracts && npm run verify:p03:geo-visibility:portable",
+    "verify:p03:navigation-docs:full": "npm run verify:p03:navigation-docs && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

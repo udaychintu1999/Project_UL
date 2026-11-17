@@ -145,7 +145,7 @@ class _DiscoveryLocationGateState extends State<DiscoveryLocationGate> {
             ]),
             IndiaLocationPanel(
               baseUrl: widget.baseUrl, access: widget.access,
-              showGps: false,
+              showGps: false, compact: true,
               onLocationSaved: (name) {
                 _saved(name);
                 Navigator.of(sheetContext).pop();

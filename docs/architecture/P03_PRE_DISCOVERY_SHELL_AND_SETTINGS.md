@@ -40,7 +40,7 @@ Navigation indexes are zero-based: **Dating 0, Friendship 1, Local Feed 2, Conne
 
 An existing GeoNames place selection and GPS selection are private owner location in `uluv_settings`. The signed-in API derives the approximate H3 R6 cell; no raw GPS coordinates are retained. The original one-bucket CloudFront GeoNames catalogue is **public geographical source data only**, never owner records, and its manifest/shards are SHA-verified. Bundled India country polygon is loaded by Fastify locally, not on every request. PIN search remains on hold.
 
-**P03-2 is NOT started by this cleanup:** No public publication to `uluv_discovery`, no people/post ranking, no discovery queries, no feed, no Connects functionality and no new DynamoDB table. `discoveryEnabled` must remain false until a later independently tested slice.
+**Phase boundary (current):** This earlier UI cleanup introduced no public publication to `uluv_discovery`. P03-2 now adds private, bounded backend H3 query utilities only (see `P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md`); it still does **not** publish profiles, return people/post feeds or activate Connects. `discoveryEnabled` remains false until future independently tested eligibility/publication gates.
 
 ### P03 document ownership and reading order
 

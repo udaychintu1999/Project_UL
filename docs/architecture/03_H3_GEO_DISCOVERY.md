@@ -1,5 +1,7 @@
 # H3 Resolution 6 — Geo Discovery with separate Local tables
 
+**Current implementation boundary:** See `P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md` for the private-only P03-2 backend building blocks. Public profile publication, hydration, nearby feeds and Flutter UI below are design targets for subsequent phases, NOT functioning endpoints yet.
+
 **Unchanged product rule:** User chooses 0–10 km, 10–35 km, 35–50 km, or All 0–50 km across Dating, Friendship and Local. Locality comes from `uluv_settings`, not live GPS. Nearer bands win before farther bands.
 
 ## Profile candidate flow

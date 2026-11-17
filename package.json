@@ -108,7 +108,12 @@
     "verify:p03:pre-discovery": "npm run verify:p03:pre-discovery:portable && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
     "test:p03:navigation-docs": "node --test scripts/verify/p03-four-tabs-and-documentation.test.mjs scripts/verify/p03-pre-discovery-shell.test.mjs",
     "verify:p03:navigation-docs": "npm run test:p03:navigation-docs && npm run test:p02-1:navigation:contracts && npm run test:p02-5:contracts && npm run verify:p03:geo-visibility:portable",
-    "verify:p03:navigation-docs:full": "npm run verify:p03:navigation-docs && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter"
+    "verify:p03:navigation-docs:full": "npm run verify:p03:navigation-docs && npm run typecheck && npm run test:p03:gps:api && npm run test:flutter",
+    "test:p03-2:unit": "tsx --test apps/api/tests/discovery/p03-2-foundation.test.ts",
+    "test:p03-2:contracts": "node --test scripts/verify/p03-2-infrastructure-contracts.test.mjs",
+    "test:p03-2:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-2-dynamo-local.test.ts",
+    "verify:p03-2:portable": "npm run test:p03-2:unit && npm run test:p03-2:contracts && npm run verify:p03:navigation-docs && npm run test:secrets && npm run test:cloud-guards",
+    "verify:p03-2": "npm run verify:p03-2:portable && npm run typecheck && npm run lint && npm run test:p03:gps:api && npm run test:flutter && npm run test:p03-2:integration"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

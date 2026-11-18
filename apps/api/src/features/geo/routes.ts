@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk/lib-dynamodb';
+import { appendModeInvalidationBarrier } from '../discovery/pointer-lifecycle-policy.js';
 import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { latLngToCell, cellToLatLng } from 'h3-js';
 import { IndiaCatalogue, type PackMeta } from './india-catalogue.js';
@@ -11,6 +12,18 @@ const settingsTable='uluv_settings', usersTable='uluv_users';
 type Session = (request:FastifyRequest,reply:FastifyReply)=>Promise<{uid:string}|null>;
 const key=(uid:string)=>({PK:`USER#${uid}`,SK:'SETTINGS'});
 const failure=(reply:FastifyReply,status:number,error:string)=>reply.code(status).send({error});
+/** A locality update must atomically invalidate BOTH mode pointers, including
+ * mode insertion/activation race barriers. No automatic republish on GPS. */
+async function invalidateOnGeoWrite(db:DynamoDBDocumentClient,uid:string,
+  transaction:NonNullable<TransactWriteCommandInput['TransactItems']>):Promise<void>{
+  const modes=['dating','friendship'] as const;
+  const records=await Promise.all(modes.map(async(mode)=>
+    (await db.send(new GetCommand({TableName:'uluv_profiles',
+      Key:{PK:`USER#${uid}`,SK:`MODE#${mode.toUpperCase()}`},ConsistentRead:true}))).Item));
+  const now=new Date().toISOString();
+  for(let i=0;i<modes.length;i++)appendModeInvalidationBarrier(transaction,uid,modes[i],records[i],now);
+}
+
 
 /** Distinct from P03-1 15-city catalogue. Does NOT activate public discovery. */
 export function registerIndiaGeoRoutes(app:FastifyInstance, db:DynamoDBDocumentClient, guard:Session):void {
@@ -211,7 +224,7 @@ export function registerIndiaGeoRoutes(app:FastifyInstance, db:DynamoDBDocumentC
       const district=state?.districts.find(d=>d.code===point.district);
       const label=knownDistrict ? `${point.name}, ${district?.name??'Unmapped district'}, ${state?.name??'India'}`:
         `${point.name}, ${state?.name??'Unresolved state'}, India`; 
-      await db.send(new TransactWriteCommand({TransactItems:[
+      const transaction:NonNullable<TransactWriteCommandInput['TransactItems']>=[
         {ConditionCheck:{TableName:usersTable,Key:{PK:`USER#${auth.uid}`,SK:'META'},
           ConditionExpression:'#status = :active AND ageEligibility = :adult',
           ExpressionAttributeNames:{'#status':'status'},
@@ -228,7 +241,9 @@ export function registerIndiaGeoRoutes(app:FastifyInstance, db:DynamoDBDocumentC
             ':label':label,':center':{lat,lng},':cell':cell,':source':'manual_geonames',':version':input.catalogueVersion,
             ':now':new Date().toISOString(),':epoch':nowEpoch,':cutoff':nowEpoch-15,
             ...(rev===0?{}:{':expected':rev})}}}
-      ]}));
+      ];
+      await invalidateOnGeoWrite(db,auth.uid,transaction);
+      await db.send(new TransactWriteCommand({TransactItems:transaction}));
       audit(request)('account.location.save.committed',{source:'manual_geonames',revision:rev+1});
       return {settingsRevision:rev+1,localityRevision:prevLocality+(changed?1:0),
         location:{id:point.id,stateCode:actualState,districtCode:actualDistrict,name:label,source:'manual_geonames'},
@@ -261,7 +276,7 @@ export function registerIndiaGeoRoutes(app:FastifyInstance, db:DynamoDBDocumentC
       const [lat,lng]=cellToLatLng(cell);
       const changed=item.geoSelectionSource!=='gps_selected'||item.geoH3Cell!==cell;
       // Never log, persist, return, or expose fix.lat/fix.lng or fixTimestamp.
-      await db.send(new TransactWriteCommand({TransactItems:[
+      const transaction:NonNullable<TransactWriteCommandInput['TransactItems']>=[
         {ConditionCheck:{TableName:usersTable,Key:{PK:`USER#${auth.uid}`,SK:'META'},
           ConditionExpression:'#status = :active AND ageEligibility = :adult',
           ExpressionAttributeNames:{'#status':'status'},
@@ -278,7 +293,9 @@ export function registerIndiaGeoRoutes(app:FastifyInstance, db:DynamoDBDocumentC
             ':label':'Approximate location in India',':now':new Date().toISOString(),
             ':epoch':nowEpoch,':cutoff':nowEpoch-15,
             ...(rev===0?{}:{':expected':rev})}}}
-      ]}));
+      ];
+      await invalidateOnGeoWrite(db,auth.uid,transaction);
+      await db.send(new TransactWriteCommand({TransactItems:transaction}));
       audit(request)('account.location.save.committed',{source:'gps_selected',revision:rev+1});
       return {settingsRevision:rev+1,localityRevision:prior+(changed?1:0),
         location:{name:'Approximate location in India',source:'gps_selected'},

@@ -10,6 +10,7 @@
     "tests/geo/p03-1-local-db-acceptance.test.ts",
     "tests/discovery/p03-2-acceptance.test.ts",
     "tests/discovery/p03-2-foundation.test.ts",
-    "tests/discovery/p03-2-dynamo-local.test.ts"
+    "tests/discovery/p03-2-dynamo-local.test.ts",
+    "tests/discovery/p03-3-private-publication-dynamo.test.ts"
   ]
 }

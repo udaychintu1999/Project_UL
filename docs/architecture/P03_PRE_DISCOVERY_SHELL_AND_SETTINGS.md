@@ -44,8 +44,8 @@ An existing GeoNames place selection and GPS selection are private owner locatio
 
 ### P03 document ownership and reading order
 
-- `docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md` — data import, S3, checksums, caching, H3, GPS, DynamoDB and operational diagnostics.
-- `docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md` — implemented HTTP methods, auth/revision/privacy/error contracts and API route ownership.
+- `docs/p03/02_GEO_DATA_STORAGE_AND_H3.md` — data import, S3, checksums, caching, H3, GPS, DynamoDB and operational diagnostics.
+- `docs/p03/03_API_REFERENCE.md` — implemented HTTP methods, auth/revision/privacy/error contracts and API route ownership.
 - `docs/P03_READ_ME_FIRST.md` — current P03 index, retired-document cleanup and links to unchanged P01/P02 references.
 - `docs/manual/P03_FOUR_TAB_SETTINGS_WINDOWS_ANDROID_ACCEPTANCE.md` — exact Flutter, API and device tests.
 

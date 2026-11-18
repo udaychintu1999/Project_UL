@@ -1,4 +1,4 @@
-# 04 — P03-1/P03-2 automated acceptance and physical-device closeout
+# 04 — P03-1/P03-2 evidence, P03-3 verification and physical-device closeout
 
 ## Commands (Windows PowerShell at project root)
 
@@ -29,7 +29,7 @@ Run `npm run verify:p03:acceptance` for definitive full acceptance; it checks Ty
 | Combined full automated runner | **PASS 11/11, twice** | Log ends `P03 LOCAL AUTOMATED GATES PASSED` |
 | **Expanded Android journeys after final recovery** | **PASS 7/7 (owner log, 18 Nov)** | Real Android Flutter screens + authenticated loopback HTTP fixture, NOT native GPS, real app session or live CDN |
 | **Latest post-recovery Flutter analyzer** | **PASS, No issues found (owner log, 18 Nov)** | Four accepted Flutter production files restored; no reported analyzer issues |
-| Full `verify:p03:acceptance` **after expanded suite and recovery** | **NOT YET EVIDENCED** | Previous 11/11 proof is valid for the earlier baseline; rerun required for the final combined state |
+| Full `verify:p03:acceptance` **after expanded suite and recovery** | **NOT YET RUN on final recovered baseline** | Previous 11/11 proof is valid for the earlier baseline; rerun required for the final combined state |
 | Native GPS, OS force-stop/relaunch, live CDN | **MANUAL PENDING** | Not proven by simulated fixture or by the local-DB tests |
 
 ## What the expanded isolated Android tests exercise
@@ -54,3 +54,39 @@ Existing three device tests: completed navigation Dating → third Local Feed �
 - [ ] Confirm 15-second server cooldown and settingsRevision conflict across signed-in devices if two authorized devices are available.
 
 Do not run an owner's acceptance test against production AWS/real user fixtures; do not create/edit P01/P02 documentation. **P03-3 public discovery still disabled** after these gates.
+
+The historical narrower `npm run verify:p03:geo-visibility` command remains valid for the earlier geo visibility sub-slice, but it is **not** the final combined P03 release gate.
+
+## P03-3 — Targeted Windows/Android proof (not executed by author)
+
+**First apply the changed-files ZIP at project root, do not replace prior full source.** Use the owner's already-running Java DynamoDB Local and the existing P00 18 tables. Run the new private tests before the full inherited verifier. No AWS credentials should be passed to the test. **Baseline source preflight:** four existing test paths referred to in `package.json` are absent in this uploaded ZIP. Recover the original accepted files from Git first; never replace them with empty/no-op tests or bypass their npm commands.
+
+```powershell
+# Once, at repository root, before launching the API:
+npm ci
+# Fail-fast required source guard: recover originals from Git if ANY is False.
+@(
+  'scripts/verify/p02-1-account-navigation.test.mjs',
+  'scripts/verify/p02-5-visual-contracts.test.mjs',
+  'scripts/verify/p03-pre-discovery-shell.test.mjs',
+  'scripts/verify/p03-four-tabs-and-documentation.test.mjs'
+) | ForEach-Object { "$_ : $(Test-Path $_)" }
+# Terminal 1: leave manually started Java DynamoDB Local running at loopback:8000
+# Terminal 2: owner-started Fastify API for inherited P03 acceptance
+npm run dev:api
+# Terminal 3: at repository root, physical Android connected via USB
+npm run test:p03-3:policy
+npm run test:p03-3:contracts
+npm run test:p03-3:integration
+npm run test:p03:acceptance:types
+npm run typecheck
+npm run lint
+npm run test:p03:acceptance:flutter-analyze
+npm run test:flutter
+npm run test:flutter:p03:e2e
+npm run verify:p03-3
+```
+
+The integration command reads the *owner's existing local environment by Node* using `--env-file=apps/api/.env`; the agent must not open that file. It asserts `APP_ENV=local`, validates the loopback DynamoDB endpoint before network access, and uses synthetic user and mode keys with scoped cleanup. The full `verify:p03-3` is fail-fast: it includes P03-3 targeted tests and previous full P03-1/P03-2 acceptance (which runs live Fastify/DynamoDB + the physical phone). If any command fails, stop acceptance, retain the failing log, fix only the demonstrated root cause and re-run the complete gate.
+
+Manual checks still separate: physical Android native GPS permission/accuracy, actual normal-app force-stop/reopen, live CloudFront/OAC with fresh operation authorization, new privacy/block/moderation/account deletion transitions, geo movement choice and real preview authorization in future P03-4. These are **not** checked by loopback fixture E2E. No one has yet owner-accepted P03-3 and no current automated test proves the future moderation/delete integration.

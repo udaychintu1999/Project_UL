@@ -5,6 +5,10 @@ import { ageFromBirthDate, draftMissing, onboardingMissing, parseDraft, parseHan
 import type { DraftFields, ProfileMode, SharedSetup } from './validation.js';
 import { validMediaId } from './media-policy.js';
 import { activationMissing, modeVisibility, parseActivation, privatePreview } from './activation-policy.js';
+import { buildPointer, type Coordinates } from '../discovery/contracts.js';
+import { checkLocality } from '../discovery/pointer-reader.js';
+import { PRIVATE_DISCOVERY_TABLE, appendModeInvalidationBarrier, appendPointerDelete, canonicalPointerAnchor,
+  nextJoinTime, pointerAnchor, samePointerCondition } from '../discovery/pointer-lifecycle-policy.js';
 
 const usersTable = 'uluv_users';
 const profilesTable = 'uluv_profiles';
@@ -51,6 +55,20 @@ function ownerDto(mode: ProfileMode, raw: Item | undefined, handle: string | nul
 }
 async function getItem(db: DynamoDBDocumentClient, table: string, key: {PK: string; SK: string}): Promise<Item | undefined> {
   return (await db.send(new GetCommand({ TableName: table, Key: key, ConsistentRead: true }))).Item as Item | undefined;
+}
+/** Consistent canonical mode reads for transactional setup/identity invalidation.
+ * Even absent records receive a conditional barrier to prevent insertion races. */
+async function modeRecords(db: DynamoDBDocumentClient, uid: string): Promise<{ dating: Item | undefined; friendship: Item | undefined }> {
+  const [dating, friendship] = await Promise.all([
+    getItem(db, profilesTable, modeKey(uid, 'dating')),
+    getItem(db, profilesTable, modeKey(uid, 'friendship'))
+  ]);
+  return { dating, friendship };
+}
+function invalidateBoth(items: NonNullable<TransactWriteCommandInput['TransactItems']>, uid: string,
+  records: { dating: Item | undefined; friendship: Item | undefined }, now: string): void {
+  appendModeInvalidationBarrier(items, uid, 'dating', records.dating, now);
+  appendModeInvalidationBarrier(items, uid, 'friendship', records.friendship, now);
 }
 async function ownerAccount(db: DynamoDBDocumentClient, uid: string): Promise<Item | null> {
   const item = await getItem(db, usersTable, accountKey(uid));
@@ -155,7 +173,8 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
     if ('error' in parsed) return failure(reply, 400, parsed.error);
     const { expectedRevision, commonName, locality, gender, selectedModes } = parsed.value;
     try {
-      await db.send(new TransactWriteCommand({ TransactItems: [
+      const records = await modeRecords(db, auth.uid);
+      const transaction: NonNullable<TransactWriteCommandInput['TransactItems']> = [
         { ConditionCheck: {
           TableName: usersTable, Key: accountKey(auth.uid),
           ConditionExpression: '#state = :active AND ageEligibility = :adult',
@@ -173,7 +192,9 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
             ...(expectedRevision === 0 ? {} : { ':expected': expectedRevision })
           }
         } }
-      ] }));
+      ];
+      invalidateBoth(transaction, auth.uid, records, new Date().toISOString());
+      await db.send(new TransactWriteCommand({ TransactItems: transaction }));
       const dashboard = await ownerDashboard(db, auth.uid);
       return dashboard ?? failure(reply, 403, 'account_unavailable');
     } catch (error) {
@@ -231,6 +252,8 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         TableName: usersTable, Key: aliasKey(current),
         ConditionExpression: 'uid = :uid', ExpressionAttributeValues: { ':uid': auth.uid }
       } });
+      const records = await modeRecords(db, auth.uid);
+      invalidateBoth(transaction, auth.uid, records, now);
       await db.send(new TransactWriteCommand({ TransactItems: transaction }));
       return { handle, identityRevision: next };
     } catch (error) {
@@ -270,6 +293,11 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
     const { expectedVersion, ...fields } = parsed.value;
     const key = modeKey(auth.uid, mode);
     try {
+      const previous = await getItem(db, profilesTable, key);
+      if (expectedVersion === 0 ? Boolean(previous) : previous?.version !== expectedVersion)
+        return failure(reply, 409, 'profile_version_conflict');
+      const oldAnchor = canonicalPointerAnchor(auth.uid, mode, previous);
+      const guard = samePointerCondition(oldAnchor);
       const now = new Date().toISOString();
       const next = expectedVersion + 1;
       const profileWrite: NonNullable<TransactWriteCommandInput['TransactItems']>[number] = expectedVersion === 0
@@ -279,15 +307,16 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         } }
         : { Update: {
           TableName: profilesTable, Key: key,
-          UpdateExpression: 'SET displayName = :name, bio = :bio, interests = :interests, intention = :intent, requestedActive = :inactive, #version = :next, updatedAt = :now',
-          ConditionExpression: '#version = :expected AND attribute_exists(PK)',
+          UpdateExpression: 'SET displayName = :name, bio = :bio, interests = :interests, intention = :intent, requestedActive = :inactive, #version = :next, updatedAt = :now REMOVE discoveryPointer',
+          ConditionExpression: '#version = :expected AND attribute_exists(PK)' + guard.expression,
           ExpressionAttributeNames: { '#version': 'version' },
           ExpressionAttributeValues: {
             ':name': fields.displayName, ':bio': fields.bio, ':interests': fields.interests,
-            ':intent': fields.intention, ':next': next, ':now': now, ':expected': expectedVersion, ':inactive': false
+            ':intent': fields.intention, ':next': next, ':now': now, ':expected': expectedVersion, ':inactive': false,
+            ...guard.values
           }
         } };
-      await db.send(new TransactWriteCommand({ TransactItems: [
+      const transaction: NonNullable<TransactWriteCommandInput['TransactItems']> = [
         { ConditionCheck: {
           TableName: usersTable, Key: accountKey(auth.uid),
           ConditionExpression: '#state = :active AND ageEligibility = :adult',
@@ -295,7 +324,9 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
           ExpressionAttributeValues: { ':active': 'active', ':adult': 'self_declared_adult' }
         } },
         profileWrite
-      ] }));
+      ];
+      appendPointerDelete(transaction, auth.uid, mode, previous);
+      await db.send(new TransactWriteCommand({ TransactItems: transaction }));
       // Re-read authoritative readiness, photo ownership and activation state.
       const dashboard = await ownerDashboard(db, auth.uid);
       return dashboard?.profiles[mode] ?? failure(reply, 403, 'account_unavailable');
@@ -344,8 +375,8 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
     return failure(reply, 404, 'profile_not_found');
   });
 
-  // P02-3 activation records a deliberate, independent owner intent; it does
-  // NOT create discovery pointers, publish photos or claim public visibility.
+  // P03-3: independent owner intent plus PRIVATE transactional H3 pointer.
+  // The owner response remains discoveryEligible:false; no public route exists.
   const updateActivation = (active: boolean) => async (request: FastifyRequest, reply: FastifyReply) => {
     noStore(reply);
     const auth = await requireSession(request, reply);
@@ -368,6 +399,28 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         { ...normalizedFields(profile), photoIds: verifiedPhotos }, ageFromBirthDate(account.birthDate));
       if (active && missing.length > 0) return reply.code(409).send({ error: 'profile_ineligible', missing });
       const expectedSetup = revisionOf(settings?.setupRevision);
+      const expectedSettings = revisionOf(settings?.settingsRevision);
+      const oldAnchor = canonicalPointerAnchor(auth.uid, mode, profile);
+      const pointerGuard = samePointerCondition(oldAnchor);
+      // P02's activation before an approved R6 locality is retained as an
+      // explicit pending intent, NEVER as a discoverable pointer.
+      let trusted = false;
+      try {
+        if (settings) {
+          checkLocality({center: settings.geoApprovedCenter as Coordinates,
+            cell: settings.geoH3Cell as string, source: settings.geoSelectionSource as 'manual_geonames' | 'gps_selected',
+            localityRevision: settings.localityRevision as number,
+            settingsRevision: revisionOf(settings.settingsRevision), distanceBand: '0-50'});
+          trusted = true;
+        }
+      } catch { trusted = false; }
+      const now = new Date().toISOString();
+      const freshPointer = active && trusted && settings ? buildPointer({
+        mode: mode.toUpperCase() as 'DATING' | 'FRIENDSHIP', cell: settings.geoH3Cell as string,
+        joinedAt: nextJoinTime(now, oldAnchor), uid: auth.uid,
+        localityRevision: settings.localityRevision as number, profileVersion: expectedVersion + 1
+      }) : null;
+      const newAnchor = freshPointer ? pointerAnchor(freshPointer, auth.uid, mode) : null;
       const items: NonNullable<TransactWriteCommandInput['TransactItems']> = [
         { ConditionCheck: { TableName: usersTable, Key: accountKey(auth.uid),
           ConditionExpression: '#state = :active AND ageEligibility = :adult AND birthDate = :dob AND identityRevision = :identity',
@@ -375,16 +428,23 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
           ExpressionAttributeValues: { ':active': 'active', ':adult': 'self_declared_adult', ':dob': account.birthDate,
             ':identity': revisionOf(account.identityRevision, 1) } } },
         { ConditionCheck: { TableName: settingsTable, Key: settingsKey(auth.uid),
-          ConditionExpression: 'setupRevision = :rev AND selectedModes.#mode = :selected',
+          ConditionExpression: 'setupRevision = :rev AND selectedModes.#mode = :selected AND ' +
+            '(attribute_not_exists(settingsRevision) OR settingsRevision = :settingsVersion)' +
+            (trusted ? ' AND localityRevision = :locality AND geoH3Cell = :cell AND geoSelectionSource = :source' : ''),
           ExpressionAttributeNames: { '#mode': mode },
-          ExpressionAttributeValues: { ':rev': expectedSetup, ':selected': shared.selectedModes[mode] } } },
+          ExpressionAttributeValues: { ':rev': expectedSetup, ':selected': shared.selectedModes[mode],
+            ':settingsVersion': expectedSettings,
+            ...(trusted ? { ':locality': settings?.localityRevision, ':cell': settings?.geoH3Cell,
+              ':source': settings?.geoSelectionSource } : {}) } } },
         { Update: { TableName: profilesTable, Key: modeKey(auth.uid, mode),
-          UpdateExpression: 'SET requestedActive = :requested, activationSetupRevision = :setup, activationIdentityRevision = :identity, #version = :next, updatedAt = :now',
-          ConditionExpression: '#version = :expected AND attribute_exists(PK)',
+          UpdateExpression: 'SET requestedActive = :requested, activationSetupRevision = :setup, activationIdentityRevision = :identity, #version = :next, updatedAt = :now' +
+            (newAnchor ? ', discoveryPointer = :pointer' : ' REMOVE discoveryPointer'),
+          ConditionExpression: '#version = :expected AND attribute_exists(PK)' + pointerGuard.expression,
           ExpressionAttributeNames: { '#version': 'version' },
-          ExpressionAttributeValues: { ':requested': active, ':setup': expectedSetup, ':identity': revisionOf(account.identityRevision, 1),
-            ':next': expectedVersion + 1, ':expected': expectedVersion,
-            ':now': new Date().toISOString() } } }
+          ExpressionAttributeValues: { ':requested': active, ':setup': expectedSetup,
+            ':identity': revisionOf(account.identityRevision, 1), ':next': expectedVersion + 1,
+            ':expected': expectedVersion, ':now': now, ...pointerGuard.values,
+            ...(newAnchor ? { ':pointer': newAnchor } : {}) } } }
       ];
       if (active) for (const mediaId of verifiedPhotos) items.push({ ConditionCheck: {
         TableName: profilesTable, Key: mediaKey(auth.uid, mediaId),
@@ -392,6 +452,9 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
         ExpressionAttributeNames: { '#state': 'state' },
         ExpressionAttributeValues: { ':ready': 'READY', ':one': 1 }
       } });
+      appendPointerDelete(items, auth.uid, mode, profile);
+      if (freshPointer) items.push({ Put: { TableName: PRIVATE_DISCOVERY_TABLE, Item: freshPointer,
+        ConditionExpression: 'attribute_not_exists(PK)' } });
       await db.send(new TransactWriteCommand({ TransactItems: items }));
       const updated = await ownerDashboard(db, auth.uid);
       return updated ?? failure(reply, 403, 'account_unavailable');

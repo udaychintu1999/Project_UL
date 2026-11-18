@@ -7,13 +7,37 @@ import {registerIndiaGeoRoutes} from '../../src/features/geo/routes.js';
 import type {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
 
 test('authenticated GPS save derives H3 from vetted polygon and never persists raw fix',async()=>{
-  const row:Record<string,unknown>={PK:'USER#fixture',SK:'SETTINGS',settingsRevision:0,localityRevision:0};
+  // At revision 0, settingsRevision is intentionally absent: the production
+  // conditional write requires attribute_not_exists(settingsRevision).
+  const row:Record<string,unknown>={PK:'USER#fixture',SK:'SETTINGS',localityRevision:0};
   let transaction:unknown;
   const fake={send:async(command:unknown)=>{
-    if(command instanceof GetCommand) return {Item:row};
+    if(command instanceof GetCommand){
+      const {TableName,Key}=command.input;
+      assert.equal(Key?.PK,'USER#fixture','only synthetic fixture owner may be read');
+      if(TableName==='uluv_settings'){
+        assert.equal(Key?.SK,'SETTINGS');
+        return {Item:row};
+      }
+      if(TableName==='uluv_profiles'){
+        assert.ok(Key?.SK==='MODE#DATING'||Key?.SK==='MODE#FRIENDSHIP');
+        // No mode profiles exist for this test owner. P03-3 must still
+        // install both absence-condition barriers in the same transaction.
+        return {};
+      }
+      throw new Error(`Unexpected DynamoDB Get table: ${TableName}`);
+    }
     if(command instanceof TransactWriteCommand){
       transaction=command.input;
-      const attrs=command.input.TransactItems?.[1]?.Update?.ExpressionAttributeValues as Record<string,unknown>;
+      const items=command.input.TransactItems??[];
+      assert.equal(items.length,4,'account + settings + Dating/Friendship barriers required');
+      for(const mode of ['DATING','FRIENDSHIP']){
+        const item=items.find(x=>x.ConditionCheck?.TableName==='uluv_profiles' &&
+          x.ConditionCheck.Key?.SK===`MODE#${mode}`);
+        assert.equal(item?.ConditionCheck?.ConditionExpression,'attribute_not_exists(PK)',
+          `${mode} missing-profile creation race must be fenced`);
+      }
+      const attrs=items[1]?.Update?.ExpressionAttributeValues as Record<string,unknown>;
       row.settingsRevision=attrs[':newrev'];
       row.localityRevision=attrs[':locrev'];
       row.geoSelectionSource=attrs[':source'];

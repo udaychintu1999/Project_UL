@@ -30,7 +30,10 @@ test('Fastify confirms DynamoDB read/save and local terminal is readable',()=>{
   assert.match(app,/disableRequestLogging: true/);
 });
 test('Location architecture and verification runbook documents S3, cache, H3, APIs, and test gates',()=>{
-  const doc=source('docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md');
+  const doc=[source('docs/p03/02_GEO_DATA_STORAGE_AND_H3.md'),
+    source('docs/p03/03_API_REFERENCE.md'),source('docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md'),
+    source('docs/architecture/P03_GEO_CDN_DATA_SEPARATION.md'),
+    source('docs/architecture/P03_1C_PINCODE_SEARCH.md')].join('\n');
   for(const term of ['CloudFront','ULUV_GEO_CANONICAL_MANIFEST_SHA256','server-index-manifest.json',
     '/v1/me/geo/manual','/v1/me/geo/location','/v1/me/geo/gps','H3','DynamoDB',
     'sha256','CC BY','India boundary','PIN code','npm run verify:p03:geo-visibility'])assert.ok(doc.includes(term),term);

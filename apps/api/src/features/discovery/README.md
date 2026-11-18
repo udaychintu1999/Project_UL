@@ -21,3 +21,7 @@ canonical account/profile/block/eligibility hydration before any client response
 - Query results within one page can be sorted by approximate distance, but
   pagination does NOT guarantee globally nearest-first ordering over unvisited
   H3 partitions; no claim of full global order should appear in UI.
+
+## P03-3 implementation candidate (not owner-accepted)
+
+`pointer-lifecycle-policy.ts` is a private, no-network anchor validator and atomic revocation planner. Existing authenticated owner mutation routes now use it for private `uluv_discovery` publication on explicit activation, and conditional invalidation during mode/photo/handle/setup/geo updates. **P03-2 reader remains unverified-only**; public `/v1/discovery/*`, public previews and `discoveryEligible` remain off. No moderation/account-deletion handlers are certified and no real DynamoDB Local owner gate has been reported. See `docs/architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md`.

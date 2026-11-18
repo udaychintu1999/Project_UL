@@ -5,6 +5,7 @@ import type { DynamoDBDocumentClient, TransactWriteCommandInput } from '@aws-sdk
 import type { Readable } from 'node:stream';
 import { LocalMediaStore, InvalidImageError } from './local-media-store.js';
 import { MAX_MEDIA_BYTES, MEDIA_UPLOAD_TTL_SECONDS, parsePhotoUpdate, validMediaId, validUploadBegin } from './media-policy.js';
+import { appendPointerDelete, canonicalPointerAnchor, samePointerCondition } from '../discovery/pointer-lifecycle-policy.js';
 import { parseMode, draftMissing } from './validation.js';
 
 const profilesTable = 'uluv_profiles';
@@ -207,6 +208,7 @@ export function registerProfileMediaRoutes(app: FastifyInstance, db: DynamoDBDoc
       if (!await active(auth.uid)) return failure(reply, 403, 'account_unavailable');
       const modeRecord = await get(profilesTable, modeKey(auth.uid, mode));
       if (!modeRecord || modeRecord.version !== expectedVersion) return failure(reply, 409, 'profile_version_conflict');
+      const guard = samePointerCondition(canonicalPointerAnchor(auth.uid, mode, modeRecord));
       const previous = Array.isArray(modeRecord.photoIds) ? modeRecord.photoIds.filter((v): v is string => typeof v === 'string') : [];
       const add = photoIds.filter(id => !previous.includes(id));
       const remove = previous.filter(id => !photoIds.includes(id));
@@ -217,11 +219,11 @@ export function registerProfileMediaRoutes(app: FastifyInstance, db: DynamoDBDoc
           ExpressionAttributeNames: { '#state': 'status' },
           ExpressionAttributeValues: { ':active': 'active', ':adult': 'self_declared_adult' } } },
         { Update: { TableName: profilesTable, Key: modeKey(auth.uid, mode),
-          UpdateExpression: 'SET photoIds = :ids, requestedActive = :inactive, #version = :next, updatedAt = :now',
-          ConditionExpression: '#version = :expected AND attribute_exists(PK)',
+          UpdateExpression: 'SET photoIds = :ids, requestedActive = :inactive, #version = :next, updatedAt = :now REMOVE discoveryPointer',
+          ConditionExpression: '#version = :expected AND attribute_exists(PK)' + guard.expression,
           ExpressionAttributeNames: { '#version': 'version' },
           ExpressionAttributeValues: { ':ids': photoIds, ':next': expectedVersion + 1, ':expected': expectedVersion,
-            ':now': now, ':inactive': false } } },
+            ':now': now, ':inactive': false, ...guard.values } } },
       ];
       for (const id of add) transactions.push({ Update: { TableName: profilesTable, Key: mediaKey(auth.uid, id),
         UpdateExpression: 'ADD refCount :one', ConditionExpression: '#state = :ready AND attribute_exists(PK)',
@@ -232,6 +234,7 @@ export function registerProfileMediaRoutes(app: FastifyInstance, db: DynamoDBDoc
         ConditionExpression: '#state = :ready AND refCount >= :one',
         ExpressionAttributeNames: { '#state': 'state' },
         ExpressionAttributeValues: { ':minus': -1, ':one': 1, ':ready': 'READY' } } });
+      appendPointerDelete(transactions, auth.uid, mode, modeRecord);
       await db.send(new TransactWriteCommand({ TransactItems: transactions }));
       const updated = await get(profilesTable, modeKey(auth.uid, mode));
       if (!updated) return failure(reply, 503, 'media_store_unavailable');

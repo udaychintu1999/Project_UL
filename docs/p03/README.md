@@ -1,6 +1,6 @@
-# U_luv P03-1 / P03-2 — Current Technical Handbook
+# U_luv P03 — Current Technical Handbook
 
-**Maintained:** 18 November 2026 · **Scope:** P03-1 private location and P03-2 private H3 discovery infrastructure, plus the P03 pre-discovery navigation shell. P01/P02 documents and behavior are unchanged.
+**Maintained:** 18 November 2026 · **Scope:** owner-accepted P03-1/P03-2, plus P03-3 private pointer lifecycle implementation candidate. No public discovery/API/Flutter people results, no P03-4. P01/P02 documents remain unchanged.
 
 ## Read in this order
 
@@ -11,12 +11,16 @@
 5. [05 — History and safe documentation cleanup](05_LEGACY_MAP_AND_CLEANUP.md): prior P03 manuals, retained low-level source references and optional **P03-only** dry-run cleanup.
 6. [06 — Next P03 stages](06_NEXT_STAGES_ROADMAP.md): proposed P03-3 publication, P03-4 API, P03-5 Flutter UI and P03 integration closeout; scope boundaries and acceptance gates.
 
+## P03-3 implementation candidate — verification outstanding
+
+The new [P03-3 private pointer transaction contract](../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md) covers explicit activation, revocation and invalidation from known profile, media, setup, handle and location routes, plus [targeted P03-3 evidence](../qa/P03_3_POINTER_LIFECYCLE_IMPLEMENTATION_EVIDENCE.md). This source is **not owner-accepted**; Fastify/real Java DynamoDB, TypeScript/lint and owner physical Android/full combined acceptance are still **UNVERIFIED**. Moderation, block semantics and account deletion require separate integration/owner decisions. Do not enable P03-4.
+
 ## Status with evidence boundaries
 
 - **P03-1:** **OWNER-ACCEPTED for local automated development (18 Nov 2026).** Private manual/GPS selection, GeoNames CDN verification and Fastify fallback, location save/read, two/five-tab UI and Settings are implemented. The owner's November 18 Windows log shows 11/11 combined P03 acceptance gates passing, including authenticated local API checks, DynamoDB Local and Flutter/Android integration.
 - **P03-2:** **OWNER-ACCEPTED for local automated development (18 Nov 2026).** H3 R6 coverage, bounded `uluv_discovery` partition Query, exact distance bands and encrypted cursors are implemented and the owner's original full 11/11 local acceptance passed. **These are internal building blocks, not a public discovery feature.**
 - **Expanded physical-Android journeys:** **7/7 owner-reported PASS on 18 November 2026** after the recovered production Flutter files; Flutter analyzer returned **No issues found**. They exercise actual Flutter screens with a private loopback HTTP fixture, manual pick/save, five/two-tab routing, widget remount and server re-read, 409/429 retry and 503 outage recovery. They are **not** an OS force-stop, native hardware GPS, live Fastify session or CloudFront test. The combined 11/11 verifier has **not yet been rerun on this final expanded-test/recovery state**.
-- **Not signed off:** native permission dialogs and real hardware GPS, true Android OS force-stop/relaunch with the owner account, live CloudFront/OAC behavior, and production release. The P03-3 publication/eligibility and public people feed have **not started**.
+- **Not signed off:** native permission dialogs and real hardware GPS, true Android OS force-stop/relaunch with the owner account, live CloudFront/OAC behavior, and production release. A P03-3 **private** publication implementation candidate now exists; real transaction proof and safety lifecycle closure remain outstanding, and the public people feed has **not started**.
 
 **Source of truth:** runtime source and latest owner logs override stale historical status statements. `docs/implementation/phases/P03.md` remains the overarching forward-looking D1/D2/D3 specification, not proof that those later features are implemented.
 

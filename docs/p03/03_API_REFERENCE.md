@@ -35,3 +35,9 @@ Valid error response shape for these handlers is `{ "error": "fixed_error_code" 
 | `cursor.ts` | AES-GCM encrypted continuation + contextual binding | TTL, owner/revision/filter/mode integrity |
 
 **Nonexistent in P03-2:** public `/v1/discovery/*`, people matching cards, eligibility publication, Feed/Activities post APIs, public cursor tokens, and automatic profile pointer writes. These belong to later P03 phases. Do not add mock success routes to satisfy UI tests. Additional details: [`../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md`](../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md).
+
+## P03-3 — Private/internal transactional publisher (not accepted)
+
+`apps/api/src/features/discovery/pointer-lifecycle-policy.ts` is a server-only module that validates canonical anchors and generates conditional transaction Delete/Update/check operations. It has **no HTTP endpoint**. Existing authenticated owner routes (`/v1/profiles/me/:mode/activate`, `/deactivate`, owner profile/photolist/setup/handle saves, `/v1/me/geo/manual`, `/v1/me/geo/gps`) now use those operations to add or invalidate private pointers. Responses still report `discoveryEligible:false`/`discoveryEnabled:false`. Public third-party preview remains 404.
+
+The new `discoveryPointer` property on mode rows is an **optional private anchor**, never a preview DTO. Index rows are unverified. Account moderation, account deletion and block policy are not complete; see [`../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md`](../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md). **Do not register or expose `/v1/discovery/people` for P03-3.**

@@ -1,4 +1,4 @@
-> **Decision record, not current instructions.** For active operations use [P03_GEO_LOCATION_COMPLETE_HANDBOOK.md](P03_GEO_LOCATION_COMPLETE_HANDBOOK.md) and [../P03_READ_ME_FIRST.md](../P03_READ_ME_FIRST.md). The one-S3-bucket GeoNames decision remains active; subsequent one-time GPS work superseded the GPS-disabled statement in this older note.
+> **Decision record, not current instructions.** For active operations use [P03 geo-storage guide](../p03/02_GEO_DATA_STORAGE_AND_H3.md) and [../P03_READ_ME_FIRST.md](../P03_READ_ME_FIRST.md). The one-S3-bucket GeoNames decision remains active; subsequent one-time GPS work superseded the GPS-disabled statement in this older note.
 
 # U_luv P03 — ONE S3 bucket / CloudFront GeoNames catalogue, canonical Fastify authority
 

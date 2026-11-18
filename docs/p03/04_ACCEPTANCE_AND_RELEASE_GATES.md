@@ -17,6 +17,8 @@ Run `npm run verify:p03:acceptance` for definitive full acceptance; it checks Ty
 
 ## Owner-reported execution evidence (18 November 2026)
 
+**Status:** P03-1 and P03-2 are **owner-accepted at the local automated-development milestone** based on the earlier full 11/11 and later 7/7 expanded device execution. Do not claim the final 11/11 post-recovery rerun, the OS/manual checks, P03-3 publication, or a production release has passed.
+
 | Layer | Previous actual owner run | Scope |
 | --- | --- | --- |
 | Strict acceptance test TS, application TS, lint | PASS | Real local Windows toolchain, not stubs |
@@ -25,12 +27,14 @@ Run `npm run verify:p03:acceptance` for definitive full acceptance; it checks Ty
 | Flutter analyzer/widget | PASS, **81/81** | Actual Flutter analyzer and widget test runtime |
 | Isolated physical Android integration (original) | PASS, **3/3** | Bottom navigation states and simulated one-tap GPS, not native GPS permission |
 | Combined full automated runner | **PASS 11/11, twice** | Log ends `P03 LOCAL AUTOMATED GATES PASSED` |
-| **Expanded Android journeys delivered in this patch** | **NOT YET RUN** | Requires a new Windows/Android execution; do not combine with prior 3/3 evidence |
+| **Expanded Android journeys after final recovery** | **PASS 7/7 (owner log, 18 Nov)** | Real Android Flutter screens + authenticated loopback HTTP fixture, NOT native GPS, real app session or live CDN |
+| **Latest post-recovery Flutter analyzer** | **PASS, No issues found (owner log, 18 Nov)** | Four accepted Flutter production files restored; no reported analyzer issues |
+| Full `verify:p03:acceptance` **after expanded suite and recovery** | **NOT YET EVIDENCED** | Previous 11/11 proof is valid for the earlier baseline; rerun required for the final combined state |
 | Native GPS, OS force-stop/relaunch, live CDN | **MANUAL PENDING** | Not proven by simulated fixture or by the local-DB tests |
 
 ## What the expanded isolated Android tests exercise
 
-Existing three device tests: completed navigation Dating → third Local Feed → Settings; incomplete 2-tab shell; no automatic GPS and one mocked GPS save. New tests are registered **in the same physical-device suite**, so the command executes **7** named scenarios total, with expanded console reporting. The four new tests use production Flutter widgets and **real `dart:io` HTTP GET/PUT** to an `HttpServer` bound to the test app's own loopback interface (random local port). The fixture requires a fixed synthetic bearer token; it contains no real account credentials, no AWS access and no external network.
+Existing three device tests: completed navigation Dating → third Local Feed → Settings; incomplete 2-tab shell; no automatic GPS and one mocked GPS save. New tests are registered **in the same physical-device suite**, so the command executes **7** named scenarios total, with expanded console reporting. The four new tests (owner-reported **4/4 PASS**, alongside original **3/3 PASS**) use production Flutter widgets and **real `dart:io` HTTP GET/PUT** to an `HttpServer` bound to the test app's own loopback interface (random local port). The fixture requires a fixed synthetic bearer token; it contains no real account credentials, no AWS access and no external network.
 
 1. Full real-picker journey: initial private GET returns no location → explicit Manual opens sheet → State/UT → Nicobar District → verifiably unchanged 5,908-byte pack from published fixture with manifest SHA → select place → authenticated PUT → authoritative saved ACK → Dating, Friendship and Local Feed show saved location → Settings shows it → unmount/remount Flutter widget tree → fresh authenticated GET rehydrates it. Assert **one save only**, zero GPS calls and no public discovery.
 2. Manual save rejection: synthetic HTTP 409 revision conflict and 429 cooldown must not dismiss the gate or claim success; after rereading/handling errors, a valid retry saves **once**.

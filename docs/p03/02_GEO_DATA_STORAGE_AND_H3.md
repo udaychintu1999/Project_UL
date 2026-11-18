@@ -36,4 +36,4 @@ Authenticated Fastify → canonical index SHA verification → conditional Dynam
                     UNVERIFIED internal pointers — NOT published
 ```
 
-DynamoDB Local remains the P00–P16 test backend; do not run owner tests against AWS. P17 is where production DynamoDB/data migration is to be separately planned. See detailed [`../architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md`](../architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md) and [`../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md`](../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md) for data schemas and edge cases.
+DynamoDB Local remains the P00–P16 test backend; do not run owner tests against AWS. P17 is where production DynamoDB/data migration is to be separately planned. See detailed [`../architecture/P03_GEO_CDN_DATA_SEPARATION.md`](../architecture/P03_GEO_CDN_DATA_SEPARATION.md) and [`../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md`](../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md) for data schemas and edge cases.

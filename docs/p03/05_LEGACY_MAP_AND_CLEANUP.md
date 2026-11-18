@@ -12,6 +12,7 @@ This folder is now the **reader-friendly P03-1/P03-2 entry point**. It does **no
 | Which tests really passed, and what still needs real-device checking? | `docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md` |
 | Original detailed implementation / data-pipeline specs | `docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md`, `docs/architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md`, `docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md` |
 | Original wider D1–D3 P03 product roadmap (not a completion report) | `docs/implementation/phases/P03.md` |
+| Forward stages and P03-only cleanup rules | `docs/p03/06_NEXT_STAGES_ROADMAP.md` |
 
 ## Historical records, not active runbooks
 

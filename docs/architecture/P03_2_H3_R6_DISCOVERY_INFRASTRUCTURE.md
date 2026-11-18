@@ -1,10 +1,10 @@
 # P03-2 — H3 R6 private geographic discovery infrastructure
 
-**Current status (18 Nov 2026):** Owner Windows full automated acceptance passed; new extended Android journeys have not yet run. This remains private/non-public. [P03-1/P03-2 current handbook](../p03/README.md).
+**Current status (18 Nov 2026):** P03-2 OWNER-ACCEPTED for local automated development. The original full 11/11 runner passed twice, the expanded device suite subsequently passed 7/7 separately and Flutter analyzer is clean. Final post-recovery combined rerun and native OS/CDN manual checks remain pending. This remains private/non-public. [P03-1/P03-2 current handbook](../p03/README.md).
 
 **Implementation scope:** Backend infrastructure only. This is **not** a public discovery release. No new user-facing discovery endpoint, no profile publication, no Flutter discovery UI, no new DynamoDB table, no Scan, no production AWS actions. P03-1 manual place selection, one-time GPS, saved locality and five-tab shell are preserved.
 
-**Authoritative source:** latest owner-uploaded `Project_UL-master(3).zip` and the P03 spec in `docs/implementation/phases/P03.md`. This document supplements `03_H3_GEO_DISCOVERY.md` and `P03_GEO_LOCATION_COMPLETE_HANDBOOK.md` without rewriting P01/P02 contracts.
+**Authoritative source:** latest owner-uploaded `Project_UL-master(3).zip` and the P03 spec in `docs/implementation/phases/P03.md`. This document supplements `03_H3_GEO_DISCOVERY.md` and the current `docs/p03/02_GEO_DATA_STORAGE_AND_H3.md` without rewriting P01/P02 contracts.
 
 ## Data ownership and trust
 

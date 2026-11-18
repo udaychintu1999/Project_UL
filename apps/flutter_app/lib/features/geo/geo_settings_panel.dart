@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'india_location.dart';
@@ -28,7 +27,7 @@ class UluvGeoSettingsPanel extends StatefulWidget {
   @override State<UluvGeoSettingsPanel> createState()=>_UluvGeoSettingsPanelState();
 }
 class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
-  final ExpansionTileController _tile = ExpansionTileController();
+  final ExpansibleController _tile = ExpansibleController();
   String? _savedName;
   bool _savedLoaded=false, _savedLoading=false, _expanded=false, _everOpened=false;
   String? _savedError;
@@ -37,6 +36,10 @@ class _UluvGeoSettingsPanelState extends State<UluvGeoSettingsPanel> {
   @override void initState(){
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){if(mounted)_readSavedLocation();});
+  }
+  @override void dispose() {
+    _tile.dispose();
+    super.dispose();
   }
   @override void didUpdateWidget(covariant UluvGeoSettingsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);

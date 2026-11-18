@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "tests/geo/p03-1-fixture.ts",
+    "tests/geo/p03-1-fixture-acceptance.test.ts",
+    "tests/geo/p03-1-local-db-acceptance.test.ts",
+    "tests/discovery/p03-2-acceptance.test.ts",
+    "tests/discovery/p03-2-foundation.test.ts",
+    "tests/discovery/p03-2-dynamo-local.test.ts"
+  ]
+}

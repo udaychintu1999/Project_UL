@@ -1,3 +1,5 @@
+> **Historical P03 navigation cleanup guide.** Despite this filename, the final active design is **five tabs**, Local Feed third. Use [`../p03/04_ACCEPTANCE_AND_RELEASE_GATES.md`](../p03/04_ACCEPTANCE_AND_RELEASE_GATES.md) for current Windows/Android testing; owner 11/11 full automated gates passed 18 Nov, new extended device suite pending.
+
 # P03 owner check — five tabs, saved profile in Settings, concise location editor
 
 **Apply target:** Latest P03-1 owner-accepted repository. Apply changed-files-only ZIP without overwriting unreviewed newer local edits. No `.env`, S3 data, or DynamoDB migration. PIN feature stays on hold.

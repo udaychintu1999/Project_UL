@@ -1,6 +1,6 @@
 # P03 — Five-tab navigation and clean Settings (owner update, 2026-11-17)
 
-**Status:** Owner-requested five-tab correction implemented; automated verification details are in the P03 QA record. Flutter/Android acceptance still required. This decision supersedes the earlier four-tab P03 shell and the historical four-tab product-navigation wording only. It does not alter P01-3 sessions or P02 profile/photo logic.
+**Status (18 Nov 2026):** Five-tab correction was covered by the owner’s 11/11 full local automated acceptance (twice), including the original 3 Android UI tests. Expanded 7-scenario Android journey suite is newly authored and still needs execution; native GPS and true OS restart remain separate. See [../p03/README.md](../p03/README.md). This decision supersedes the earlier four-tab P03 shell and the historical four-tab product-navigation wording only. It does not alter P01-3 sessions or P02 profile/photo logic.
 
 ## Canonical product navigation
 

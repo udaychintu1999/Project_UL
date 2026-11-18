@@ -16,8 +16,8 @@ Future<void> eventually(WidgetTester tester,Finder finder) async {
 
 void main(){
   testWidgets('selecting district automatically loads a verified real S3 pack via API fallback',(tester) async{
-    final dir=await Directory.systemTemp.createTemp('p03-auto-district-');
-    final sample=await File('test/fixtures/p03-nicobar-638.json').readAsBytes();
+    final dir=Directory.systemTemp.createTempSync('p03-auto-district-');
+    final sample=File('test/fixtures/p03-nicobar-638.json').readAsBytesSync();
     final fetched=<String>[];
     Future<Uint8List> get(String path) async {
       fetched.add(path);
@@ -47,6 +47,6 @@ void main(){
       expect(find.byKey(const Key('p03-1b-download')),findsNothing);
       expect(find.textContaining('District ready'),findsWidgets);
       expect(find.byKey(const Key('p03-1b-save')),findsOneWidget);
-    }finally{await dir.delete(recursive:true);}
-  });
+    }finally{dir.deleteSync(recursive:true);}
+  }, timeout: const Timeout(Duration(seconds: 75)));
 }

@@ -53,7 +53,7 @@ void main() {
 
   testWidgets('incomplete account shows Dating setup and Settings only',
       (tester) async {
-    await tester.pumpWidget(MaterialApp(home: AccountNavigation(
+    await tester.pumpWidget(const MaterialApp(home: AccountNavigation(
       selectedIndex: 0, onSelect: null, onBack: _noop,
       home: const Text('Complete your account'),
       settings: const Text('Account security'),

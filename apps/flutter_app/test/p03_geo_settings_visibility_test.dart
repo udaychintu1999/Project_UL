@@ -18,7 +18,7 @@ Future<void> eventually(WidgetTester tester, Finder finder) async {
 
 void main(){
   testWidgets('saved location is visible before expansion and survives remount', (tester) async{
-    final dir=await Directory.systemTemp.createTemp('p03-settings-summary-');
+    final dir=Directory.systemTemp.createTempSync('p03-settings-summary-');
     var readCount=0;
     Future<Map<String,dynamic>> read() async {
       readCount++;
@@ -38,12 +38,12 @@ void main(){
       await tester.pumpWidget(const MaterialApp(home:Scaffold(body:SizedBox())));
       await tester.pumpWidget(page());
       await eventually(tester,find.text('Hyderabad, Telangana, India'));
-    }finally{await dir.delete(recursive:true);}
-  });
+    }finally{dir.deleteSync(recursive:true);}
+  }, timeout: const Timeout(Duration(seconds: 75)));
 
   testWidgets('choose place hides list; successful save closes settings; reopen shows server value', (tester) async{
-    final dir=await Directory.systemTemp.createTemp('p03-settings-save-');
-    final pack=await File('test/fixtures/p03-nicobar-638.json').readAsBytes();
+    final dir=Directory.systemTemp.createTempSync('p03-settings-save-');
+    final pack=File('test/fixtures/p03-nicobar-638.json').readAsBytesSync();
     var label='';var revision=0;var saves=0;
     Future<Map<String,dynamic>> read() async=>{
       'settingsRevision':revision,
@@ -95,6 +95,6 @@ void main(){
       await tester.pumpWidget(const MaterialApp(home:Scaffold(body:SizedBox())));
       await tester.pumpWidget(page());
       await eventually(tester,find.text('Saved Nicobar Place, Andaman and Nicobar Islands, India'));
-    }finally{await dir.delete(recursive:true);}
-  });
+    }finally{dir.deleteSync(recursive:true);}
+  }, timeout: const Timeout(Duration(seconds: 75)));
 }

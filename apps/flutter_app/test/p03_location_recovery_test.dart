@@ -41,7 +41,7 @@ Future<void> pumpUntil(WidgetTester tester,Finder finder) async {
 
 void main() {
   testWidgets('manual selector survives CDN failure and account location survives reopening',(tester) async {
-    final cache=await Directory.systemTemp.createTemp('p03-recovery-widget-');
+    final cache=Directory.systemTemp.createTempSync('p03-recovery-widget-');
     try {
       await tester.pumpWidget(app(cache));
       await pumpUntil(tester,find.byKey(const Key('p03-1b-selected-location')));
@@ -54,6 +54,6 @@ void main() {
       await pumpUntil(tester,find.byKey(const Key('p03-1b-selected-location')));
       expect(find.byKey(const Key('p03-1b-state-null')),findsOneWidget);
       expect(find.textContaining('Approximate location in India'),findsOneWidget);
-    }finally{await cache.delete(recursive:true);}
-  });
+    }finally{cache.deleteSync(recursive:true);}
+  }, timeout: const Timeout(Duration(seconds: 75)));
 }

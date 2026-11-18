@@ -17,14 +17,15 @@ import 'gps_location.dart';
 /// validates the bundled, checksum-verified India polygon before saving.
 class IndiaLocationPanel extends StatefulWidget {
   const IndiaLocationPanel({super.key, required this.baseUrl, required this.access,
-    @visibleForTesting this.testGet, @visibleForTesting this.testCacheDirectory,
+    this.testGet, this.testCacheDirectory,
     this.onLocationSaved, this.showGps = true, this.compact = false,
-    @visibleForTesting this.testSaveManual});
+    this.testSaveManual});
   final String baseUrl;
   final Future<String> Function() access;
-  /// Test-only API transport. Production always uses authenticated HTTP.
+  /// Internal transport seam forwarded by the parent Settings widget for tests.
+  /// Production uses authenticated HTTP; do not populate this in app wiring.
   final Future<Uint8List> Function(String path)? testGet;
-  /// File-backed isolation for widget tests; never used by production.
+  /// Internal file isolation seam for widget tests; never used by production.
   final Future<Directory> Function()? testCacheDirectory;
   /// Receives only the server-confirmed label, never a raw GPS fix.
   final ValueChanged<String>? onLocationSaved;
@@ -32,7 +33,7 @@ class IndiaLocationPanel extends StatefulWidget {
   final bool showGps;
   /// Settings/sheet mode: hide duplicate explanations and maintenance controls.
   final bool compact;
-  /// Test-only transport for verifying save behavior. Production uses PUT.
+  /// Internal save seam for widget tests; production uses authenticated PUT.
   final Future<Map<String,dynamic>> Function(Map<String,dynamic> body)? testSaveManual;
   @override
   State<IndiaLocationPanel> createState() => _IndiaLocationPanelState();
@@ -644,7 +645,7 @@ class _IndiaLocationPanelState extends State<IndiaLocationPanel> {
       ],
       if (busy && !downloading) const LinearProgressIndicator(),
       if (status.isNotEmpty && (!widget.compact || districtFailure!=null ||
-          RegExp(r'could not|unavailable|failed|mismatch|invalid|retry',caseSensitive:false).hasMatch(status)))
+          RegExp(r'could not|unavailable|failed|mismatch|invalid|retry|wait 15 seconds|location changes are limited',caseSensitive:false).hasMatch(status)))
         Padding(padding:const EdgeInsets.symmetric(vertical:8),child:Text(status,key:const Key('p03-1b-status'))),
       if (!widget.compact) Wrap(spacing:8,children:[
         TextButton(key:const Key('p03-1b-reload'),onPressed:busy||initializing?null:_init,child:const Text('Reload catalogue / settings')),

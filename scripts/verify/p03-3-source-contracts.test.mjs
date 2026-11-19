@@ -60,16 +60,16 @@ test('P03 budgets and local-only verification inherited, never relaxed',()=>{
   assert.match(pkg.scripts['verify:p03-3'],/verify:p03:acceptance/);
   assert.match(pkg.scripts['verify:p03-3'],/test:p03-3:repair:integration/,
     'full verification must run real restricted-account repair integration');
-  assert.ok(existsSync('docs/architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md'));
+  assert.ok(existsSync('docs/p03/05_POINTER_LIFECYCLE_AND_SAFETY.md'));
 });
 
 test('active P03 Markdown links target real files, not deleted handbook placeholders',()=>{
   const files=[
     ...['README','01_USER_JOURNEYS','02_GEO_DATA_STORAGE_AND_H3','03_API_REFERENCE',
-      '04_ACCEPTANCE_AND_RELEASE_GATES','05_LEGACY_MAP_AND_CLEANUP','06_NEXT_STAGES_ROADMAP']
+      '04_ACCEPTANCE_AND_RELEASE_GATES','05_POINTER_LIFECYCLE_AND_SAFETY','06_NEXT_STAGES_ROADMAP']
       .map(name=>`docs/p03/${name}.md`),
-    'docs/architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md',
-    'docs/qa/P03_3_POINTER_LIFECYCLE_IMPLEMENTATION_EVIDENCE.md'
+    'docs/p03/05_POINTER_LIFECYCLE_AND_SAFETY.md',
+    'docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md'
   ];
   for(const file of files){
     for(const match of read(file).matchAll(/(?<!!)\[[^\]\n]+\]\(([^)]+)\)/g)){

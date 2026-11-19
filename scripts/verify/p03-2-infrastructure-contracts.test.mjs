@@ -32,11 +32,11 @@ test('authenticated encrypted cursor guards replay, locality/settings revision a
 test('P03-1 frontend and geo routing files untouched by P03-2',()=>{
   assert.ok(existsSync(fileURLToPath(new URL('apps/flutter_app/lib/features/geo/india_location.dart',root))));
   assert.ok(existsSync(fileURLToPath(new URL('apps/api/src/features/geo/india-boundary.ts',root))));
-  assert.ok(existsSync(fileURLToPath(new URL('docs/P03_READ_ME_FIRST.md',root))));
+  assert.ok(existsSync(fileURLToPath(new URL('docs/p03/README.md',root))));
 });
 test('P03-2 code and docs stay isolated in P03, with owner-run local integration gate',()=>{
   const pkg=JSON.parse(source('package.json'));
   assert.match(pkg.scripts['test:p03-2:integration'],/env-file=apps\/api\/\.env/);
   assert.match(pkg.scripts['verify:p03-2'],/test:p03-2:integration/);
-  assert.ok(existsSync(fileURLToPath(new URL('docs/architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md',root))));
+  assert.ok(existsSync(fileURLToPath(new URL('docs/p03/02_GEO_DATA_STORAGE_AND_H3.md',root))));
 });

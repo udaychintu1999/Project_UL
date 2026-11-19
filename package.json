@@ -132,8 +132,11 @@
     "test:p03-3:repair:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-restricted-repair-dynamo.test.ts",
     "verify:p03-3:closeout": "npm run verify:p03-3",
     "test:p03-3:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-private-publication-dynamo.test.ts",
-    "verify:p03-3:portable": "npm run test:p03-3:policy && npm run test:p03-3:contracts && npm run test:p03-3:repair:contracts && npm run verify:p03:acceptance:portable && npm run test:secrets && npm run test:cloud-guards",
-    "verify:p03-3": "npm run verify:p03-3:portable && npm run test:p03:acceptance:types && npm run typecheck && npm run lint && npm run test:p03-3:integration && npm run test:p03-3:repair:integration && npm run verify:p03:acceptance"
+    "verify:p03-3:portable": "npm run test:p03-3:policy && npm run test:p03-3:contracts && npm run test:p03-3:repair:contracts && npm run test:p03-3:restriction:contracts && npm run test:p03:docs && npm run verify:p03:acceptance:portable && npm run test:secrets && npm run test:cloud-guards",
+    "verify:p03-3": "npm run verify:p03-3:portable && npm run test:p03:acceptance:types && npm run typecheck && npm run lint && npm run test:p03-3:integration && npm run test:p03-3:repair:integration && npm run test:p03-3:restriction:integration && npm run verify:p03:acceptance",
+    "test:p03-3:restriction:contracts": "node --test scripts/verify/p03-3-trusted-restriction.test.mjs",
+    "test:p03-3:restriction:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-trusted-restriction-dynamo.test.ts",
+    "test:p03:docs": "node --test scripts/verify/p03-consolidated-docs.test.mjs"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

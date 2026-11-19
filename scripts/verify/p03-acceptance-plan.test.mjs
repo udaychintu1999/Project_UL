@@ -162,7 +162,7 @@ test('P03-1/P03-2 canonical docs are scoped, linked and do not rewrite P01/P02',
   const hub=readFileSync('docs/p03/README.md','utf8');
   for(const file of ['01_USER_JOURNEYS.md','02_GEO_DATA_STORAGE_AND_H3.md',
       '03_API_REFERENCE.md','04_ACCEPTANCE_AND_RELEASE_GATES.md',
-      '05_LEGACY_MAP_AND_CLEANUP.md']) {
+      '05_POINTER_LIFECYCLE_AND_SAFETY.md','06_NEXT_STAGES_ROADMAP.md']) {
     assert.ok(existsSync('docs/p03/'+file),file);
     assert.ok(hub.includes(file),file);
   }
@@ -182,8 +182,14 @@ test('P03-1/P03-2 canonical docs are scoped, linked and do not rewrite P01/P02',
   assert.match(evidence,/moderation.*delet|delet.*moderation/i);
   assert.match(pkg.scripts['verify:p03-3'],/test:p03-3:repair:integration/,
     'combined P03-3 verifier must execute the real restricted-account repair test');
-  const cleaner=readFileSync('docs/p03/PRUNE_SUPERSEDED_P03.ps1','utf8');
-  assert.match(cleaner,/\$Apply/);
-  assert.doesNotMatch(cleaner,/P01_|P02_/);
-  assert.match(cleaner,/DRY RUN/);
+  // The consolidated P03 handbook supersedes ad hoc prune scripts and
+  // historical file-path dependencies; actual safety/privacy obligations
+  // remain tested rather than permitting obsolete documents to linger.
+  assert.match(readFileSync('docs/p03/05_POINTER_LIFECYCLE_AND_SAFETY.md','utf8'),
+    /both directions|both block directions/i);
+  assert.match(readFileSync('docs/p03/02_GEO_DATA_STORAGE_AND_H3.md','utf8'),
+    /ULUV_GEO_CANONICAL_MANIFEST_SHA256/);
+  assert.ok(!existsSync('docs/p03/PRUNE_SUPERSEDED_P03.ps1'));
+  assert.ok(!existsSync('docs/p03/05_LEGACY_MAP_AND_CLEANUP.md'));
+
 });

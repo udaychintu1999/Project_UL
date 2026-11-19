@@ -1,27 +1,10 @@
-# P03-2 discovery infrastructure — private/internal
+# P03 private discovery modules — not a public API
 
-Exports contain H3 R6 coverage, exact approximate-center distance filters, canonical
-pointer-key constructors, authenticated encrypted progress cursors and a *bounded
-internal pointer reader*. Nothing here is registered as a public API endpoint,
-performs a pointer write, or returns discoverable users. A pointer is NEVER enough
-for authorization: P03-3/4 must implement atomic publication and independent
-canonical account/profile/block/eligibility hydration before any client response.
+**Current owner evidence (19 Nov 2026):** Private P03-3 pointer publication/invalidation and already-restricted anchored repair passed the owner's full Windows 15/15 portable + 11/11 acceptance, real Java DynamoDB Local, 81 Flutter widget and 7 isolated Android E2E tests. A newly added *server-internal trusted restriction transaction and audit* still requires targeted owner proof and a complete rerun. No people-search route or public candidate DTO is registered.
 
-- Sources: `uluv_settings` consistent GetItem, `uluv_discovery` PK Query.
-- No Scan, `Query` per R6 partition only, max 6 calls / 72 raw items per request.
-- No auto-widen beyond 50 km; overlapping H3 cover plus exact geodesic filter.
-- `0–10`, `(10–35]`, `(35–50]`; all `0–50` is staged near-band-first.
-- Cursor is AES-256-GCM with viewer, mode, settings/locality revisions, cell,
-  source, page size, distance band bound to it; expires in 10 minutes.
-- Unverified pointer rows stay inside Fastify. Client never receives uid or cell.
-- P03-2 does not update profile `discoveryEligible:false` and does not make
-  existing P02-3 `requestedActive` profiles publicly visible.
-- This module does not mint/obtain secret keys; future handlers inject a
-  separate high-entropy server-owned 256-bit signing/encryption secret.
-- Query results within one page can be sorted by approximate distance, but
-  pagination does NOT guarantee globally nearest-first ordering over unvisited
-  H3 partitions; no claim of full global order should appear in UI.
+- P03-2 `contracts`, `coverage`, `settings-snapshot`, `cursor`, and `pointer-reader` provide validated H3 R6 approximate-center coverage, strong `uluv_settings` reads, bounded `uluv_discovery` PK `Query` and AES-256-GCM progress. Limits: 6 Queries, 72 raw items, 12 per partition, 24 unverified internal pointers, 1600 cover cells, cursor 10 minutes; no Scan or hidden popularity ranking.
+- P03-3 `pointer-lifecycle-policy` and authenticated profile/media/geo owner routes atomically write or revoke private pointers with canonical version/anchor/eligibility barriers. `reconcile-restricted-pointers` privately deletes at most two known anchors **after** canonical account status has changed. Neither service grants staff permissions.
+- New `restrict-account-pointers` is **not** an HTTP route. After a *separately authorized* trusted staff decision, it conditionally changes active account to restricted, revokes Dating/Friendship pointers, clears both mode intents and writes an immutable `uluv_safety` staff audit in a single transaction. There is no moderator UI, appeal, reinstatement or complete deletion handler; do not expose this function to client-selected targets or unauthenticated callers.
+- `uluv_blocks` is a future **viewer-specific** suppression: P03-4 canonical hydration must check *both* directions, along with account/status/age, mode, READY media, current revisions, privacy and radius. A private pointer alone is never permission to disclose a person. Legacy orphans lacking canonical anchors cannot be enumerated by UID with the current PK-only schema; no Scan-based sweeper is installed.
 
-## P03-3 implementation candidate (not owner-accepted)
-
-`pointer-lifecycle-policy.ts` is a private, no-network anchor validator and atomic revocation planner. Existing authenticated owner mutation routes now use it for private `uluv_discovery` publication on explicit activation, and conditional invalidation during mode/photo/handle/setup/geo updates. **P03-2 reader remains unverified-only**; public `/v1/discovery/*`, public previews and `discoveryEligible` remain off. No moderation/account-deletion handlers are certified and no real DynamoDB Local owner gate has been reported. See `docs/architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md`.
+Source-of-truth P03 documentation: [`docs/p03/README.md`](../../../../../docs/p03/README.md) (path relative to this file) and [05 — lifecycle](../../../../../docs/p03/05_POINTER_LIFECYCLE_AND_SAFETY.md). P01/P02 session, profile, media, and privacy contracts are preserved. Do not enable `/v1/discovery/*`, public previews or public results until P03-4 has its own verified authorization/hydration tests.

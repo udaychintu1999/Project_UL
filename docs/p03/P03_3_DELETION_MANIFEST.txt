@@ -1,5 +1,0 @@
-# P03-only P03-3 closeout — 2026-11-18
-# DELETE NOW: NONE. Do not run git rm or Remove-Item.
-# Four optional archive candidates remain protected by the existing dry-run script.
-# Before any future deletion: verify original Git provenance, unique details, backlink
-# references in the owner's entire current tree, and full P03 verification.

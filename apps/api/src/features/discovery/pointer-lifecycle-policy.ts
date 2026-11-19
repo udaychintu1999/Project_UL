@@ -99,6 +99,32 @@ export function appendModeInvalidationBarrier(items: Items, uid: string, mode: M
     ExpressionAttributeValues: { ':expected': version, ':next': version + 1, ':now': now,
       ...guard.values } } });
 }
+/** A trusted account restriction must also clear mode activation intent, not
+ * just the index anchor. This is deliberately separate from ordinary geo/setup
+ * invalidation (which must preserve the owner's selected intent policy).
+ * The account status + all returned actions belong in one TransactWrite.
+ */
+export function appendModeRestrictionBarrier(items: Items, uid: string, mode: Mode,
+  row: Row, now: string): void {
+  safeContext(uid, mode);
+  const recordKey = key(uid, mode);
+  if (!row) {
+    items.push({ ConditionCheck: { TableName: 'uluv_profiles', Key: recordKey,
+      ConditionExpression: 'attribute_not_exists(PK)' } });
+    return;
+  }
+  const version = profileVersion(row);
+  const anchor = canonicalPointerAnchor(uid, mode, row);
+  const guard = samePointerCondition(anchor);
+  appendPointerDelete(items, uid, mode, row);
+  items.push({ Update: { TableName: 'uluv_profiles', Key: recordKey,
+    UpdateExpression: 'SET requestedActive = :inactive, #version = :next, updatedAt = :now REMOVE discoveryPointer',
+    ConditionExpression: '#version = :expected AND attribute_exists(PK)' + guard.expression,
+    ExpressionAttributeNames: { '#version': 'version' },
+    ExpressionAttributeValues: { ':inactive': false, ':next': version + 1, ':now': now,
+      ':expected': version, ...guard.values } } });
+}
+
 /** Prevent publication based on a READY-photo projection read from another
  * canonical mode version or assignment. All three inputs are server reads;
  * this is not client-supplied authorization. Activation still checks >=2 READY

@@ -36,3 +36,5 @@ The app authenticates via the existing P01-3 session flow; the server's `onboard
 | No location but tab active | Show GPS/manual, not real people/posts |
 
 **Privacy:** location is an approximate locality. No raw GPS or real names are sent to S3; P03-1 does not publish discovery pointers. The public user-facing feature is intentionally not implemented in P03-2.
+
+**Later-stage eligibility:** P03-3 may create an unverified private pointer only after explicit mode activation, and may revoke it after owner or trusted restriction changes. This does not expose people. `uluv_blocks` will be viewer-specific at P03-4 canonical hydration; an individual block must not globally deactivate the target's mode. See [05 — safety](05_POINTER_LIFECYCLE_AND_SAFETY.md).

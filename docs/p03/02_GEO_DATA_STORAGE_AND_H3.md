@@ -1,39 +1,37 @@
-# 02 — P03-1 geo data, GPS, private storage and P03-2 H3
+# 02 — GeoNames, GPS, private locality and H3 R6
 
-## Geographic reference-data lifecycle
+## Authority and source boundaries
 
-1. **Build/deploy input:** immutable GeoNames-derived India JSON release with public State/District/Place packs and separate canonical lookup shards; source licensing and CC BY attribution retained. The server independently pins the canonical manifest SHA-256 and explicit `ULUV_GEO_PUBLIC_BASE_URL` through its private environment. Never use a newly retrieved manifest's hash as its own authority.
-2. **Public distribution:** the owner's approved single DEV S3 bucket and CloudFront OAC serve `geo/india/v1/` immutable static files. They are *reference data*, not account data. Public CDN GETs carry no user JWT. P17 may replace deployment infrastructure without changing the typed manifest/pinned-hash interface.
-3. **App bootstrap:** Flutter has a ~175 KB checksum-pinned State/District index (`apps/flutter_app/assets/geo/india-manifest.json`) so choices can render without a CDN. The app obtains signed-off delivery metadata from authenticated Fastify; it loads only selected district packs, verifies byte length/SHA-256 (`sha256` field in the pack metadata) and schema before atomic private cache activation.
-4. **Failure recovery:** on CDN timeout/403/bad SHA, the app requests the *same* verified pack from authenticated Fastify `/v1/geo/india/packs/:state/:district`. A cached old pack may support reading/search, but an older unapproved release must not enable an untrusted new save.
-5. **Private selection:** manual save sends GeoNames IDs/version/provenance and the owner's expected `settingsRevision` to Fastify. The server resolves the canonical place, checks account adult/active status and 15-second cooldown, computes H3, and commits a conditional transaction into the owner's `uluv_settings` row. Reference JSON never becomes user profile data.
-6. **GPS:** one explicit device capture goes only to Fastify over authenticated API. A bundled, SHA-pinned India MultiPolygon is loaded by the API for boundary checks. Fastify derives a resolution-6 cell; only its approximate cell center and source are saved, never the raw fix/timestamp. GPS does not depend on S3, CloudFront or a third-party geocoder.
+- **Public reference data:** immutable GeoNames-derived India release `IN-52fd741e8c61b53a` under `geo/india/v1/` in an owner-managed private S3 bucket with Block Public Access and CloudFront Origin Access Control (OAC). GeoNames CC BY 4.0 attribution stays with the release. It contains published place names and approximate GeoNames coordinates, never accounts, media, owner H3 centers or login credentials.
+- **Release layout:** 1,058 public-source JSON objects: 798 district/unmapped packs, 256 `server/00.json`–`server/ff.json` canonical lookup shards, and public `manifest.json`, trusted `server-index-manifest.json`, attribution and build report. The public manifest does not disclose `serverIndex`; canonical metadata is independently SHA-pinned by Fastify. Source `IN.txt` and the compiled JSON packs are **not** bundled in Git; Flutter bundles only a small verified State/District index.
+- **Trusted canonical SHA-256 (v1):** `8f4c54c2acbf474fba5ee07eefa86c4e86903299af04a0a9e57f0fa72c8f9caa`. **Public-manifest SHA-256:** `97d83d80f2e1b487109e01e7a37e8fb8fb88daf607cf090568144f5969f43887`. The downloaded manifest MUST NOT supply its own trust anchor.
+- **API configuration:** the owner configures private `ULUV_GEO_PUBLIC_BASE_URL=https://<approved-cloudfront-host>/geo/india/v1/` together with `ULUV_GEO_CANONICAL_MANIFEST_SHA256`. No bearer token, S3 credentials or private user settings are sent to CloudFront. Do not include real host/secrets in committed docs.
+- **Offline/local provider:** for DEV only, set `ULUV_GEO_PUBLIC_LOCAL_DIR` to an external absolute folder holding the same full immutable release, omit `ULUV_GEO_PUBLIC_BASE_URL`, and retain the same SHA pin. Obsolete `ULUV_GEO_PRIVATE_DIR` must not be used.
 
-**Existing storage:** `uluv_settings` key `PK=USER#<uid>, SK=SETTINGS` holds `geoH3Cell`, `geoApprovedCenter`, `geoSelectionSource`, `geoSelectionLabel`, `settingsRevision`, `localityRevision`, selected distance band/sort and manual provenance fields when applicable. `uluv_users` is consulted transactionally for write eligibility. No new table was introduced for P03-1/P03-2.
+## Owner-only CloudFront Console setup (manual; not an automated AWS task)
 
-## P03-2 private query foundation
+1. Use the **existing** approved GeoNames S3 bucket and CloudFront distribution. Extract the separate GeoNames data archive, upload its `geo/` folder at the **bucket root**, and verify exact keys such as `geo/india/v1/manifest.json`, `server-index-manifest.json`, `server/00.json`, `states/40/districts/686.json`. Avoid `geo/geo/...` path duplication and do not upload the ZIP or project source.
+2. Confirm **1,058 JSON objects**, S3 Block Public Access, CloudFront OAC `Sign requests`, matching S3 SourceArn read policy, no duplicate CloudFront Origin path, HTTPS and JSON content type. No public S3 ACL is required. Do not create a second bucket or use the AWS CLI without separate authorization.
+3. In an ordinary browser, inspect the approved CloudFront URLs for public manifest, canonical manifest and one shard/pack. Expect valid JSON; a 403 may indicate OAC/policy and 404 an incorrect key. Do not remove privacy settings to repair them.
+4. Change immutable release versions using **new prefixes**, verify every object first, then change trusted SHA **and** URL together. Roll back using the previous pair. Existing checksum-verified Flutter caches remain readable. Console invalidations may incur cost; owner must decide.
 
-- `uluv_discovery` contains *potential* index projections keyed `DISC#DATING#R6#<cell>` or `DISC#FRIENDSHIP#R6#<cell>`, with SK starting `JOIN#`. P03-2 defined the pointer shape and private reader without publishing. The later P03-3 candidate now writes *private* pointers on explicit activation, but has no public reader and is not accepted.
-- `h3-js` R6 centers drive conservative cell coverage. Allowed bands are `[0,10]`, `(10,35]`, `(35,50]` and combined `0–50` km, approximate great-circle distance between approved cell centers (not road distance). Exact distance classification happens after broad H3 coverage; no radius widening.
-- Caps: **6** DynamoDB Query calls/page, **72** raw items/page, **12** items/query, **24** internal pointers/page, **1,600** planned H3 cells; no table Scan. A page may legitimately contain zero pointers and a continuation cursor.
-- AES-256-GCM cursor, ~10-minute expiration, bound to owner UID, mode, location H3, distance selection, locality/settings revisions and page size. Reject tampering and cross-owner/stale replay. The cursor secret belongs only on the backend.
-- P03-2 returns **internal unverified pointers**, never a Flutter/public DTO. P03-3 now has an **unaccepted private pointer publication/invalidation candidate** on owner activation/profile/media/setup/identity/locality routes. Moderation/account deletion hooks and mutual-block reader policy are not complete. P03-4 must still implement canonical eligibility, account age/status, privacy/block/media/mode and revision checks before anyone becomes publicly discoverable.
+## Client → Fastify → private storage
 
-## Data-flow diagram
+1. Flutter's checksum-pinned ~175 KB State/District index shows 36 State/UT labels offline. An explicit district choice downloads only the selected pack, validates the `sha256` / SHA-256 digest, byte length and schema, and atomically replaces the local cache. No automatic 798-pack download. Failover: authenticated `GET /v1/geo/india/packs/:state/:district` returns independently verified bytes after CDN failure; stale packs may be viewed but do not authorize a fresh unverified Save.
+2. Manual Save supplies GeoNames `geonameId`, release version, administrative provenance and `expectedRevision`, **not client coordinates**. Fastify resolves an independently pinned canonical lookup shard (bounded in-memory cache), validates membership, computes H3 R6 and commits a conditional private `uluv_settings` update. Concurrent edits give 409; a 15-second server cooldown gives 429; unavailable/tampered source fails closed.
+3. GPS is **single-shot and user-triggered**. Permission denial, stale/future/inaccurate fixes and out-of-India points are rejected or offer manual fallback. Fastify validates against bundled SHA-pinned `apps/api/assets/geo/india-boundary.geojson` India boundary MultiPolygon (mainland, islands), and stores only server-derived H3 R6 cell/approved center/label/source. Raw latitude/longitude and the phone's GPS fix are never persisted. Coordinates can be spoofed; polygon containment is not proof of physical presence.
+4. `uluv_settings` key `USER#uid / SETTINGS` holds private `geoH3Cell`, `geoApprovedCenter`, `geoSelectionSource`, `geoSelectionLabel`, `settingsRevision`, `localityRevision`, selected distance band/sort and manual provenance when applicable. `uluv_users` account/age eligibility is transaction-checked. A location change revokes existing P03-3 private pointers for both modes; an explicit new activation is needed to publish a new pointer.
 
-```text
-GeoNames public release (approved immutable version)
-         → private S3 source → CloudFront public JSON
-                                      ↓ (no JWT)
-Flutter bundled State/District index → selected verified district cache
-                                      ↓ selected place ID/version only
-Authenticated Fastify → canonical index SHA verification → conditional DynamoDB write
-                                      ↓
-                        uluv_settings private H3 R6 locality
-                                      ↓ server-only
-                    P03-2 bounded H3 Query planner / encrypted cursor
-                                      ↓
-                    UNVERIFIED internal pointers — private P03-3 writes only
-```
+## Internal H3 query and cursor contract
 
-DynamoDB Local remains the P00–P16 test backend; do not run owner tests against AWS. P17 is where production DynamoDB/data migration is to be separately planned. See detailed [`../architecture/P03_GEO_CDN_DATA_SEPARATION.md`](../architecture/P03_GEO_CDN_DATA_SEPARATION.md) and [`../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md`](../architecture/P03_2_H3_R6_DISCOVERY_INFRASTRUCTURE.md) for data schemas and edge cases.
+- `uluv_discovery` partition `DISC#DATING#R6#<h3-cell>` or `DISC#FRIENDSHIP#R6#<h3-cell>`, sort key `JOIN#<ISO-date>#<uid>`. Index entries are **unverified internal projections**, not authorization or a response DTO.
+- Owner-selected bands: `[0,10]`, `(10,35]`, `(35,50]` km; All `0–50` is staged near-band-first. Exact great-circle distance between **approved approximate centers** follows conservative H3 covering. Never auto-widen beyond 50 km or claim globally closest ordering over unread cells.
+- Hard per-request ceilings: **six strongly consistent partition Query calls**, **72 raw index items**, **12 per Query**, **24 internal unverified pointers**, **1,600 cover cells**. Never Scan the entire table or accept arbitrary client partition, resolution or search center.
+- AES-256-GCM progress cursor expires after **10 minutes**; binds authenticated viewer UID, mode, selected approved cell/source, band, page size and `settingsRevision`/`localityRevision`. Reject tampering, replay in another context and expired/malformed tokens. Secrets are injected server-side only.
+- Future P03-4 public hydration must independently verify candidate canonical account/status/age, mode requestedActive/selection/revisions, READY media, privacy and **both directions** of blocks, plus current approved center/radius; pointer presence alone never authorizes visibility.
+
+## Diagnostics, migration and deferred postal PIN
+
+The local Fastify terminal logs bounded route templates/request IDs/SHA stage and safe outcome categories, **never** GPS fixes, bearer headers, unredacted user IDs or request bodies. A CDN outage must not erase account location. P17 may replace physical media/CDN/data-store deployment via the same typed manifest + hash provider boundary without changing location semantics; DynamoDB Local remains the default through P16.
+
+**India postal PIN search is ON HOLD.** GeoNames contains no postal-to-office authority. Any PIN importer must use separately licensed/verified Department of Posts India directory, handle six-digit PIN and multiple offices, and NEVER fabricate a PIN → exact GPS center or bypass the GeoNames manual save policy. No PIN search UI should be turned on until this dataset has been approved and tested.

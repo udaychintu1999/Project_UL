@@ -1,47 +1,43 @@
-# 03 — Implemented P03-1 HTTP APIs and P03-2 private interfaces
+# 03 — Implemented P03 HTTP and internal API contracts
 
-**Authentication:** All listed P03-1 HTTP routes are authenticated through the existing P01-3 session guard; owner location/settings responses use `Cache-Control: no-store`. Do not invent a second login system, send bearer tokens to CloudFront, or claim an internal P03-2 function is a REST endpoint. Full route sources: `apps/api/src/features/geo/routes.ts` and `settings-routes.ts`.
+The app uses the **existing P01-3 authenticated session guard**, not another authentication system. `/v1/me/*`, `/v1/geo/india/*` and `/v1/profiles/me*` are owner-authenticated. Owner responses are `Cache-Control: no-store`. Never send a bearer token to the public GeoNames CDN. Canonical source: `apps/api/src/features/{geo,profiles,discovery}/`.
 
-## P03-1 — HTTP routes already registered
+## Actual registered P03-1 owner routes
 
-| Method + route | Input / behavior | Output / likely errors |
+| HTTP route | Trust-checked input / response | Failure modes |
 | --- | --- | --- |
-| `GET /v1/me/geo/location` | No body; consistent owner settings read | `settingsRevision`, `localityRevision`, `location` (`null` or name/source/IDs for manual), `gpsAvailable`, `discoveryEnabled:false`; 401, 409 uninitialized, 503 |
-| `PUT /v1/me/geo/manual` | `geonameId`, `catalogueVersion`, `stateCode`, `districtCode` (nullable where applicable), `expectedRevision` | Validated place + updated revisions/private label, `discoveryEnabled:false`; 400 malformed/provenance, 404 unknown ID, 409 version/revision, 429 cooldown, 503 |
-| `POST /v1/me/geo/gps` | One short-lived fix, timestamp, accuracy and `expectedRevision` validated by Fastify | Approximate `gps_selected` location; 400 malformed/outside boundary, 409 revision, 429 cooldown, 503 boundary/storage |
-| `GET /v1/me/settings` | Private preferences read | `settingsRevision`, `localityRevision`, `distanceBand`, `sortMode`, `locationSource`, `locationName`, `discoveryEnabled:false` |
-| `PUT /v1/me/settings` | `expectedRevision`, `distanceBand` (`0-10`, `10-35`, `35-50`, `0-50`), `sortMode` (`near_band_first`, `recent_first`) | Updated preference view; 400 malformed, 409 concurrent update, 503 |
-| `GET /v1/geo/india/delivery` | Authenticated catalogue delivery descriptor | Provider, version, trusted public manifest SHA, manifest path/base URL; 503 not configured |
-| `GET /v1/geo/india/manifest` | Authenticated public metadata read | Public State/District/pack metadata; 503 unavailable |
-| `GET /v1/geo/india/packs/:state/:district` | Authenticated **SHA-pinned fallback** when direct CDN retrieval fails | Verified JSON bytes; 404 invalid/nonexistent pack, 503 source/integrity unavailable |
-| `GET /v1/geo/india/catalogue/:version/*` | **Local-mode-only** authenticated test/static delivery | 404 when CDN mode enabled or pack/version invalid |
+| `GET /v1/profiles/me` | P02 canonical shared and mode profiles, server-calculated `onboarding.ready`; 2/5 shell depends on verified response | 401/403; transport failure must not imply incomplete |
+| `GET /v1/me/geo/location` | Private location, `settingsRevision`, `localityRevision`, nullable label/source, `gpsAvailable`, `discoveryEnabled:false` | 409 missing settings; 503 unavailable |
+| `PUT /v1/me/geo/manual` | `geonameId`, `catalogueVersion` (`IN-<16 hex>`), `stateCode`, optional `districtCode`, `expectedRevision` | 400 provenance, 404 unknown ID, 409 revision/catalogue, 429 cooldown, 503 |
+| `POST /v1/me/geo/gps` | `lat`, `lng`, `accuracyMeters`, `fixTimestamp`, `expectedRevision` **only after explicit tap**; server rejects stale/out-of-bound fixes and saves approximate H3 only | 400 GPS invalid/outside India, 409, 429, 503 |
+| `GET /v1/me/settings` | Private band, sort, label/source, revisions, `discoveryEnabled:false` | 409/503 |
+| `PUT /v1/me/settings` | `distanceBand ∈ {0-10,10-35,35-50,0-50}`, `sortMode ∈ {near_band_first,recent_first}`, `expectedRevision` | 400, 409, 503 |
+| `GET /v1/geo/india/delivery` | Configured provider, immutable release root and independently verified public manifest SHA | 503 invalid configuration |
+| `GET /v1/geo/india/manifest` | SHA-verified public catalogue metadata | 503 unavailable |
+| `GET /v1/geo/india/packs/:state/:district` | SHA-verified authenticated fallback for only requested district | 404 missing/invalid, 503 integrity/provider |
+| `GET /v1/geo/india/catalogue/:version/*` | Local-mode only, explicitly allowlisted static test assets | 404 in CDN mode |
 
-Valid error response shape for these handlers is `{ "error": "fixed_error_code" }`; always follow the actual handler for exact codes and status. The P03-1 owner test covers 401, invalid request, 409 optimistic conflicts, 429 cooldown and 503 failure paths. Never log raw GPS, UID, bearer headers, place bodies or secret manifest-hash configuration values.
+Manual `geonameId` is a decimal canonical string. GPS fix is UTC ISO and must be ≤120 seconds old, ≤30 seconds in future, `accuracyMeters` finite and ≤10,000. All save writes verify an active self-declared adult account and conditional settings revision. A successful write is not permission to publish a person's profile.
 
-### Ownership and tests
+`POST /v1/profiles/me/:mode/activate` and `/deactivate` (existing P02 owner routes) now manage **private P03-3 anchors** in DynamoDB transactions. Both continue to return `discoveryEligible:false`, and no raw H3/pointer is returned. Existing owner setup, handle, mode draft, photo assignment and private geo writes invalidate relevant anchors atomically; details in [05](05_POINTER_LIFECYCLE_AND_SAFETY.md).
 
-- Real Fastify/DB: `apps/api/tests/geo/p03-1-local-db-acceptance.test.ts` (synthetic UID, exact-key cleanup), `scripts/verify/p03-1-live-api.test.mjs` (live HTTP unauthenticated rejection).
-- CDN/manifest: `apps/api/tests/geo/p03-onebucket-canonical.test.ts`, `apps/api/tests/geo/p03-1-fixture-acceptance.test.ts` and existing GPS/boundary units.
-- Android full UI/HTTP: `apps/flutter_app/integration_test/p03_location_acceptance_integration_test.dart` includes real Flutter taps and an isolated, synthetic **localhost HTTP server**. This is not a P01 login test and does not call Fastify or CloudFront.
+## Internal modules, never public routes
 
-## P03-2 — internal interfaces only
+| Module | Server-only purpose |
+| --- | --- |
+| `discovery/contracts.ts` | Valid H3 R6 pointer, modes/bands, partition keys, hard query caps |
+| `coverage.ts` | Conservative R6 circle cover, exact geodesic distance bands |
+| `settings-snapshot.ts` | Strong owner-only settings read, never trust client coordinates |
+| `pointer-reader.ts` | Bounded consistent partition `Query`; returns **unverified pointers internally** |
+| `cursor.ts` | Context-authenticated AES-256-GCM continuation, 10-minute expiry |
+| `pointer-lifecycle-policy.ts` | Canonical pointer anchor validation, conditional deletion/update/activation barriers |
+| `reconcile-restricted-pointers.ts` | Internal bounded repair of known anchors **after** an existing restriction; not a route, no Scan |
+| `restrict-account-pointers.ts` | NEW trusted staff-only transaction to restrict active account, deactivate both modes, revoke pointers and create immutable safety audit; **requires external staff authorization and real-DDB acceptance** |
 
-| Module | Function/use | Security invariant |
-| --- | --- | --- |
-| `contracts.ts` | Valid R6 cell, distance bands, partition keys and pointer shape | Fixed modes/bands, reject forged IDs |
-| `coverage.ts` | Conservative overlapping cover; exact geodesic band calculation | R6 only; strict cover and distance budgets |
-| `settings-snapshot.ts` | Consistent owner-private locality read | Never trust client-supplied coordinate/cell |
-| `pointer-reader.ts` | Bounded strongly consistent `Query` on `uluv_discovery`, internal unverified pointers | No Scan, no public serialization; bounded work and pagination |
-| `cursor.ts` | AES-GCM encrypted continuation + contextual binding | TTL, owner/revision/filter/mode integrity |
+The new trusted restriction function is not registered with Fastify or reachable from Flutter. Its `staffUid` must come from a separately verified privileged principal, and its reason/decision must be authorized independently; a TypeScript call alone is **not** staff authentication. Deletion/appeal/restore endpoints are not implemented here. Both owner and moderator transitions must fail closed under concurrent revision conflicts.
 
-**Nonexistent in P03-2:** public `/v1/discovery/*`, people matching cards, eligibility publication, Feed/Activities post APIs, public cursor tokens, and automatic profile pointer writes. These belong to later P03 phases. Do not add mock success routes to satisfy UI tests. Additional details: [`../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md`](../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md).
+**Nonexistent public interfaces:** `/v1/discovery/people`, public `/v1/discovery/*` hydration, public third-party preview (returns 404), public listing/people cards, Local Feed and Activities post endpoints, and any block-admin API. Do not invent success responses or silently set `discoveryEligible:true` before P03-4 authorization is proven.
 
-## P03-3 — Private/internal transactional publisher (core owner-tested; not fully accepted)
+## API diagnostics and tests
 
-`apps/api/src/features/discovery/pointer-lifecycle-policy.ts` is a server-only module that validates canonical anchors and generates conditional transaction Delete/Update/check operations. It has **no HTTP endpoint**. Existing authenticated owner routes (`/v1/profiles/me/:mode/activate`, `/deactivate`, owner profile/photolist/setup/handle saves, `/v1/me/geo/manual`, `/v1/me/geo/gps`) now use those operations to add or invalidate private pointers. Responses still report `discoveryEligible:false`/`discoveryEnabled:false`. Public third-party preview remains 404.
-
-The new `discoveryPointer` property on mode rows is an **optional private anchor**, never a preview DTO. Index rows are unverified. Account moderation, account deletion and block policy are not complete; see [`../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md`](../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md). **Do not register or expose `/v1/discovery/people` for P03-3.**
-
-### New P03-3 internal-only maintenance function (not an HTTP API)
-
-`reconcileRestrictedPointers(db, uid)` in `reconcile-restricted-pointers.ts` reads canonical `uluv_users` + both `MODE` profiles with strongly consistent GetItem. It refuses to run for an active or missing account, then conditionally deletes at most two anchored `uluv_discovery` records while clearing their anchors under the same transaction; the user account's `status` and `moderationRestrictionVersion` are rechecked at commit. A repeat call is a no-op. **This function does not change status, grant staff authorization or discover orphan pointers without an anchor.** A future authorized moderation/delete process must integrate it after policy review; no new route has been registered.
+A typical fixed error envelope is `{ "error": "fixed_error_code" }`. Use actual handler response codes as source of truth. Log only safe template/status/timing information; private token, UID, H3 and raw fix values are excluded. Tests: `npm run test:p03-1:acceptance:api`, `npm run test:p03-1:acceptance:db`, `npm run test:p03-2:integration`, `npm run test:p03-3:integration`, `npm run test:p03-3:repair:integration`, and the new trusted restriction integration via [04](04_ACCEPTANCE_AND_RELEASE_GATES.md).

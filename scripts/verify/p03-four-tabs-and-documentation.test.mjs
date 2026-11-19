@@ -66,10 +66,10 @@ test('Location & discovery is a compact expansion with safe retry and no automat
 });
 
 test('living phase documentation indexes actual auth and geo APIs without claiming public discovery', () => {
-  const doc = file('docs/architecture/P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md');
-  const api = file('docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md');
-  const index = file('docs/handoff/TECHNICAL_DOCS_INDEX.md');
-  assert.match(doc, /five main tabs/i);
+  const doc = file('docs/p03/01_USER_JOURNEYS.md');
+  const api = file('docs/p03/03_API_REFERENCE.md');
+  const index = file('docs/p03/README.md');
+  assert.match(doc, /five.*tabs/i);
   assert.match(doc, /Settings/);
   assert.match(api, /GET \/v1\/me\/geo\/location/);
   assert.match(api, /PUT \/v1\/me\/geo\/manual/);
@@ -79,7 +79,7 @@ test('living phase documentation indexes actual auth and geo APIs without claimi
   assert.match(index, /P13_REAUTH_SECONDS/);
   assert.match(file('apps/api/src/features/auth/device-session-policy.ts'), /P13_REAUTH_SECONDS = 30 \* 24 \* 60 \* 60/);
   for (const path of ['docs/p03/02_GEO_DATA_STORAGE_AND_H3.md',
-    'docs/manual/P03_FOUR_TAB_SETTINGS_WINDOWS_ANDROID_ACCEPTANCE.md',
+    'docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md',
     'docs/design_reviews/P01_3_APPROVED_IMPLEMENTATION_CONTRACT_2026_11_14.md',
     'apps/api/src/features/profiles/routes.ts']) {
     assert.ok(existsSync(resolve(root, path)), path);

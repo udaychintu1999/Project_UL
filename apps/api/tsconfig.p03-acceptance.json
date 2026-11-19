@@ -12,6 +12,7 @@
     "tests/discovery/p03-2-foundation.test.ts",
     "tests/discovery/p03-2-dynamo-local.test.ts",
     "tests/discovery/p03-3-private-publication-dynamo.test.ts",
-    "tests/discovery/p03-3-restricted-repair-dynamo.test.ts"
+    "tests/discovery/p03-3-restricted-repair-dynamo.test.ts",
+    "tests/discovery/p03-3-trusted-restriction-dynamo.test.ts"
   ]
 }

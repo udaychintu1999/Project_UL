@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  canonicalPointerAnchor, appendPointerDelete, appendModeInvalidationBarrier,
+  canonicalPointerAnchor, appendPointerDelete, appendModeInvalidationBarrier, appendModeRestrictionBarrier,
   samePointerCondition, nextJoinTime, pointerAnchor, matchesCanonicalPublicationSnapshot
 } from '../../apps/api/src/features/discovery/pointer-lifecycle-policy.ts';
 const uid='p033_synthetic_owner';
@@ -95,4 +95,20 @@ test('publisher rejects mixed-version READY-photo snapshots and unassigned IDs',
   assert.equal(matchesCanonicalPublicationSnapshot(7,{version:7,photoIds:['owner_photo_1','owner_photo_1']},7,media),false);
   assert.equal(matchesCanonicalPublicationSnapshot(7,{version:7,photoIds:null},7,media),false);
   assert.equal(matchesCanonicalPublicationSnapshot(7,undefined,7,media),false);
+});
+
+test('trusted restriction clears active intent and anchors atomically for both modes',()=>{
+  const tx=[];
+  appendModeRestrictionBarrier(tx,uid,'dating',{...canonical,requestedActive:true},joined);
+  appendModeRestrictionBarrier(tx,uid,'friendship',{version:2,requestedActive:true},joined);
+  assert.equal(tx.length,3);
+  assert.ok(tx[0].Delete);
+  assert.match(tx[1].Update.UpdateExpression,/requestedActive = :inactive/);
+  assert.equal(tx[1].Update.ExpressionAttributeValues[':inactive'],false);
+  assert.match(tx[1].Update.ConditionExpression,/discoveryPointer.PK/);
+  assert.match(tx[2].Update.ConditionExpression,/attribute_not_exists\(discoveryPointer\)/);
+  assert.equal(tx[2].Update.ExpressionAttributeValues[':next'],3);
+  const absent=[];
+  appendModeRestrictionBarrier(absent,uid,'friendship',undefined,joined);
+  assert.equal(absent[0].ConditionCheck.ConditionExpression,'attribute_not_exists(PK)');
 });

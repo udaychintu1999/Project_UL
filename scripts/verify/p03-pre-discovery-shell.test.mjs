@@ -59,5 +59,5 @@ test('no background GPS, no auto district bulk fetch, settings refresh propagate
 test('new actual Flutter widget tests and phase manual are present',()=>{
  const widgets=file('apps/flutter_app/test/p03_pre_discovery_shell_test.dart');
  for(const phrase of ['findsNWidgets(2)','findsNWidgets(5)','p03-location-required','p03-discovery-manual','p02-setup-ready'])assert.ok(widgets.includes(phrase),phrase);
- assert.ok(file('docs/architecture/P03_PRE_DISCOVERY_SHELL_AND_SETTINGS.md').includes('onboarding.ready'));
+ assert.ok(file('docs/p03/01_USER_JOURNEYS.md').includes('onboarding.ready'));
 });

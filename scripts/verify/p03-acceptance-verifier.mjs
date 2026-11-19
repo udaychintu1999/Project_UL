@@ -20,4 +20,4 @@ const ok=executeP03Stages(P03_LOCAL_STAGES,command=>spawnSync('npm',['run',comma
 if(!ok){console.error('P03 NOT VERIFIED. Correct the first failing gate before release.');process.exit(1);}
 console.log('P03 LOCAL AUTOMATED GATES PASSED.');
 console.log('OWNER MANUAL GATE: one-time GPS permission accuracy/island/border and app force-stop/reopen.');
-console.log('P03-3 public discovery remains disabled; this is not production release approval.');
+console.log('P03-4 candidate route is session gated; its hydration acceptance, P03-5 UI and production release have separate gates.');

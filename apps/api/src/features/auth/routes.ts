@@ -25,6 +25,7 @@ import { registerProfileMediaRoutes } from '../profiles/media-routes.js';
 import { registerIndiaGeoRoutes } from '../geo/routes.js';
 import { registerGeoPreferenceRoutes } from '../geo/settings-routes.js';
 import { registerIndiaPincodeRoutes } from '../pincode/routes.js';
+import { registerDiscoveryRoutes } from '../discovery/routes.js';
 
 const authTable = 'uluv_auth_links';
 const usersTable = 'uluv_users';
@@ -407,6 +408,7 @@ export function registerLocalEmailAuth(app: FastifyInstance, db: DynamoDBDocumen
   registerGeoPreferenceRoutes(app, db, requireSession);
   registerIndiaGeoRoutes(app, db, requireSession);
   registerIndiaPincodeRoutes(app, requireSession);
+  registerDiscoveryRoutes(app, db, requireSession, secret);
   const devices = registerDeviceSessionRoutes(app, db, secret, requireSession);
   app.get('/v1/auth/me', async (request, reply) => {
     const auth = await requireSession(request, reply);

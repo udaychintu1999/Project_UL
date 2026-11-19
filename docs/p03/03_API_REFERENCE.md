@@ -21,7 +21,19 @@ Manual `geonameId` is a decimal canonical string. GPS fix is UTC ISO and must be
 
 `POST /v1/profiles/me/:mode/activate` and `/deactivate` (existing P02 owner routes) now manage **private P03-3 anchors** in DynamoDB transactions. Both continue to return `discoveryEligible:false`, and no raw H3/pointer is returned. Existing owner setup, handle, mode draft, photo assignment and private geo writes invalidate relevant anchors atomically; details in [05](05_POINTER_LIFECYCLE_AND_SAFETY.md).
 
-## Internal modules, never public routes
+## Authenticated P03-4 discovery (new candidate; Windows validation pending)
+
+`GET /v1/discovery/people?mode=dating|friendship&pageSize=1..12&cursor=<opaque>` is registered under the **existing P01/P01-3 verified session guard**. `pageSize` defaults to 8. No other client filter, cell, UID, coordinates, radius, `sortMode` or target identity is accepted. Invalid query: 400; no session: 401; ineligible viewer: 403; expired/cross-viewer/cross-mode/cross-version cursor: 409; canonical DB failure: 503. Always `Cache-Control: private, no-store`.
+
+Response: `{ mode, distanceBand, sortMode, ordering:'page_local_only', items, nextCursor }`. Each `items[]` is **strictly** `{ handle, displayName, age, broadArea, bio, intention, interests, photoCount, distanceBand }`. No uid, H3, GPS fix, precise location, internal media IDs/URLs or pointer timestamps. The count verifies READY assigned media; actual authenticated preview media serving is **deferred to P03-5** and must not reuse the owner-only media route. Third-party `/v1/profiles/:mode/:handle/preview` remains 404 (no arbitrary handle enumeration).
+
+Candidate hydration uses a bounded partition scanner (≤6 Queries, ≤72 pointer reads, ≤12 candidate proofs) and at most 12 **TransactGet** consistent candidate snapshots (up to 20 strongly read items each, including media and blocks; measure costs before production) of both accounts/settings/modes, both directional block edges and assigned READY media. It verifies each mode was explicitly activated, canonical pointer PK/SK/revisions match, selected mode/active-adult account and all READY photos remain valid, both users opted in, no known opt-out, and candidate R6 centroid is within **both users' exact selected distance bands** (reciprocal radius privacy). Stale/orphan/restricted/blocked candidates disappear; an unauthorized pointer is never directly returned. Strong snapshots protect each candidate, but no separate cross-request global consistency promise is made.
+
+`sortMode` is owner-selected, not supplied by HTTP; `near_band_first` traverses the nearest partition centers first and `recent_first` sorts **only the hydrated page**. Neither is a global nearest/recent leaderboard. Query may yield an empty `items` with a nonnull cursor while traversing sparse partitions. Client must not auto-widen the radius; P03-5 UI may allow explicit continuation. Cursor context also binds the viewer's current active mode version, settings/locality revisions and mode; 10-minute expiry.
+
+**Release status:** This endpoint is a new P03-4 implementation candidate, not owner-approved yet. Prove the real local transaction test, full inherited regressions and unauthorized HTTP behavior before accepting it; external AWS tests require fresh approval.
+
+## Internal modules and private facilities
 
 | Module | Server-only purpose |
 | --- | --- |
@@ -30,13 +42,14 @@ Manual `geonameId` is a decimal canonical string. GPS fix is UTC ISO and must be
 | `settings-snapshot.ts` | Strong owner-only settings read, never trust client coordinates |
 | `pointer-reader.ts` | Bounded consistent partition `Query`; returns **unverified pointers internally** |
 | `cursor.ts` | Context-authenticated AES-256-GCM continuation, 10-minute expiry |
+| `hydration-policy.ts` / `hydration-service.ts` / `request-policy.ts` / `routes.ts` | P03-4 viewer/candidate transactional re-read, block/media proof, strict query + preview allowlist, session guard |
 | `pointer-lifecycle-policy.ts` | Canonical pointer anchor validation, conditional deletion/update/activation barriers |
 | `reconcile-restricted-pointers.ts` | Internal bounded repair of known anchors **after** an existing restriction; not a route, no Scan |
 | `restrict-account-pointers.ts` | NEW trusted staff-only transaction to restrict active account, deactivate both modes, revoke pointers and create immutable safety audit; **requires external staff authorization and real-DDB acceptance** |
 
 The new trusted restriction function is not registered with Fastify or reachable from Flutter. Its `staffUid` must come from a separately verified privileged principal, and its reason/decision must be authorized independently; a TypeScript call alone is **not** staff authentication. Deletion/appeal/restore endpoints are not implemented here. Both owner and moderator transitions must fail closed under concurrent revision conflicts.
 
-**Nonexistent public interfaces:** `/v1/discovery/people`, public `/v1/discovery/*` hydration, public third-party preview (returns 404), public listing/people cards, Local Feed and Activities post endpoints, and any block-admin API. Do not invent success responses or silently set `discoveryEligible:true` before P03-4 authorization is proven.
+**Still nonexistent interfaces:** arbitrary third-party handle-preview (404), public unauthenticated people listings, Flutter people cards (P03-5), Local Feed/Activities post endpoints and block-admin API. P03-3 owner DTOs intentionally retain `discoveryEligible:false` for backward compatibility; P03-4 is a separately authorized list capability, never permission to expose a raw pointer.
 
 ## API diagnostics and tests
 

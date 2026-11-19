@@ -28,7 +28,7 @@
 - Owner-selected bands: `[0,10]`, `(10,35]`, `(35,50]` km; All `0–50` is staged near-band-first. Exact great-circle distance between **approved approximate centers** follows conservative H3 covering. Never auto-widen beyond 50 km or claim globally closest ordering over unread cells.
 - Hard per-request ceilings: **six strongly consistent partition Query calls**, **72 raw index items**, **12 per Query**, **24 internal unverified pointers**, **1,600 cover cells**. Never Scan the entire table or accept arbitrary client partition, resolution or search center.
 - AES-256-GCM progress cursor expires after **10 minutes**; binds authenticated viewer UID, mode, selected approved cell/source, band, page size and `settingsRevision`/`localityRevision`. Reject tampering, replay in another context and expired/malformed tokens. Secrets are injected server-side only.
-- Future P03-4 public hydration must independently verify candidate canonical account/status/age, mode requestedActive/selection/revisions, READY media, privacy and **both directions** of blocks, plus current approved center/radius; pointer presence alone never authorizes visibility.
+- P03-4 authenticated hydration candidate (owner verification pending) independently verifies candidate canonical account/status/age, mode requestedActive/selection/revisions, READY media, privacy and **both directions** of blocks, plus current approved center/radius; pointer presence alone never authorizes visibility.
 
 ## Diagnostics, migration and deferred postal PIN
 

@@ -178,7 +178,7 @@ test('P03-1/P03-2 canonical docs are scoped, linked and do not rewrite P01/P02',
   assert.match(evidence,/7\/7/);
   assert.match(evidence,/reconcileRestrictedPointers/);
   assert.match(evidence,/MANUAL PENDING/);
-  assert.match(evidence,/no public discovery|public discovery still disabled/i);
+  assert.match(evidence,/P03-4 authenticated canonical hydration|P03-4.*guarded route/i);
   assert.match(evidence,/moderation.*delet|delet.*moderation/i);
   assert.match(pkg.scripts['verify:p03-3'],/test:p03-3:repair:integration/,
     'combined P03-3 verifier must execute the real restricted-account repair test');

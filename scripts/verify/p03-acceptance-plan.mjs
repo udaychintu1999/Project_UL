@@ -27,7 +27,7 @@ export const P03_LOCAL_STAGES=Object.freeze([
   ['Backend and script lint','lint'],
   ['All offline and inherited P02/P03 regressions','verify:p03:acceptance:portable'],
   ['Real running Fastify HTTP readiness and local DB roundtrips','test:integration'],
-  ['Real unauthenticated geo API security and no-public-discovery HTTP checks','test:p03-1:acceptance:live-api'],
+  ['Real unauthenticated geo API and session-gated P03-4 discovery HTTP checks','test:p03-1:acceptance:live-api'],
   ['P03-1 isolated real DynamoDB Local roundtrip and conflict/security suite','test:p03-1:acceptance:db'],
   ['P03-2 synthetic DynamoDB Local multi-page read/cleanup','test:p03-2:integration'],
   ['All Flutter widget regressions, including P01/P02','test:flutter'],

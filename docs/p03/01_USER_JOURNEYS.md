@@ -9,7 +9,7 @@ The app authenticates via the existing P01-3 session flow; the server's `onboard
 | Incomplete profile | **Dating/setup · Settings** | Dating/setup | Guided setup remains under Dating; security/location settings under Settings |
 | Completed profile | **Dating · Friendship · Local Feed · Connects · Settings** | Dating | View/edit summary and security under Settings |
 
-**Local Feed is third.** Its page is **Local Feed & Activities**; the two activities are inside that tab. Friendship is separate. There is no Home tab. Connects and discovery result feeds still have later-phase placeholders, not fictional working endpoints.
+**Local Feed is third.** Its page is **Local Feed & Activities**; the two activities are inside that tab. Friendship is separate. There is no Home tab. Connects and Flutter discovery result feeds remain later-phase placeholders; P03-4 supplies a guarded backend candidate, but P03-5 alone may wire real Dating/Friendship cards.
 
 ## Missing-location flows (completed profile)
 
@@ -37,4 +37,4 @@ The app authenticates via the existing P01-3 session flow; the server's `onboard
 
 **Privacy:** location is an approximate locality. No raw GPS or real names are sent to S3; P03-1 does not publish discovery pointers. The public user-facing feature is intentionally not implemented in P03-2.
 
-**Later-stage eligibility:** P03-3 may create an unverified private pointer only after explicit mode activation, and may revoke it after owner or trusted restriction changes. This does not expose people. `uluv_blocks` will be viewer-specific at P03-4 canonical hydration; an individual block must not globally deactivate the target's mode. See [05 — safety](05_POINTER_LIFECYCLE_AND_SAFETY.md).
+**Later-stage eligibility:** P03-3 may create an unverified private pointer only after explicit mode activation, and may revoke it after owner or trusted restriction changes. This does not expose people. `uluv_blocks` is viewer-specific at P03-4 canonical hydration and is checked in both directions; an individual block must not globally deactivate the target's mode. See [05 — safety](05_POINTER_LIFECYCLE_AND_SAFETY.md).

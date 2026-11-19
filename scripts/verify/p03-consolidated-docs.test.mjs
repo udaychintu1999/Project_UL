@@ -20,7 +20,7 @@ test('P03 documentation has one focused handbook and no superseded manuals',()=>
     'docs/qa/P03_3_POINTER_LIFECYCLE_IMPLEMENTATION_EVIDENCE.md'])
     assert.equal(existsSync(path),false,`obsolete document remains: ${path}`);
   for(const dir of ['docs/manual','docs/api','docs/architecture','docs/qa'])
-    assert.equal(readdirSync(dir).filter(name=>/^P03.*\.md$/.test(name)).length,0,dir);
+    assert.equal((existsSync(dir)?readdirSync(dir):[]).filter(name=>/^P03.*\.md$/.test(name)).length,0,dir);
 });
 test('every maintained P03 Markdown link points to an existing file',()=>{
   for(const name of expected){
@@ -46,8 +46,8 @@ test('living technical facts survive consolidation; original evidence is correct
     assert.ok(proof.includes(term),term);
   for(const term of ['restricted','requestedActive','TransactWrite','both','orphan','block'])
     assert.ok(safety.includes(term),term);
-  assert.match(api,/Nonexistent public interfaces/);
-  assert.match(proof,/No public|no public discovery/i);
+  assert.match(api,/Authenticated P03-4 discovery/);
+  assert.match(proof,/session-gated|authenticated discovery/i);
 });
 
 test('one-time migration only removes an exact P03 allowlist after explicit -Apply',()=>{

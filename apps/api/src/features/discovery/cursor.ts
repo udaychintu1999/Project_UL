@@ -5,14 +5,14 @@ import {
 
 export type CursorKey={PK:string;SK:string};
 export type InternalCursor={bandIndex:number;cellIndex:number;lastKey:CursorKey|null};
-export type CursorContext={uid:string;mode:DiscoveryMode;location:LocalitySnapshot;pageSize:number};
+export type CursorContext={uid:string;mode:DiscoveryMode;location:LocalitySnapshot;pageSize:number;authorizationVersion?:number};
 const b64=(bytes:Buffer)=>bytes.toString('base64url');
 function fingerprint(ctx:CursorContext){
   // No PII leaves this module except encrypted; fingerprint detects context drift.
   return createHash('sha256').update(JSON.stringify([
     'P03-2-V1',ctx.uid,ctx.mode,ctx.location.cell,ctx.location.center.lat,ctx.location.center.lng,
     ctx.location.localityRevision,ctx.location.settingsRevision,ctx.location.distanceBand,
-    ctx.location.source,ctx.pageSize
+    ctx.location.source,ctx.pageSize,ctx.authorizationVersion??null
   ])).digest('hex');
 }
 function aesKey(secret:string):Buffer {

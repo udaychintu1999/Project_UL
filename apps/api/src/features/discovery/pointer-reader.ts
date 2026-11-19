@@ -16,7 +16,7 @@ export type InternalPointer={uid:string;mode:DiscoveryMode;homeCell:string;
 export type QueryResponse={items:readonly Record<string,unknown>[];lastKey:CursorKey|null};
 export type QueryFn=(partition:string,after:CursorKey|null,limit:number)=>Promise<QueryResponse>;
 export type ScanParams={uid:string;mode:DiscoveryMode;location:LocalitySnapshot;pageSize:number;
-  token?:string;cursorSecret:string};
+  token?:string;cursorSecret:string;authorizationVersion?:number};
 export type InternalScanPage={unverifiedPointers:readonly InternalPointer[];nextCursor:string|null;
   diagnostics:{queryCalls:number;itemsRead:number;cellsTraversed:number;budgetExhausted:boolean}};
 
@@ -54,7 +54,7 @@ export async function scanPointerPage(query:QueryFn,p:ScanParams,
     pBand.cells.length===0||pBand.cells.length>1600||
     (i>0&&pBand.band===planned[i-1].band)||
     pBand.cells.some(cell=>!isR6Cell(cell))))throw new Error('invalid_discovery_cover');
-  const context:CursorContext={uid:p.uid,mode:p.mode,location:p.location,pageSize:p.pageSize};
+  const context:CursorContext={uid:p.uid,mode:p.mode,location:p.location,pageSize:p.pageSize,authorizationVersion:p.authorizationVersion};
   const state:InternalCursor=p.token?decodeCursor(p.token,context,p.cursorSecret):
     {bandIndex:0,cellIndex:0,lastKey:null};
   if(state.bandIndex>planned.length||

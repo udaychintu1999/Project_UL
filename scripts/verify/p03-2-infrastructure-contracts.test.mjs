@@ -9,8 +9,9 @@ const profile=source('apps/api/src/features/profiles/routes.ts');
 const geo=source('apps/api/src/features/geo/routes.ts');
 const pointer=source('apps/api/src/features/discovery/pointer-reader.ts');
 const cursors=source('apps/api/src/features/discovery/cursor.ts');
-test('no new discovery endpoint/publication; P03-1 activation stays fail-closed',()=>{
-  for(const text of [api,profile,geo])assert.doesNotMatch(text,/registerDiscoveryRoutes|\/v1\/discovery\/people/);
+test('P03-2 cannot publish or expose pointers; later discovery registration must reuse P01 session',()=>{
+  for(const text of [profile,geo])assert.doesNotMatch(text,/registerDiscoveryRoutes|\/v1\/discovery\/people/);
+  assert.match(api,/registerDiscoveryRoutes\(app, db, requireSession, secret\)/);
   assert.match(profile,/discoveryEligible: false/);
   assert.doesNotMatch(profile,/PutCommand.*uluv_discovery|ScanCommand/);
 });

@@ -2,7 +2,7 @@ import {
   cellToLatLng, getResolution, isValidCell, latLngToCell, polygonToCellsExperimental,
   POLYGON_TO_CELLS_FLAGS
 } from 'h3-js';
-import {MAX_CELLS_IN_COVER, RESOLUTION, enclosingCircle, validCoordinates,
+import {MAX_CELLS_IN_COVER, RESOLUTION, enclosingCircle, validCoordinates, distanceKm, bandForDistance,
   type Coordinates, type DistanceBand, requestedBands} from './contracts.js';
 
 export function isR6Cell(cell:unknown):cell is string {
@@ -33,11 +33,23 @@ export function conservativeCellCover(center:Coordinates,radiusKm:10|35|50):read
   const unique=new Set<string>([...cells,origin]);
   if(unique.size>MAX_CELLS_IN_COVER||unique.size===0||
     [...unique].some(cell=>!isR6Cell(cell)))throw new Error('geo_cover_budget_exceeded');
-  return [...unique].sort();
+  // Geographic ordering matters operationally: the scanner is capped at six
+  // empty PK Queries per request. Lexicographic H3 ordering could hide a
+  // same-cell candidate dozens of empty cursor pages away.
+  return [...unique].sort((a,b)=>{
+    const [aLat,aLng]=cellToLatLng(a),[bLat,bLng]=cellToLatLng(b);
+    return distanceKm(center,{lat:aLat,lng:aLng})-distanceKm(center,{lat:bLat,lng:bLng})||a.localeCompare(b);
+  });
 }
 export type BandCover={band:Exclude<DistanceBand,'0-50'>;cells:readonly string[]};
 export function planBandCovers(center:Coordinates,selected:DistanceBand):readonly BandCover[]{
   const bands=requestedBands(selected);
   return bands.map(band=>({band,cells:conservativeCellCover(center,
-    band==='0-10'?10:band==='10-35'?35:50)}));
+    band==='0-10'?10:band==='10-35'?35:50).filter(cell=>{
+      // Every published candidate center is the canonical R6 cell centroid.
+      // Do not query inner-band cells again in outer phases; final candidate
+      // hydration independently rechecks the exact selected locality.
+      const [lat,lng]=cellToLatLng(cell);
+      return bandForDistance(distanceKm(center,{lat,lng}))===band;
+    })}));
 }

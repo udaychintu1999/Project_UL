@@ -17,7 +17,7 @@ test('all four previously recovered Flutter files remain in ZIP',()=>{
     'apps/flutter_app/lib/features/geo/local_feed_activities_sections.dart'
   ])assert.ok(existsSync(p),`missing recovered file: ${p}`);
 });
-test('no public discovery endpoint, all DTOs still fail closed',()=>{
+test('P03-3 publication remains private and old owner DTOs stay fail-closed',()=>{
   for(const txt of [profile,app,geo,photos]) {
     assert.doesNotMatch(txt,/app\.(?:get|post|put|delete)\(['"]\/v1\/discovery\/people/);
     assert.doesNotMatch(txt,/ScanCommand/);

@@ -148,13 +148,15 @@ test('bounded empty partitions and hostile DynamoDB cursor are handled without S
   await assert.rejects(scanPointerPage(bad,{uid:'viewer',mode:'FRIENDSHIP',location:loc,pageSize:4,
     cursorSecret:SECRET},[{band:'0-10',cells:[loc.cell]}]),/invalid_discovery_storage_response/);
 });
-test('P03-2 must not expose raw pointer identities, publish pointers or new discovery routes',async()=>{
+test('P03-2 cannot publish raw pointers; P03-4 route is a separate session-guarded module',async()=>{
   const fs=await import('node:fs');
   const dir=new URL('../../src/features/',import.meta.url);
-  for(const relative of ['auth/routes.ts','profiles/routes.ts','geo/routes.ts']){
+  for(const relative of ['profiles/routes.ts','geo/routes.ts']){
     const contents=fs.readFileSync(new URL(relative,dir),'utf8');
     assert.doesNotMatch(contents,/registerDiscoveryRoutes|\/v1\/discovery\/people/);
   }
+  const auth=fs.readFileSync(new URL('auth/routes.ts',dir),'utf8');
+  assert.match(auth,/registerDiscoveryRoutes\(app, db, requireSession, secret\)/);
 });
 test('staged near-band-first scan honors exact inner/outer bands and no auto-widen',async()=>{
   const loc=locality(17.385,78.486,'0-50');

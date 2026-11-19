@@ -136,7 +136,13 @@
     "verify:p03-3": "npm run verify:p03-3:portable && npm run test:p03:acceptance:types && npm run typecheck && npm run lint && npm run test:p03-3:integration && npm run test:p03-3:repair:integration && npm run test:p03-3:restriction:integration && npm run verify:p03:acceptance",
     "test:p03-3:restriction:contracts": "node --test scripts/verify/p03-3-trusted-restriction.test.mjs",
     "test:p03-3:restriction:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-trusted-restriction-dynamo.test.ts",
-    "test:p03:docs": "node --test scripts/verify/p03-consolidated-docs.test.mjs"
+    "test:p03:docs": "node --test scripts/verify/p03-consolidated-docs.test.mjs",
+    "test:p03-4:request": "node --experimental-strip-types --test apps/api/tests/unit/p03-4-request.test.ts",
+    "test:p03-4:contracts": "node --test scripts/verify/p03-4-contracts.test.mjs",
+    "test:p03-4:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-4-hydration-dynamo.test.ts",
+    "verify:p03-4:portable": "npm run verify:p03-3:portable && npm run test:p03-4:request && npm run test:p03-4:contracts && npm run test:p03-4:coverage",
+    "verify:p03-4": "npm run test:p03-4:request && npm run test:p03-4:contracts && npm run test:p03-4:coverage && npm run verify:p03-3 && npm run test:p03-4:integration",
+    "test:p03-4:coverage": "tsx --test apps/api/tests/discovery/p03-4-coverage-and-cursor.test.ts"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

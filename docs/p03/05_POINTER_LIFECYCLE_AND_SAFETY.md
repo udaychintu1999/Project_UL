@@ -1,6 +1,6 @@
 # 05 — P03-3 private pointer lifecycle, safety and recovery
 
-**Scope:** only private H3 R6 pointer publication and revocation. There is still no public people discovery, third-party preview, Flutter people-feed or P03-4. A pointer is a stale-prone *candidate locator*, never permission to disclose an identity.
+**Scope:** only private H3 R6 pointer publication and revocation. P03-4 now supplies a separately session-gated candidate hydration/list implementation (owner tests pending); P03-3 pointers remain private, with no arbitrary handle-preview, Flutter people-feed or production enablement. A pointer is a stale-prone *candidate locator*, never permission to disclose an identity.
 
 ## Canonical versus projection keys
 
@@ -26,7 +26,7 @@
 | Manual locality / one-shot GPS save | Invalidates both anchors and deletes index keys; never republishes | Settings revision/cooldown and owner-state checks with mode barriers; raw fix never persisted |
 | Trusted staff restriction (new private primitive) | `restrictAccountAndRevokePointers`: changes canonical active → restricted, increments moderation revision, deactivates both mode intents, removes anchored pointers and writes staff audit in **one transaction** | Requires a separately authorized staff actor, fixed reason, valid action ID and expected moderation revision; absent profile rows get creation barriers; conflicts fully roll back. No admin route exposed |
 | Already restricted account repair | `reconcileRestrictedPointers`: consistent Get of account + both modes; conditional deletes up to two anchored projections and clears anchors | Never changes account status, scans, selects a different UID or repairs an unanchored legacy orphan. Idempotent and CAS-protected |
-| Viewer A blocks user B | **NOT implemented in P03-3**; decision: viewer-specific suppression, not a global publisher shutdown | P03-4 must check both block directions *at final canonical hydration*, every page and preview; no public reader exists now |
+| Viewer A blocks user B | P03-4 read checks blocks in both directions: `BLOCKS#viewer/TARGET#target` and `BLOCKS#target/TARGET#viewer` in the same transactional candidate snapshot | No global pointer invalidation; the independently authorized block-write UX is deferred |
 | Account deletion / media moderation / reinstatement | No authorized complete workflow in this repository | Any future workflow must first gate canonical status, atomically revoke relevant known anchors, and durably finish erasure/appeals; do not treat today's helper as full account deletion |
 
 ## Threat model and failed-transaction recovery

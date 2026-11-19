@@ -31,9 +31,13 @@ test('P03 geolocation, catalogue and preferences are owner-authenticated over HT
     assert.ok(res.data.error,`${method} ${path}: safe error envelope required`);
   }
 });
-test('P03-2 internal discovery does not have a public HTTP endpoint yet',async()=>{
-  for(const path of ['/v1/discovery/people','/v1/discovery/dating','/v1/discovery/friendship']){
+test('P03-4 discovery is session guarded and unrelated routes remain unregistered',async()=>{
+  for(const path of ['/v1/discovery/people','/v1/discovery/people?mode=dating']){
     const res=await call('GET',path);
-    assert.equal(res.status,404,`P03-3 not approved: ${path}`);
+    assert.equal(res.status,401,`No unauthenticated discovery: ${path}`);
+    assert.ok(res.data.error);
+  }
+  for(const path of ['/v1/discovery/dating','/v1/discovery/friendship']){
+    assert.equal((await call('GET',path)).status,404);
   }
 });

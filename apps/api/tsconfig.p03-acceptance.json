@@ -2,7 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
-    "rootDir": "."
+    "rootDir": ".",
+    "allowImportingTsExtensions": true
   },
   "include": [
     "tests/geo/p03-1-fixture.ts",
@@ -13,6 +14,9 @@
     "tests/discovery/p03-2-dynamo-local.test.ts",
     "tests/discovery/p03-3-private-publication-dynamo.test.ts",
     "tests/discovery/p03-3-restricted-repair-dynamo.test.ts",
-    "tests/discovery/p03-3-trusted-restriction-dynamo.test.ts"
+    "tests/discovery/p03-3-trusted-restriction-dynamo.test.ts",
+    "tests/discovery/p03-4-hydration-dynamo.test.ts",
+    "tests/unit/p03-4-request.test.ts",
+    "tests/discovery/p03-4-coverage-and-cursor.test.ts"
   ]
 }

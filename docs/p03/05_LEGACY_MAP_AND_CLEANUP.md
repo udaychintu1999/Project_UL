@@ -45,3 +45,9 @@ The actual 674-entry full source ZIP contains 36 P03-specific Markdown documents
 | **DELETE** | **None in this patch** | Zero deletions and no manifest paths to execute; no P01/P02 files touched. A future removal must migrate unique facts, recheck backlinks/tests, then deliver project-relative deletion manifest and explicit `git rm` commands |
 
 **Broken references resolved within P03-specific live files:** `docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md` and `docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md` were not present. They are **not** being invented. Historical source test for the first file was corrected to use real maintained P03 sources, rather than weakening privacy guards.
+
+## 18 Nov post-recovery correction — historical docs are still linked from restored tests
+
+The owner's actual Windows tree restored `docs/api/P03_GEO_AND_SHELL_API_CONTRACTS.md`, `docs/handoff/TECHNICAL_DOCS_INDEX.md` and four historical JS source tests. The original uploaded ZIP did **not** contain those files, so the earlier statement that the old API manual was absent applies to the **uploaded ZIP only**, not the final owner's tree. The user then repaired a handbook link in the restored test/index and obtained full PASS. **Retain these files on Windows for now**, as their test assertions have not yet been migrated against the complete current source. The restored legacy API document has already been redirected to the maintained `docs/p03/02_GEO_DATA_STORAGE_AND_H3.md` and `03_API_REFERENCE.md` sources; preserve it while the restored historical tests still depend on it.
+
+Do not execute `-Apply` for the legacy-prune script during this closeout. The P03-3 deletion manifest is **empty**. See [07 — security closeout](07_P03_3_SECURITY_CLOSEOUT.md). The author's new restricted-owner repair test is still awaiting owner Windows validation; the original full `verify:p03-3` PASS predates this new helper.

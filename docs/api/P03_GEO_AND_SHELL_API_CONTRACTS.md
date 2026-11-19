@@ -1,6 +1,6 @@
 # P03 implemented API contracts — owner location, settings, shell readiness
 
-**Applies to source in `apps/api/src/features/{geo,profiles}/` as of 2026-11-17.** This is an implementation map, not permission to expose discovery. Keep it updated in the same change as route/validation edits. See `docs/architecture/P03_GEO_LOCATION_COMPLETE_HANDBOOK.md` for complete GeoNames data handling and disaster recovery.
+**Applies to source in `apps/api/src/features/{geo,profiles}/` as of 2026-11-17.** This is an implementation map, not permission to expose discovery. Keep it updated in the same change as route/validation edits. For the maintained storage and recovery reference, see `docs/p03/02_GEO_DATA_STORAGE_AND_H3.md`; for new API updates see `docs/p03/03_API_REFERENCE.md`. This legacy file is temporarily retained because a restored P03 source-contract test references it.
 
 > P03-only API reference. This file does **not** replace the existing P01 authentication APIs or the P02 profile/activation contracts. Keep those files in the owner-provided documentation tree unchanged.
 

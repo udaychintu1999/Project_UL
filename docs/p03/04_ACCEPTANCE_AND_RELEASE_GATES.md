@@ -1,4 +1,4 @@
-# 04 — P03-1/P03-2 evidence, P03-3 verification and physical-device closeout
+# 04 — P03-1/P03-2 evidence, P03-3 verified core and security closeout
 
 ## Commands (Windows PowerShell at project root)
 
@@ -17,7 +17,7 @@ Run `npm run verify:p03:acceptance` for definitive full acceptance; it checks Ty
 
 ## Owner-reported execution evidence (18 November 2026)
 
-**Status:** P03-1 and P03-2 are **owner-accepted at the local automated-development milestone** based on the earlier full 11/11 and later 7/7 expanded device execution. Do not claim the final 11/11 post-recovery rerun, the OS/manual checks, P03-3 publication, or a production release has passed.
+**Status (updated 19 Nov 2026):** P03-1 and P03-2 are **owner-accepted at the local automated-development milestone** based on the earlier full 11/11 and later 7/7 expanded device execution. The owner subsequently supplied the **final post-recovery `verify:p03-3` log: 15/15 portable and 11/11 full P03 PASS**, including the private P03-3 publication test. The owner then separately ran `test:p03-3:repair:contracts` and `test:p03-3:repair:integration` on 19 Nov: **1/1 PASS each**, including real Java DynamoDB Local. The full 19 Nov `verify:p03-3` run stopped at portable gate 15/15 because of an obsolete documentation-status assertion; later stages did **not run in that attempt**. The assertion and combined test wiring are repaired in this patch and require a fresh owner rerun. OS/manual checks, complete moderation/delete lifecycle, public discovery and production release remain unverified/not approved.
 
 | Layer | Previous actual owner run | Scope |
 | --- | --- | --- |
@@ -29,7 +29,9 @@ Run `npm run verify:p03:acceptance` for definitive full acceptance; it checks Ty
 | Combined full automated runner | **PASS 11/11, twice** | Log ends `P03 LOCAL AUTOMATED GATES PASSED` |
 | **Expanded Android journeys after final recovery** | **PASS 7/7 (owner log, 18 Nov)** | Real Android Flutter screens + authenticated loopback HTTP fixture, NOT native GPS, real app session or live CDN |
 | **Latest post-recovery Flutter analyzer** | **PASS, No issues found (owner log, 18 Nov)** | Four accepted Flutter production files restored; no reported analyzer issues |
-| Full `verify:p03:acceptance` **after expanded suite and recovery** | **NOT YET RUN on final recovered baseline** | Previous 11/11 proof is valid for the earlier baseline; rerun required for the final combined state |
+| Full post-recovery `npm run verify:p03-3` (owner 18 Nov log) | **PASS**: 15/15 portable; 11/11 full P03, including 81/81 widget + 7/7 physical Android E2E | Owner-run local evidence after restored tests and GPS fixture repair; no P03-4/public feature |
+| Restricted-pointer repair (19 Nov) | **1/1 contract PASS; 1/1 real DynamoDB Local PASS** | Owner executed both commands separately; full post-repair chain still blocked on stale docs assertion in reported log |
+| Full `verify:p03-3` (19 Nov attempt) | **STOPPED at portable gate 15/15** | `NOT YET RUN` stale historical assertion; not a P03-3 DB failure; all later gates not executed in this attempt |
 | Native GPS, OS force-stop/relaunch, live CDN | **MANUAL PENDING** | Not proven by simulated fixture or by the local-DB tests |
 
 ## What the expanded isolated Android tests exercise
@@ -57,9 +59,9 @@ Do not run an owner's acceptance test against production AWS/real user fixtures;
 
 The historical narrower `npm run verify:p03:geo-visibility` command remains valid for the earlier geo visibility sub-slice, but it is **not** the final combined P03 release gate.
 
-## P03-3 — Targeted Windows/Android proof (not executed by author)
+## P03-3 — Targeted Windows/Android proof (core and repair separately owner-run; full post-fix rerun pending)
 
-**First apply the changed-files ZIP at project root, do not replace prior full source.** Use the owner's already-running Java DynamoDB Local and the existing P00 18 tables. Run the new private tests before the full inherited verifier. No AWS credentials should be passed to the test. **Baseline source preflight:** four existing test paths referred to in `package.json` are absent in this uploaded ZIP. Recover the original accepted files from Git first; never replace them with empty/no-op tests or bypass their npm commands.
+**First apply the changed-files ZIP at project root, do not replace prior full source.** Use the owner's already-running Java DynamoDB Local and the existing P00 18 tables. Run the new private tests before the full inherited verifier. No AWS credentials should be passed to the test. **Source preflight:** the original supplied repository ZIP omitted four historical test paths; the owner restored these from GitHub and obtained the full 18 Nov PASS. Keep the owner's recovered files. Do not overwrite them with incomplete ZIP copies or replace them with no-op tests.
 
 ```powershell
 # Once, at repository root, before launching the API:
@@ -78,6 +80,7 @@ npm run dev:api
 npm run test:p03-3:policy
 npm run test:p03-3:contracts
 npm run test:p03-3:integration
+npm run test:p03-3:repair:integration
 npm run test:p03:acceptance:types
 npm run typecheck
 npm run lint
@@ -90,3 +93,16 @@ npm run verify:p03-3
 The integration command reads the *owner's existing local environment by Node* using `--env-file=apps/api/.env`; the agent must not open that file. It asserts `APP_ENV=local`, validates the loopback DynamoDB endpoint before network access, and uses synthetic user and mode keys with scoped cleanup. The full `verify:p03-3` is fail-fast: it includes P03-3 targeted tests and previous full P03-1/P03-2 acceptance (which runs live Fastify/DynamoDB + the physical phone). If any command fails, stop acceptance, retain the failing log, fix only the demonstrated root cause and re-run the complete gate.
 
 Manual checks still separate: physical Android native GPS permission/accuracy, actual normal-app force-stop/reopen, live CloudFront/OAC with fresh operation authorization, new privacy/block/moderation/account deletion transitions, geo movement choice and real preview authorization in future P03-4. These are **not** checked by loopback fixture E2E. No one has yet owner-accepted P03-3 and no current automated test proves the future moderation/delete integration.
+
+## Follow-up P03-3 restricted-account repair (owner targeted PASS; combined rerun required)
+
+`reconcileRestrictedPointers` is a private **post-restriction** repair for up to two canonical pointer anchors of a single UID. It is **not a moderation route**, not an account deletion implementation and not a background worker. A separately authorized trusted workflow must first mark the account non-active. The helper uses 3 strongly consistent `GetItem` calls plus at most 5 conditional `TransactWrite` actions; no Scan. A missing anchor cannot locate a legacy orphan. See `07_P03_3_SECURITY_CLOSEOUT.md`.
+
+```powershell
+# With manually started Java DynamoDB Local and the existing local environment:
+npm run test:p03-3:repair:contracts
+npm run test:p03-3:repair:integration
+npm run verify:p03-3:closeout  # includes the entire owner acceptance chain again
+```
+
+**Owner 19 Nov logs confirm the first two commands PASS (1/1 each) on Windows/real DynamoDB Local.** The old combined verifier omitted the repair integration and its portable gate 15 had an outdated `NOT YET RUN` assertion. This patch updates the assertion and makes `verify:p03-3` **mandatorily run both integration tests** before the full 11-stage inherited acceptance. Neither the corrected combined command nor the added activation-snapshot guard has been owner rerun yet. Native GPS, OS force-stop/reopen, CloudFront/OAC, moderation/block/deletion policy and production release remain separate blockers.

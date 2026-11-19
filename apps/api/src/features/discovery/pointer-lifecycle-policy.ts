@@ -99,6 +99,20 @@ export function appendModeInvalidationBarrier(items: Items, uid: string, mode: M
     ExpressionAttributeValues: { ':expected': version, ':next': version + 1, ':now': now,
       ...guard.values } } });
 }
+/** Prevent publication based on a READY-photo projection read from another
+ * canonical mode version or assignment. All three inputs are server reads;
+ * this is not client-supplied authorization. Activation still checks >=2 READY
+ * photos, profile CAS and each media READY state in the write transaction.
+ */
+export function matchesCanonicalPublicationSnapshot(expectedVersion: number, profile: Row,
+  dashboardVersion: unknown, verifiedPhotoIds: readonly string[]): boolean {
+  if (!profile || profile.version !== expectedVersion || dashboardVersion !== expectedVersion ||
+      !Array.isArray(profile.photoIds)) return false;
+  const assigned = profile.photoIds as unknown[];
+  if (!assigned.every(id => typeof id === 'string' && id.length > 0) ||
+      new Set(assigned).size !== assigned.length) return false;
+  return verifiedPhotoIds.every(id => assigned.includes(id));
+}
 /** Require no aliasing between old and newly published pointer transaction
  * items. DynamoDB transactions prohibit acting twice on the same item. */
 export function nextJoinTime(now: string, old: PointerAnchor | null): string {

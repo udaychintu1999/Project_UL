@@ -8,7 +8,7 @@ import { activationMissing, modeVisibility, parseActivation, privatePreview } fr
 import { buildPointer, type Coordinates } from '../discovery/contracts.js';
 import { checkLocality } from '../discovery/pointer-reader.js';
 import { PRIVATE_DISCOVERY_TABLE, appendModeInvalidationBarrier, appendPointerDelete, canonicalPointerAnchor,
-  nextJoinTime, pointerAnchor, samePointerCondition } from '../discovery/pointer-lifecycle-policy.js';
+  matchesCanonicalPublicationSnapshot, nextJoinTime, pointerAnchor, samePointerCondition } from '../discovery/pointer-lifecycle-policy.js';
 
 const usersTable = 'uluv_users';
 const profilesTable = 'uluv_profiles';
@@ -395,6 +395,18 @@ export function registerProfileRoutes(app: FastifyInstance, db: DynamoDBDocument
       if (!profile || profile.version !== expectedVersion) return failure(reply, 409, 'profile_version_conflict');
       const shared = sharedSetup(settings);
       const verifiedPhotos = dashboard.profiles[mode].photoIds;
+      // The dashboard verifies READY media in a separate read. If the mode
+      // changed between that read and the direct profile read, do not publish
+      // using photo evidence from a different profile revision or assignment.
+      // Deactivation must remain possible even for an incomplete profile.
+      if (active) {
+        const assigned = profile.photoIds;
+        if (!matchesCanonicalPublicationSnapshot(expectedVersion, profile,
+              dashboard.profiles[mode].version, verifiedPhotos) ||
+            !Array.isArray(assigned) || !assigned.every(validMediaId)) {
+          return failure(reply, 409, 'activation_revision_conflict');
+        }
+      }
       const missing = activationMissing(mode, dashboard.handle, shared,
         { ...normalizedFields(profile), photoIds: verifiedPhotos }, ageFromBirthDate(account.birthDate));
       if (active && missing.length > 0) return reply.code(409).send({ error: 'profile_ineligible', missing });

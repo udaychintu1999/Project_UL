@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   canonicalPointerAnchor, appendPointerDelete, appendModeInvalidationBarrier,
-  samePointerCondition, nextJoinTime, pointerAnchor
+  samePointerCondition, nextJoinTime, pointerAnchor, matchesCanonicalPublicationSnapshot
 } from '../../apps/api/src/features/discovery/pointer-lifecycle-policy.ts';
 const uid='p033_synthetic_owner';
 const joined='2026-11-18T08:00:00.000Z';
@@ -83,4 +83,16 @@ test('new JOIN key cannot equal old key in a same-millisecond reactivation',()=>
   assert.notEqual(`JOIN#${next}#${uid}`,anchor.SK);
   assert.equal(nextJoinTime('2026-11-18T08:00:01.000Z',anchor),'2026-11-18T08:00:01.000Z');
   assert.throws(()=>nextJoinTime('wrong',anchor),/invalid_pointer_timestamp/);
+});
+
+test('publisher rejects mixed-version READY-photo snapshots and unassigned IDs',()=>{
+  const media=['owner_photo_1','owner_photo_2'];
+  const record={version:7,photoIds:media};
+  assert.equal(matchesCanonicalPublicationSnapshot(7,record,7,media),true);
+  assert.equal(matchesCanonicalPublicationSnapshot(7,record,6,media),false,'stale dashboard');
+  assert.equal(matchesCanonicalPublicationSnapshot(6,record,7,media),false,'stale canonical profile');
+  assert.equal(matchesCanonicalPublicationSnapshot(7,record,7,['different_owner_photo','owner_photo_2']),false);
+  assert.equal(matchesCanonicalPublicationSnapshot(7,{version:7,photoIds:['owner_photo_1','owner_photo_1']},7,media),false);
+  assert.equal(matchesCanonicalPublicationSnapshot(7,{version:7,photoIds:null},7,media),false);
+  assert.equal(matchesCanonicalPublicationSnapshot(7,undefined,7,media),false);
 });

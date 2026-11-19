@@ -30,6 +30,10 @@ test('no public discovery endpoint, all DTOs still fail closed',()=>{
 test('no publisher accepts a client-selected cell or raw fix',()=>{
   assert.match(profile,/buildPointer\(/);
   assert.match(profile,/checkLocality\(/);
+  assert.match(profile,/matchesCanonicalPublicationSnapshot\(expectedVersion, profile/,
+    'publisher must reject READY-media snapshots from another profile revision or assignment');
+  assert.match(life,/dashboardVersion !== expectedVersion/);
+  assert.match(life,/verifiedPhotoIds\.every\(id => assigned\.includes\(id\)\)/);
   assert.match(profile,/settings\.geoH3Cell/);
   assert.doesNotMatch(profile,/request\.body.*(?:geoH3Cell|discoveryPointer)/);
   assert.match(geo,/cellToLatLng\(cell\)/);
@@ -54,6 +58,8 @@ test('P03 budgets and local-only verification inherited, never relaxed',()=>{
   const pkg=JSON.parse(read('package.json'));
   assert.match(pkg.scripts['test:p03-3:integration'],/env-file=apps\/api\/\.env/);
   assert.match(pkg.scripts['verify:p03-3'],/verify:p03:acceptance/);
+  assert.match(pkg.scripts['verify:p03-3'],/test:p03-3:repair:integration/,
+    'full verification must run real restricted-account repair integration');
   assert.ok(existsSync('docs/architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md'));
 });
 

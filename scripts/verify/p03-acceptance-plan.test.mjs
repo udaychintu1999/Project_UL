@@ -168,7 +168,20 @@ test('P03-1/P03-2 canonical docs are scoped, linked and do not rewrite P01/P02',
   }
   assert.match(readFileSync('docs/p03/01_USER_JOURNEYS.md','utf8'),/Dating.*Friendship.*Local Feed.*Connects.*Settings/);
   assert.match(readFileSync('docs/p03/03_API_REFERENCE.md','utf8'),/No|Nonexistent/i);
-  assert.match(readFileSync('docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md','utf8'),/NOT YET RUN/);
+  const evidence = readFileSync('docs/p03/04_ACCEPTANCE_AND_RELEASE_GATES.md','utf8');
+  // Historical 'NOT YET RUN' wording became false after the owner supplied
+  // a complete Windows/DynamoDB/Flutter/Android PASS log. Verify actual
+  // scope and explicitly outstanding manual/policy gates instead.
+  assert.match(evidence,/15\/15[^\n]*PASS|PASS[^\n]*15\/15/i);
+  assert.match(evidence,/11\/11[^\n]*PASS|PASS[^\n]*11\/11/i);
+  assert.match(evidence,/81\/81/);
+  assert.match(evidence,/7\/7/);
+  assert.match(evidence,/reconcileRestrictedPointers/);
+  assert.match(evidence,/MANUAL PENDING/);
+  assert.match(evidence,/no public discovery|public discovery still disabled/i);
+  assert.match(evidence,/moderation.*delet|delet.*moderation/i);
+  assert.match(pkg.scripts['verify:p03-3'],/test:p03-3:repair:integration/,
+    'combined P03-3 verifier must execute the real restricted-account repair test');
   const cleaner=readFileSync('docs/p03/PRUNE_SUPERSEDED_P03.ps1','utf8');
   assert.match(cleaner,/\$Apply/);
   assert.doesNotMatch(cleaner,/P01_|P02_/);

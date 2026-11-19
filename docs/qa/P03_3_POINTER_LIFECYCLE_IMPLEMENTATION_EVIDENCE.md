@@ -1,3 +1,9 @@
+> **19 Nov 2026 owner update:** restricted pointer recovery **1/1 policy contract PASS + 1/1 Java DynamoDB Local integration PASS** independently. The later combined `verify:p03-3` halted at portable gate 15/15 on a historical `NOT YET RUN` docs assertion (source required outdated text), not a private-pointer test failure. This corrective patch repairs the expectation, wires repair integration into the fail-closed combined command and guards activation against mixed-version media snapshots. **Post-fix full owner verification NOT YET RUN; P03-3 final moderation/block/delete lifecycle remains unaccepted.** Historical authoring-only results below remain unchanged.
+
+> **OWNER-RUN UPDATE 18 Nov 2026:** After restoring missing inherited tests and repairing the GPS test fixture (not production GPS code), the owner supplied a log ending `P03 LOCAL AUTOMATED GATES PASSED`: **P03 portable 15/15 PASS; P03 full 11/11 PASS; real P03-3 Fastify+DynamoDB Local transaction PASS; TypeScript/lint PASS; Flutter widget 81/81 and physical Android 7/7 PASS**. This supersedes the older *"owner verification pending"* statements **for that tested core only**. Original historical failure evidence below is retained; that 18 Nov remark about the restricted-account repair being untested was superseded by the 19 Nov owner-run 1/1 contract and 1/1 live DynamoDB Local PASS above. Moderation/block/account-deletion implementation and native OS/CloudFront manual gates remain unverified.
+
+---
+
 # P03-3 — Authoring implementation and verification evidence (18 Nov 2026)
 
 **Milestone:** private, transactional pointer lifecycle implementation candidate; **NOT owner-accepted; do not enable public discovery.** P03-1/P03-2 remain accepted for local automated development on the owner's earlier evidence, distinct from this patch.

@@ -128,9 +128,12 @@
     "verify:p03-2": "npm run verify:p03-2:portable && npm run typecheck && npm run lint && npm run test:p03:gps:api && npm run test:flutter && npm run test:p03-2:integration",
     "test:p03-3:policy": "node --experimental-strip-types --test scripts/verify/p03-3-pointer-policy.test.mjs",
     "test:p03-3:contracts": "node --test scripts/verify/p03-3-source-contracts.test.mjs",
+    "test:p03-3:repair:contracts": "node --test scripts/verify/p03-3-restricted-repair.test.mjs",
+    "test:p03-3:repair:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-restricted-repair-dynamo.test.ts",
+    "verify:p03-3:closeout": "npm run verify:p03-3",
     "test:p03-3:integration": "node --env-file=apps/api/.env --import tsx --test apps/api/tests/discovery/p03-3-private-publication-dynamo.test.ts",
-    "verify:p03-3:portable": "npm run test:p03-3:policy && npm run test:p03-3:contracts && npm run verify:p03:acceptance:portable && npm run test:secrets && npm run test:cloud-guards",
-    "verify:p03-3": "npm run verify:p03-3:portable && npm run test:p03:acceptance:types && npm run typecheck && npm run lint && npm run test:p03-3:integration && npm run verify:p03:acceptance"
+    "verify:p03-3:portable": "npm run test:p03-3:policy && npm run test:p03-3:contracts && npm run test:p03-3:repair:contracts && npm run verify:p03:acceptance:portable && npm run test:secrets && npm run test:cloud-guards",
+    "verify:p03-3": "npm run verify:p03-3:portable && npm run test:p03:acceptance:types && npm run typecheck && npm run lint && npm run test:p03-3:integration && npm run test:p03-3:repair:integration && npm run verify:p03:acceptance"
   },
   "devDependencies": {
     "eslint": "^10.15.0",

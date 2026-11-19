@@ -36,8 +36,12 @@ Valid error response shape for these handlers is `{ "error": "fixed_error_code" 
 
 **Nonexistent in P03-2:** public `/v1/discovery/*`, people matching cards, eligibility publication, Feed/Activities post APIs, public cursor tokens, and automatic profile pointer writes. These belong to later P03 phases. Do not add mock success routes to satisfy UI tests. Additional details: [`../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md`](../api/P03_2_INTERNAL_DISCOVERY_CONTRACTS.md).
 
-## P03-3 — Private/internal transactional publisher (not accepted)
+## P03-3 — Private/internal transactional publisher (core owner-tested; not fully accepted)
 
 `apps/api/src/features/discovery/pointer-lifecycle-policy.ts` is a server-only module that validates canonical anchors and generates conditional transaction Delete/Update/check operations. It has **no HTTP endpoint**. Existing authenticated owner routes (`/v1/profiles/me/:mode/activate`, `/deactivate`, owner profile/photolist/setup/handle saves, `/v1/me/geo/manual`, `/v1/me/geo/gps`) now use those operations to add or invalidate private pointers. Responses still report `discoveryEligible:false`/`discoveryEnabled:false`. Public third-party preview remains 404.
 
 The new `discoveryPointer` property on mode rows is an **optional private anchor**, never a preview DTO. Index rows are unverified. Account moderation, account deletion and block policy are not complete; see [`../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md`](../architecture/P03_3_PRIVATE_POINTER_LIFECYCLE.md). **Do not register or expose `/v1/discovery/people` for P03-3.**
+
+### New P03-3 internal-only maintenance function (not an HTTP API)
+
+`reconcileRestrictedPointers(db, uid)` in `reconcile-restricted-pointers.ts` reads canonical `uluv_users` + both `MODE` profiles with strongly consistent GetItem. It refuses to run for an active or missing account, then conditionally deletes at most two anchored `uluv_discovery` records while clearing their anchors under the same transaction; the user account's `status` and `moderationRestrictionVersion` are rechecked at commit. A repeat call is a no-op. **This function does not change status, grant staff authorization or discover orphan pointers without an anchor.** A future authorized moderation/delete process must integrate it after policy review; no new route has been registered.
